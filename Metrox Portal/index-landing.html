@@ -1,0 +1,2522 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Metrox Taxinvoo | Your Trusted Tax Ready Invoicing Partner</title>
+  <meta name="description" content="Metrox Taxinvoo is a modern GST invoicing platform with AI-ready billing, real-time summaries, and clean tax workflows for growing businesses." />
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap");
+
+    :root {
+      --brand-navy: #222253;
+      --brand-indigo: #6a4df5;
+      --brand-blue: #3d8bde;
+      --brand-cyan: #69d7d8;
+      --brand-white: #f5f7ff;
+
+      --bg: #f2f6ff;
+      --bg-soft: #ffffff;
+      --surface: rgba(255, 255, 255, 0.74);
+      --surface-strong: #ffffff;
+      --text: #161a3d;
+      --muted: #5d6387;
+      --line: rgba(30, 36, 85, 0.13);
+      --card-shadow: 0 22px 55px rgba(36, 44, 109, 0.12);
+      --hero-glow: radial-gradient(circle at 12% 12%, rgba(105, 215, 216, 0.14), transparent 46%), radial-gradient(circle at 88% 8%, rgba(106, 77, 245, 0.12), transparent 44%);
+      --section-blend: linear-gradient(145deg, rgba(105, 215, 216, 0.12), rgba(61, 139, 222, 0.06) 45%, rgba(106, 77, 245, 0.11));
+      --btn-text: #ffffff;
+      --chip-bg: rgba(105, 215, 216, 0.18);
+      --dot: #69d7d8;
+      --grid: rgba(34, 34, 83, 0.08);
+      --preview-bg: linear-gradient(160deg, rgba(255, 255, 255, 0.84), rgba(226, 240, 255, 0.8));
+      --footer-bg: #eaf0ff;
+      --footer-hero-bg: linear-gradient(135deg, #e3ebff 0%, #dce6ff 100%);
+      --footer-text: #1a2550;
+      --footer-muted: #4f5c88;
+      --footer-link: #2c3768;
+      --footer-divider: rgba(40, 55, 110, 0.16);
+      --footer-pattern: rgba(56, 74, 138, 0.2);
+      --glass-bg: rgba(255, 255, 255, 0.9);
+      --glass-border: rgba(41, 60, 126, 0.16);
+      --glass-highlight: rgba(255, 255, 255, 0.74);
+      --band-a: linear-gradient(120deg, #e8f5ff 0%, #e6eefc 56%, #e9e8ff 100%);
+      --band-b: linear-gradient(125deg, #eff7ff 0%, #eef0ff 52%, #efe9ff 100%);
+      --band-c: linear-gradient(128deg, #eefbff 0%, #eaf5ff 46%, #ecf0ff 100%);
+      --band-border: rgba(54, 76, 148, 0.18);
+      --band-dot: rgba(62, 84, 156, 0.12);
+    }
+
+    [data-theme="dark"] {
+      --bg: #10163b;
+      --bg-soft: #161d4a;
+      --surface: rgba(22, 29, 74, 0.72);
+      --surface-strong: #1e2558;
+      --text: #eef2ff;
+      --muted: #b2badf;
+      --line: rgba(214, 222, 255, 0.16);
+      --card-shadow: 0 28px 64px rgba(7, 10, 28, 0.46);
+      --hero-glow: radial-gradient(circle at 12% 12%, rgba(105, 215, 216, 0.14), transparent 48%), radial-gradient(circle at 88% 8%, rgba(106, 77, 245, 0.2), transparent 46%);
+      --section-blend: linear-gradient(145deg, rgba(105, 215, 216, 0.2), rgba(61, 139, 222, 0.08) 45%, rgba(106, 77, 245, 0.2));
+      --btn-text: #f8faff;
+      --chip-bg: rgba(105, 215, 216, 0.16);
+      --dot: #75f2f4;
+      --grid: rgba(197, 207, 255, 0.07);
+      --preview-bg: linear-gradient(160deg, rgba(15, 21, 58, 0.88), rgba(28, 38, 91, 0.8));
+      --footer-bg: #171f4e;
+      --footer-hero-bg: linear-gradient(135deg, #1e2a67 0%, #1a2159 100%);
+      --footer-text: #f3f7ff;
+      --footer-muted: rgba(220, 229, 255, 0.82);
+      --footer-link: rgba(220, 229, 255, 0.9);
+      --footer-divider: rgba(255, 255, 255, 0.1);
+      --footer-pattern: rgba(255, 255, 255, 0.3);
+      --glass-bg: rgba(21, 30, 73, 0.86);
+      --glass-border: rgba(191, 208, 255, 0.14);
+      --glass-highlight: rgba(255, 255, 255, 0.18);
+      --band-a: linear-gradient(125deg, rgba(33, 47, 111, 0.78) 0%, rgba(35, 49, 114, 0.82) 56%, rgba(43, 48, 110, 0.84) 100%);
+      --band-b: linear-gradient(125deg, rgba(29, 43, 103, 0.8) 0%, rgba(26, 39, 96, 0.84) 50%, rgba(40, 45, 102, 0.86) 100%);
+      --band-c: linear-gradient(125deg, rgba(26, 45, 104, 0.78) 0%, rgba(24, 52, 112, 0.82) 48%, rgba(32, 48, 103, 0.86) 100%);
+      --band-border: rgba(178, 197, 255, 0.22);
+      --band-dot: rgba(188, 205, 255, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+    }
+
+    body {
+      font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(700px 420px at 82% 0%, rgba(106, 77, 245, 0.12), transparent 64%),
+        radial-gradient(640px 420px at 8% 0%, rgba(105, 215, 216, 0.1), transparent 60%),
+        var(--hero-glow),
+        var(--bg);
+      transition: background-color 0.35s ease, color 0.35s ease;
+      overflow-x: hidden;
+      line-height: 1.64;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: radial-gradient(circle at center, #000 24%, transparent 80%);
+      z-index: -1;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .container {
+      width: min(1180px, 92vw);
+      margin: 0 auto;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 25;
+      backdrop-filter: blur(12px);
+      background: color-mix(in srgb, var(--bg) 82%, transparent);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .topbar-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      min-height: 84px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+      position: relative;
+    }
+
+    .brand-mark {
+      width: 60px;
+      height: 60px;
+      flex: 0 0 60px;
+      position: relative;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      overflow: visible;
+      transform-origin: 48% 52%;
+      animation: logoFloat 4.8s ease-in-out infinite;
+    }
+
+    .brand-mark svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .brand-text {
+      display: grid;
+      line-height: 1;
+      gap: 4px;
+    }
+
+    .brand-text .up {
+      font-family: "Sora", sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.035em;
+    }
+
+    .brand-text .down {
+      font-family: "Sora", sans-serif;
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .brand-text .down .dot {
+      color: var(--dot);
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 26px;
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .nav a {
+      position: relative;
+      padding: 4px 0;
+    }
+
+    .nav a::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: -4px;
+      width: 100%;
+      height: 2px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--brand-cyan), var(--brand-indigo));
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.22s ease;
+    }
+
+    .nav a:hover::after,
+    .nav a:focus-visible::after {
+      transform: scaleX(1);
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 11px 17px;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      background: var(--surface);
+      color: var(--text);
+      transition: transform 0.2s ease, box-shadow 0.25s ease, background-color 0.3s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .btn-primary {
+      border: 0;
+      color: var(--btn-text);
+      background: linear-gradient(120deg, var(--brand-cyan), var(--brand-blue), var(--brand-indigo));
+      box-shadow: 0 16px 34px rgba(61, 139, 222, 0.34);
+    }
+
+    .theme-toggle {
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      display: grid;
+      place-items: center;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .hero {
+      padding: 72px 0 44px;
+      display: grid;
+      grid-template-columns: 1.06fr 0.94fr;
+      gap: 30px;
+      align-items: center;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      background: var(--chip-bg);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 8px 13px;
+      border-radius: 999px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .hero h1 {
+      margin: 18px 0 14px;
+      font-family: "Sora", sans-serif;
+      font-size: clamp(32px, 5vw, 44px);
+      line-height: 1.08;
+      letter-spacing: -0.024em;
+    }
+
+    .hero h1 .accent {
+      background: linear-gradient(120deg, var(--brand-cyan), var(--brand-blue), var(--brand-indigo));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 58ch;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.68;
+    }
+
+    .hero .hero-qualifier {
+      margin-top: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: color-mix(in srgb, var(--muted) 88%, var(--text));
+      font-weight: 600;
+    }
+
+    .hero-cta {
+      margin-top: 26px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .trust {
+      margin-top: 26px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .trust-item {
+      border-radius: 12px;
+      padding: 10px 13px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .hero-preview {
+      position: relative;
+      border-radius: 28px;
+      border: 1px solid var(--line);
+      background: var(--preview-bg);
+      box-shadow: var(--card-shadow);
+      padding: 24px;
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .hero-preview::before {
+      content: "";
+      position: absolute;
+      inset: -20% auto auto -20%;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(105, 215, 216, 0.5), transparent 70%);
+      z-index: -1;
+      animation: drift 7s ease-in-out infinite;
+    }
+
+    .hero-preview::after {
+      content: "";
+      position: absolute;
+      right: -70px;
+      bottom: -70px;
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(106, 77, 245, 0.36), transparent 70%);
+      z-index: -1;
+      animation: drift 9s ease-in-out infinite reverse;
+    }
+
+    .preview-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .badge {
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: 999px;
+      padding: 7px 12px;
+      background: rgba(106, 77, 245, 0.16);
+      border: 1px solid var(--line);
+    }
+
+    .mini-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: "Sora", sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .mini-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--brand-cyan);
+      box-shadow: 0 0 0 6px rgba(105, 215, 216, 0.18);
+    }
+
+    .invoice {
+      display: grid;
+      gap: 10px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--surface-strong);
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .row strong {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .voice {
+      border: 1px dashed var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      font-size: 14px;
+      color: var(--muted);
+      background: color-mix(in srgb, var(--chip-bg) 48%, transparent);
+      line-height: 1.5;
+    }
+
+    .floating-note {
+      position: absolute;
+      right: 12px;
+      top: 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--surface);
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      box-shadow: 0 10px 18px rgba(0, 0, 0, 0.13);
+      animation: bob 4.8s ease-in-out infinite;
+    }
+
+    .brand-strip {
+      margin-top: 34px;
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      background: var(--section-blend);
+      padding: 24px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      box-shadow: var(--card-shadow);
+    }
+
+    .metric {
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      padding: 14px;
+      background: color-mix(in srgb, var(--surface-strong) 84%, transparent);
+    }
+
+    .metric .value {
+      font-family: "Sora", sans-serif;
+      font-size: clamp(24px, 2.5vw, 32px);
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .metric .label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .section {
+      margin-top: 68px;
+      position: relative;
+    }
+
+    .section::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: -14px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--brand-blue) 22%, var(--line)), transparent);
+      opacity: 0.28;
+      pointer-events: none;
+    }
+
+    .section.band {
+      border-radius: 26px;
+      border: 1px solid var(--band-border);
+      padding: 34px;
+      background: var(--band-a);
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+    }
+
+    .section.band::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.34;
+      background-image: radial-gradient(circle, var(--band-dot) 1px, transparent 1.3px);
+      background-size: 22px 22px;
+      mask-image: linear-gradient(180deg, #000 10%, transparent 100%);
+    }
+
+    .section.band-violet {
+      background: var(--band-b);
+    }
+
+    .section.band-soft {
+      background: var(--band-c);
+    }
+
+    .section.band::before,
+    .section.band-soft::before {
+      opacity: 0;
+    }
+
+    .section.full-width {
+      margin-left: calc(50% - 50vw);
+      margin-right: calc(50% - 50vw);
+      padding: 52px 0;
+      background: var(--band-a);
+      border: 0;
+      border-radius: 0;
+      box-shadow: inset 0 1px 0 color-mix(in srgb, var(--line) 70%, transparent), inset 0 -1px 0 color-mix(in srgb, var(--line) 70%, transparent);
+      overflow: hidden;
+    }
+
+    .section.full-width::before {
+      opacity: 0;
+    }
+
+    .section.full-width::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.26;
+      background-image: radial-gradient(circle, var(--band-dot) 1px, transparent 1.3px);
+      background-size: 22px 22px;
+      mask-image: linear-gradient(180deg, #000 8%, transparent 100%);
+    }
+
+    .section.full-width.violet {
+      background: var(--band-b);
+    }
+
+    .section.full-width.soft {
+      background: var(--band-c);
+    }
+
+    .section-inner {
+      width: min(1180px, 92vw);
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .section h2 {
+      margin: 0 0 12px;
+      font-family: "Sora", sans-serif;
+      font-size: clamp(32px, 3.7vw, 44px);
+      line-height: 1.16;
+      letter-spacing: -0.018em;
+    }
+
+    .section p.lead {
+      margin: 0;
+      max-width: 64ch;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.75;
+    }
+
+    .section p.note {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+      font-weight: 600;
+    }
+
+    .feature .note {
+      font-weight: 700;
+      color: color-mix(in srgb, var(--brand-blue) 54%, var(--muted));
+    }
+
+    .feature-grid {
+      margin-top: 22px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .feature {
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      box-shadow: var(--card-shadow);
+      padding: 20px;
+      display: grid;
+      gap: 10px;
+      transition: transform 0.26s ease, box-shadow 0.26s ease;
+    }
+
+    .feature:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 28px 52px rgba(27, 36, 89, 0.2);
+    }
+
+    .feature .icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--btn-text);
+      background: linear-gradient(130deg, var(--brand-cyan), var(--brand-blue), var(--brand-indigo));
+    }
+
+    .feature h3 {
+      margin: 0;
+      font-family: "Sora", sans-serif;
+      font-size: 20px;
+      line-height: 1.28;
+      letter-spacing: -0.01em;
+    }
+
+    .feature p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.68;
+    }
+
+    #workflow .workflow-grid {
+      margin-top: 22px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      position: relative;
+      isolation: isolate;
+    }
+
+    #workflow .workflow-grid::before {
+      content: "";
+      position: absolute;
+      left: 5%;
+      right: 5%;
+      top: 44px;
+      height: 2px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--brand-cyan) 52%, var(--line)), color-mix(in srgb, var(--brand-indigo) 42%, var(--line)), transparent);
+      opacity: 0.65;
+      z-index: 0;
+    }
+
+    #workflow .step-card {
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      box-shadow: var(--card-shadow);
+      padding: 20px;
+      display: grid;
+      gap: 10px;
+      position: relative;
+      z-index: 1;
+      transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    #workflow .step-card:hover {
+      transform: translateY(-6px);
+      border-color: color-mix(in srgb, var(--brand-cyan) 34%, var(--line));
+      box-shadow: 0 26px 48px rgba(27, 36, 89, 0.22);
+    }
+
+    #workflow .step-card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+      background: linear-gradient(150deg, color-mix(in srgb, var(--brand-cyan) 16%, transparent), transparent 44%, color-mix(in srgb, var(--brand-indigo) 14%, transparent));
+    }
+
+    #workflow .step-card:hover::after {
+      opacity: 1;
+    }
+
+    #workflow .step-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    #workflow .step-index {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--text);
+      border: 1px solid var(--line);
+      background: color-mix(in srgb, var(--surface-strong) 86%, transparent);
+    }
+
+    #workflow .step-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      border: 1px solid color-mix(in srgb, var(--brand-blue) 30%, var(--line));
+      display: grid;
+      place-items: center;
+      font-family: "Sora", sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--btn-text);
+      background: linear-gradient(130deg, var(--brand-cyan), var(--brand-blue), var(--brand-indigo));
+      box-shadow: 0 10px 22px rgba(61, 139, 222, 0.28);
+    }
+
+    #workflow .step-card h3 {
+      margin: 0;
+      font-family: "Sora", sans-serif;
+      font-size: 20px;
+      line-height: 1.3;
+      letter-spacing: -0.008em;
+    }
+
+    #workflow .step-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.66;
+    }
+
+    .trust-layout {
+      margin-top: 22px;
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 14px;
+    }
+
+    .compliance-list {
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      box-shadow: var(--card-shadow);
+      padding: 18px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .compliance-item {
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: color-mix(in srgb, var(--surface-strong) 90%, transparent);
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .status {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      color: var(--text);
+    }
+
+    .testimonial-card {
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      box-shadow: var(--card-shadow);
+      padding: 20px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .quote {
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.65;
+    }
+
+    .author {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    #pricing .pricing-toolbar {
+      margin-top: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    #pricing .billing-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--surface-strong) 88%, transparent);
+      box-shadow: var(--card-shadow);
+    }
+
+    #pricing .billing-btn {
+      border: 0;
+      border-radius: 999px;
+      padding: 8px 14px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+      background: transparent;
+      cursor: pointer;
+      transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+    }
+
+    #pricing .billing-btn[aria-pressed="true"] {
+      color: var(--btn-text);
+      background: linear-gradient(120deg, var(--brand-cyan), var(--brand-blue), var(--brand-indigo));
+      box-shadow: 0 10px 22px rgba(61, 139, 222, 0.28);
+    }
+
+    #pricing .billing-note {
+      margin: 0;
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    #pricing .pricing-grid {
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    #pricing .plan {
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      box-shadow: var(--card-shadow);
+      padding: 20px;
+      display: grid;
+      gap: 12px;
+      position: relative;
+      transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+
+
+    #pricing .plan:hover {
+      transform: translateY(-6px);
+      border-color: color-mix(in srgb, var(--brand-cyan) 36%, var(--line));
+      box-shadow: 0 28px 52px rgba(27, 36, 89, 0.24);
+    }
+
+    #pricing .plan.highlight {
+      background: var(--section-blend);
+      border-color: color-mix(in srgb, var(--brand-blue) 30%, var(--line));
+      transform: scale(1.015);
+    }
+
+    #pricing .plan.highlight:hover {
+      transform: translateY(-8px) scale(1.02);
+    }
+
+    #pricing .plan-kicker {
+      margin: 0;
+      display: inline-flex;
+      width: fit-content;
+      align-items: center;
+      border-radius: 999px;
+      padding: 5px 10px;
+      border: 1px solid var(--line);
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      font-weight: 800;
+      color: var(--muted);
+      background: color-mix(in srgb, var(--surface-strong) 88%, transparent);
+    }
+
+    #pricing .plan.highlight .plan-kicker {
+      color: var(--btn-text);
+      border-color: transparent;
+      background: linear-gradient(120deg, var(--brand-cyan), var(--brand-blue), var(--brand-indigo));
+    }
+
+    #pricing .plan h3 {
+      margin: 0;
+      font-family: "Sora", sans-serif;
+      font-size: 24px;
+      line-height: 1.24;
+      letter-spacing: -0.01em;
+    }
+
+    #pricing .plan-price {
+      margin: 0;
+      font-family: "Sora", sans-serif;
+      font-size: 34px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.01em;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    #pricing .plan-price small {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    #pricing .plan-sub {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    #pricing .starter-note {
+      margin: 0;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    #pricing .starter-helper {
+      margin: -2px 0 2px;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    #pricing .save-tag {
+      display: none;
+      width: fit-content;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #0b3046;
+      background: color-mix(in srgb, var(--brand-cyan) 60%, #ffffff);
+      border: 1px solid color-mix(in srgb, var(--brand-blue) 36%, var(--line));
+    }
+
+    #pricing[data-billing="yearly"] .save-tag {
+      display: inline-flex;
+    }
+
+    #pricing .plan-list {
+      margin: 0;
+      padding-left: 0;
+      list-style: none;
+      color: var(--muted);
+      font-size: 14px;
+      display: grid;
+      gap: 8px;
+    }
+
+    #pricing .plan-list li {
+      position: relative;
+      padding-left: 24px;
+      line-height: 1.5;
+    }
+
+    #pricing .plan-list li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--btn-text);
+      background: linear-gradient(120deg, var(--brand-cyan), var(--brand-blue), var(--brand-indigo));
+    }
+
+    #pricing .plan-cta {
+      margin-top: 4px;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .faq-list {
+      margin-top: 22px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .faq-item {
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      box-shadow: var(--card-shadow);
+      padding: 16px 18px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .faq-item h3 {
+      margin: 0;
+      font-size: 20px;
+      font-family: "Sora", sans-serif;
+      line-height: 1.3;
+      letter-spacing: -0.008em;
+    }
+
+    .faq-item p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.68;
+    }
+
+    .logo-cloud {
+      margin-top: 22px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--surface);
+      box-shadow: var(--card-shadow);
+      padding: 16px;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .logo-item {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--muted);
+      background: color-mix(in srgb, var(--surface-strong) 88%, transparent);
+    }
+
+    .industry-grid,
+    .integration-grid,
+    .case-grid {
+      margin-top: 22px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .industry-card,
+    .integration-card,
+    .case-card {
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      box-shadow: var(--card-shadow);
+      padding: 18px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .industry-card h3,
+    .integration-card h3,
+    .case-card h3 {
+      margin: 0;
+      font-size: 20px;
+      font-family: "Sora", sans-serif;
+    }
+
+    .industry-card p,
+    .integration-card p,
+    .case-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.62;
+    }
+
+    .screenshots {
+      margin-top: 22px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .shot-track {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(240px, 1fr);
+      gap: 12px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      padding-bottom: 4px;
+    }
+
+    .shot-card {
+      scroll-snap-align: start;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+    }
+
+    .shot-head {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .shot-body {
+      padding: 16px;
+      min-height: 170px;
+      display: grid;
+      place-items: center;
+      font-size: 14px;
+      color: var(--muted);
+      background: var(--section-blend);
+    }
+
+    .roi-wrap {
+      margin-top: 22px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .roi-controls,
+    .roi-result {
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      box-shadow: var(--card-shadow);
+      padding: 18px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field label {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .field input {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: color-mix(in srgb, var(--surface-strong) 90%, transparent);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+      padding: 10px 12px;
+      outline: none;
+    }
+
+    .field input:focus {
+      border-color: var(--brand-blue);
+    }
+
+    .roi-kpi {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: color-mix(in srgb, var(--surface-strong) 88%, transparent);
+      display: grid;
+      gap: 4px;
+    }
+
+    .roi-kpi span {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      font-weight: 700;
+    }
+
+    .roi-kpi strong {
+      font-size: 24px;
+      line-height: 1;
+      font-family: "Sora", sans-serif;
+    }
+
+    .table-wrap {
+      margin-top: 22px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      box-shadow: var(--card-shadow);
+      overflow: auto;
+    }
+
+    .compare {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 720px;
+    }
+
+    .compare th,
+    .compare td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      font-size: 14px;
+    }
+
+    .compare th {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: var(--muted);
+      font-weight: 700;
+      background: color-mix(in srgb, var(--surface-strong) 86%, transparent);
+    }
+
+    .compare td strong {
+      font-family: "Sora", sans-serif;
+      font-size: 16px;
+    }
+
+    .lead-box {
+      margin-top: 22px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      box-shadow: var(--card-shadow);
+      padding: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .contact-grid {
+      margin-top: 22px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .contact-card,
+    .contact-form {
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      box-shadow: var(--card-shadow);
+      padding: 20px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .contact-card h3,
+    .contact-form h3 {
+      margin: 0;
+      font-size: 20px;
+      font-family: "Sora", sans-serif;
+    }
+
+    .contact-meta {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .contact-form-row {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .contact-form input,
+    .contact-form textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: color-mix(in srgb, var(--surface-strong) 90%, transparent);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+      padding: 10px 12px;
+      outline: none;
+    }
+
+    .contact-form textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    .brand-strip,
+    .hero-preview,
+    .feature,
+    .step-card,
+    .compliance-list,
+    .testimonial-card,
+    .plan,
+    .faq-item,
+    .logo-cloud,
+    .industry-card,
+    .integration-card,
+    .case-card,
+    .shot-card,
+    .roi-controls,
+    .roi-result,
+    .table-wrap,
+    .lead-box,
+    .contact-card,
+    .contact-form,
+    .stat {
+      background: var(--glass-bg);
+      border-color: var(--glass-border);
+      backdrop-filter: blur(8px) saturate(116%);
+      -webkit-backdrop-filter: blur(8px) saturate(116%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .brand-strip::after,
+    .feature::after,
+    .step-card::after,
+    .plan::after,
+    .faq-item::after,
+    .industry-card::after,
+    .integration-card::after,
+    .case-card::after,
+    .contact-card::after,
+    .contact-form::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--glass-highlight), transparent);
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .site-footer {
+      margin-top: 26px;
+      border-top: 1px solid var(--line);
+      padding: 0 0 28px;
+      color: var(--muted);
+      background: var(--footer-bg);
+    }
+
+    .footer-hero {
+      position: relative;
+      border-bottom: 1px solid var(--footer-divider);
+      padding: 48px 0 36px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 18% 20%, rgba(105, 215, 216, 0.16), transparent 42%),
+        radial-gradient(circle at 82% 12%, rgba(106, 77, 245, 0.2), transparent 46%),
+        var(--footer-hero-bg);
+    }
+
+    .footer-hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      opacity: 0.12;
+      background-image:
+        radial-gradient(circle, var(--footer-pattern) 1px, transparent 1.2px);
+      background-size: 24px 24px;
+      pointer-events: none;
+    }
+
+    .footer-hero-inner {
+      position: relative;
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .footer-kicker {
+      margin: 0 0 10px;
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--footer-muted);
+    }
+
+    .footer-hero h3 {
+      margin: 0;
+      font-family: "Sora", sans-serif;
+      color: var(--footer-text);
+      font-size: clamp(32px, 4vw, 44px);
+      line-height: 1.14;
+      letter-spacing: -0.018em;
+      max-width: 19ch;
+    }
+
+    .footer-hero h3 span {
+      color: var(--brand-cyan);
+    }
+
+    .footer-hero p {
+      margin: 0;
+      color: var(--footer-muted);
+      max-width: 48ch;
+      line-height: 1.72;
+    }
+
+    .footer-hero .hero-cta {
+      margin-top: 18px;
+    }
+
+    .footer-links-wrap {
+      padding: 30px 0 14px;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1.3fr repeat(3, 1fr);
+      gap: 26px;
+    }
+
+    .footer-brand {
+      display: grid;
+      gap: 12px;
+      max-width: 32ch;
+    }
+
+    .site-footer .brand-text .up,
+    .site-footer .brand-text .down {
+      color: var(--footer-text);
+    }
+
+    .site-footer .contact-meta {
+      color: var(--footer-muted);
+    }
+
+    .site-footer .brand-mark {
+      animation: none;
+    }
+
+    .footer-col h4 {
+      margin: 0 0 12px;
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--footer-text);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .footer-links {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 10px;
+      font-size: 14px;
+    }
+
+    .footer-links a {
+      color: var(--footer-link);
+      transition: color 0.2s ease, transform 0.2s ease;
+      display: inline-block;
+    }
+
+    .footer-links a:hover {
+      color: var(--brand-cyan);
+      transform: translateX(2px);
+    }
+
+    .footer-bottom {
+      margin-top: 10px;
+      border-top: 1px solid var(--footer-divider);
+      padding-top: 12px;
+      display: flex;
+      justify-content: flex-start;
+      gap: 28px;
+      flex-wrap: wrap;
+      font-size: 14px;
+      color: var(--footer-muted);
+    }
+
+    .sticky-mobile {
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      display: none;
+      z-index: 60;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 10px;
+      background: color-mix(in srgb, var(--bg-soft) 84%, transparent);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 18px 32px rgba(0, 0, 0, 0.24);
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .cta {
+      margin: 70px 0 36px;
+      padding: 34px;
+      border-radius: 24px;
+      border: 1px solid var(--line);
+      background: linear-gradient(150deg, color-mix(in srgb, var(--brand-navy) 70%, var(--bg-soft)), rgba(106, 77, 245, 0.2));
+      color: #f5f7ff;
+      box-shadow: 0 30px 65px rgba(10, 14, 40, 0.35);
+    }
+
+    .cta h3 {
+      margin: 0 0 12px;
+      font-family: "Sora", sans-serif;
+      font-size: clamp(32px, 4vw, 44px);
+      line-height: 1.14;
+      letter-spacing: -0.02em;
+    }
+
+    .cta p {
+      margin: 0;
+      max-width: 62ch;
+      color: rgba(240, 245, 255, 0.85);
+      line-height: 1.72;
+      font-size: 16px;
+    }
+
+    .cta .hero-cta {
+      margin-top: 20px;
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: none;
+    }
+
+    @keyframes bob {
+      0%,
+      100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    @keyframes drift {
+      0%,
+      100% { transform: translate(0, 0); }
+      50% { transform: translate(10px, -14px); }
+    }
+
+    @keyframes logoFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+
+    @media (max-width: 1100px) {
+      .nav {
+        display: none;
+      }
+
+      .hero {
+        grid-template-columns: 1fr;
+      }
+
+      .brand-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .feature-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .workflow-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      #workflow .workflow-grid::before {
+        display: none;
+      }
+
+      .trust-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .pricing-grid {
+        grid-template-columns: 1fr;
+      }
+
+      #pricing .pricing-toolbar {
+        align-items: flex-start;
+      }
+
+      #pricing .plan.highlight {
+        transform: none;
+      }
+
+      #pricing .plan.highlight:hover {
+        transform: translateY(-6px);
+      }
+
+      .industry-grid,
+      .integration-grid,
+      .case-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .logo-cloud {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .roi-wrap,
+      .contact-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .footer-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .footer-hero-inner {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .topbar-inner {
+        min-height: 74px;
+      }
+
+      .brand-mark {
+        width: 48px;
+        height: 48px;
+      }
+
+      .brand-text .up {
+        font-size: 14px;
+      }
+
+      .brand-text .down {
+        font-size: 24px;
+      }
+
+      .actions .btn:not(.theme-toggle) {
+        display: none;
+      }
+
+      .hero {
+        padding-top: 46px;
+      }
+
+      .hero-cta {
+        flex-direction: column;
+      }
+
+      .hero-cta .btn {
+        width: 100%;
+      }
+
+      .brand-strip {
+        grid-template-columns: 1fr;
+      }
+
+      .workflow-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .section.band {
+        padding: 24px;
+      }
+
+      .section.full-width {
+        padding: 38px 0;
+      }
+
+      .cta {
+        padding: 24px;
+      }
+
+      .logo-cloud {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .contact-form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .footer-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .sticky-mobile {
+        display: grid;
+      }
+
+      .footer-hero {
+        padding: 38px 0 30px;
+      }
+
+      .footer-links-wrap {
+        padding: 24px 0 10px;
+      }
+
+      .footer-bottom {
+        gap: 8px;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a href="#" class="brand" aria-label="Metrox Taxinvoo Home">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 100 100" role="img" aria-label="Metrox Taxinvoo logo mark">
+            <defs>
+              <linearGradient id="metroxGradient" x1="12" y1="88" x2="88" y2="10" gradientUnits="userSpaceOnUse">
+                <stop offset="0" stop-color="#69d7d8" />
+                <stop offset="0.56" stop-color="#3d8bde" />
+                <stop offset="1" stop-color="#6a4df5" />
+              </linearGradient>
+            </defs>
+            <path d="M6 6H94V94C50 94 6 50 6 6Z" fill="url(#metroxGradient)" />
+            <path d="M6 65C22 65 35 78 35 94H6Z" fill="#69d7d8" />
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="up">Metrox</span>
+          <span class="down">taxinvoo<span class="dot">.</span></span>
+        </div>
+      </a>
+
+      <nav class="nav" aria-label="Primary">
+        <a href="#features">Features</a>
+        <a href="#workflow">Workflow</a>
+        <a href="#trust">Trust</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#faq">FAQ</a>
+        <a href="#contact">Contact</a>
+      </nav>
+
+      <div class="actions">
+        <button class="btn theme-toggle" id="themeToggle" aria-label="Toggle theme" title="Toggle theme">☼</button>
+        <a class="btn" href="login.html?plan=starter">Get Early Access</a>
+        <a class="btn btn-primary" href="login.html?plan=trial">Start Free</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div class="reveal">
+        <span class="eyebrow">Your Trusted Tax Ready Invoicing Partner</span>
+        <h1>
+          GST Billing Made <span class="accent">Simple. Fast. Error-Free.</span>
+        </h1>
+        <p>
+          Built for Indian businesses to generate GST-ready invoices, track payments, and stay compliant — without accounting headaches.
+        </p>
+        <p class="hero-qualifier">
+          For retailers, service providers, and wholesale businesses in India.
+        </p>
+        <div class="hero-cta">
+          <a class="btn btn-primary" href="login.html?plan=trial">Start Free (No Credit Card)</a>
+          <a class="btn" href="index.html">Open Web Demo</a>
+        </div>
+        <div class="trust">
+          <span class="trust-item">GST invoice ready</span>
+          <span class="trust-item">AI voice billing</span>
+          <span class="trust-item">WhatsApp + PDF share</span>
+        </div>
+      </div>
+
+      <aside class="hero-preview reveal" aria-label="Invoice Preview">
+        <div class="floating-note">Theme synced</div>
+        <div class="preview-head">
+          <div class="mini-brand"><span class="mini-dot"></span> Metrox Taxinvoo</div>
+          <span class="badge">Live Invoice Preview</span>
+        </div>
+        <div class="invoice">
+          <div class="row"><strong>Invoice #MT-240921</strong><strong>Paid</strong></div>
+          <div class="row"><span>Taxable Amount</span><span>INR 4,237</span></div>
+          <div class="row"><span>CGST 9%</span><span>INR 381</span></div>
+          <div class="row"><span>SGST 9%</span><span>INR 381</span></div>
+          <div class="row"><strong>Total</strong><strong>INR 5,000</strong></div>
+        </div>
+        <div class="voice">
+          "Create invoice for Sairam Traders, INR 5,000, GST 18%, payment received."<br />
+          Taxinvoo converted voice to a complete GST bill in 2 seconds.
+        </div>
+      </aside>
+    </section>
+
+    <section class="brand-strip reveal" aria-label="Key metrics">
+      <article class="metric">
+        <div class="value">2s</div>
+        <div class="label">Invoice generation</div>
+      </article>
+      <article class="metric">
+        <div class="value">99%</div>
+        <div class="label">Tax check confidence</div>
+      </article>
+      <article class="metric">
+        <div class="value">24/7</div>
+        <div class="label">Real-time Business Visibility</div>
+      </article>
+      <article class="metric">
+        <div class="value">0</div>
+        <div class="label">Manual GST stress</div>
+      </article>
+    </section>
+
+    <section class="section reveal" id="features">
+      <h2>Core Features</h2>
+      <p class="lead">
+        Metrox Taxinvoo combines billing, compliance, and tracking in one professional workflow for daily operations.
+      </p>
+      <div class="feature-grid">
+        <article class="feature">
+          <span class="icon">M</span>
+          <h3>Smart GST Calculations</h3>
+          <p>
+            Automatic CGST/SGST/IGST calculations with clean, GST-ready invoice formatting.
+          </p>
+          <p class="note">Outcome: Fewer billing mistakes and faster invoice approvals.</p>
+        </article>
+        <article class="feature" id="voice">
+          <span class="icon">AI</span>
+          <h3>Voice-to-Invoice</h3>
+          <p>
+            Convert voice commands into invoice drafts in seconds with fewer manual entry errors.
+          </p>
+          <p class="note">Outcome: Your team bills more customers in less time.</p>
+        </article>
+        <article class="feature">
+          <span class="icon">+</span>
+          <h3>Live Business Summary</h3>
+          <p>
+            Track collections, sales, and tax amounts in real time from one unified dashboard.
+          </p>
+          <p class="note">Outcome: Make daily decisions quickly with clear numbers.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section reveal full-width violet" id="workflow">
+      <div class="section-inner">
+        <h2>4-step Workflow</h2>
+        <p class="note">Most invoices are completed in under 2 minutes.</p>
+        <p class="lead">
+          A simple process from customer capture to report generation helps teams move faster and stay organized.
+        </p>
+        <div class="workflow-grid">
+          <article class="step-card">
+            <div class="step-head">
+              <span class="step-index">01</span>
+              <span class="step-icon" aria-hidden="true">CUS</span>
+            </div>
+            <h3>Add Customer</h3>
+            <p>Select existing customer or create a new profile with GST details.</p>
+          </article>
+          <article class="step-card">
+            <div class="step-head">
+              <span class="step-index">02</span>
+              <span class="step-icon" aria-hidden="true">INV</span>
+            </div>
+            <h3>Create Invoice</h3>
+            <p>Use manual entry or voice billing to generate invoice lines quickly.</p>
+          </article>
+          <article class="step-card">
+            <div class="step-head">
+              <span class="step-index">03</span>
+              <span class="step-icon" aria-hidden="true">SND</span>
+            </div>
+            <h3>Share & Collect</h3>
+            <p>Send via PDF/WhatsApp and track payment status without follow-up chaos.</p>
+          </article>
+          <article class="step-card">
+            <div class="step-head">
+              <span class="step-index">04</span>
+              <span class="step-icon" aria-hidden="true">REP</span>
+            </div>
+            <h3>Review Reports</h3>
+            <p>See sales, GST totals, and receivables with export-ready summaries.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section reveal" id="trust">
+      <h2>Trust & Compliance</h2>
+      <p class="note">GST rules evolve. Taxinvoo adapts workflows to stay aligned with changes.</p>
+      <p class="note">Designed in line with Indian GST invoicing guidelines.</p>
+      <p class="lead">
+        Keep invoicing practices structured and audit-friendly with clear status checks built into your flow.
+      </p>
+      <div class="trust-layout">
+        <div class="compliance-list">
+          <div class="compliance-item">
+            <span>GST field and tax slab validation</span>
+            <span class="status">Ready</span>
+          </div>
+          <div class="compliance-item">
+            <span>Continuous invoice numbering logic</span>
+            <span class="status">Enabled</span>
+          </div>
+          <div class="compliance-item">
+            <span>Payment follow-up and due tracking</span>
+            <span class="status">Active</span>
+          </div>
+          <div class="compliance-item">
+            <span>Month-end tax summary support</span>
+            <span class="status">Available</span>
+          </div>
+        </div>
+        <article class="testimonial-card">
+          <h3>Testimonial block</h3>
+          <p class="quote">
+            “Metrox Taxinvoo improved our billing quality and helped us reduce manual tax mistakes within the first week.”
+          </p>
+          <p class="author">Operations Manager, Local Retail Chain</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section reveal" aria-label="Trusted by">
+      <h2>Trusted by Growing Businesses</h2>
+      <p class="lead">
+        Teams across retail, distribution, and services rely on Metrox Taxinvoo for fast daily billing.
+      </p>
+      <div class="logo-cloud">
+        <div class="logo-item">Sai Retail Group</div>
+        <div class="logo-item">Urban Traders</div>
+        <div class="logo-item">Apex Supplies</div>
+        <div class="logo-item">Bluecart Services</div>
+        <div class="logo-item">Nexus Wholesales</div>
+      </div>
+    </section>
+
+    <section class="section reveal">
+      <h2>Industries We Serve</h2>
+      <p class="lead">
+        Purpose-built invoicing for business models that need speed, accuracy, and reliable compliance.
+      </p>
+      <div class="industry-grid">
+        <article class="industry-card">
+          <h3>Retail Stores</h3>
+          <p>Fast checkout invoicing, customer ledger tracking, and end-of-day summaries.</p>
+        </article>
+        <article class="industry-card">
+          <h3>Service Businesses</h3>
+          <p>Professional service invoices with clear tax breakup and payment follow-ups.</p>
+        </article>
+        <article class="industry-card">
+          <h3>Wholesale & Distribution</h3>
+          <p>High-volume billing, due tracking, and GST-ready reporting across orders.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section reveal">
+      <h2>Integrations</h2>
+      <p class="lead">
+        Connect the billing workflow with the tools your team already uses every day.
+      </p>
+      <div class="integration-grid">
+        <article class="integration-card">
+          <h3>WhatsApp Share</h3>
+          <p>Send invoice copies instantly to customers for faster payment confirmation.</p>
+        </article>
+        <article class="integration-card">
+          <h3>PDF Export</h3>
+          <p>Generate clean, shareable invoice and report exports with a single click.</p>
+        </article>
+        <article class="integration-card">
+          <h3>Accounting Export</h3>
+          <p>Move billing data into monthly accounting workflows with structured output.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section reveal">
+      <h2>Product Screens</h2>
+      <p class="lead">
+        A quick look at the screens your team uses most: billing, ledger, reports, and payment status.
+      </p>
+      <div class="screenshots">
+        <div class="shot-track">
+          <article class="shot-card">
+            <div class="shot-head">Dashboard Overview</div>
+            <div class="shot-body">Sales snapshot, dues, and GST payable cards.</div>
+          </article>
+          <article class="shot-card">
+            <div class="shot-head">Invoice Builder</div>
+            <div class="shot-body">Fast line-item entry with automatic tax breakup.</div>
+          </article>
+          <article class="shot-card">
+            <div class="shot-head">Customer Ledger</div>
+            <div class="shot-body">Complete receivable history and payment timeline.</div>
+          </article>
+          <article class="shot-card">
+            <div class="shot-head">Tax Reports</div>
+            <div class="shot-body">Month-wise GST summaries ready for review/export.</div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <div id="signup" aria-hidden="true"></div>
+    <section class="section reveal" id="pricing" data-billing="monthly">
+      <h2>Pricing Plans</h2>
+      <p class="lead">
+        Choose a plan that matches your current billing volume and scale when needed.
+      </p>
+      <div class="pricing-toolbar">
+        <div class="billing-toggle" role="group" aria-label="Billing duration">
+          <button class="billing-btn" type="button" data-billing-option="monthly" aria-pressed="true">Monthly</button>
+          <button class="billing-btn" type="button" data-billing-option="yearly" aria-pressed="false">Yearly</button>
+        </div>
+        <p class="billing-note">Switch to yearly billing to unlock lower effective pricing.</p>
+      </div>
+      <div class="pricing-grid">
+        <article class="plan" data-monthly="free" data-yearly="free">
+          <p class="plan-kicker">Starter</p>
+          <h3>Starter</h3>
+          <p class="starter-helper">Ideal for small shops and freelancers.</p>
+          <p class="plan-price"><span class="price-value">Free Forever</span><small></small></p>
+          <p class="plan-sub">Best for getting started</p>
+          <p class="starter-note">No credit card required.</p>
+          <span class="save-tag">Always free</span>
+          <ul class="plan-list">
+            <li>Up to 20 invoices per month</li>
+            <li>Basic GST calculation</li>
+            <li>Single-user access</li>
+          </ul>
+          <a class="btn plan-cta" href="login.html?plan=starter">Get Starter</a>
+        </article>
+        <article class="plan highlight" data-monthly="299" data-yearly="249">
+          <p class="plan-kicker">Most Chosen</p>
+          <h3>Growth</h3>
+          <p class="plan-price"><span class="price-value">INR 299</span><small>/month</small></p>
+          <p class="plan-sub">Per month, most chosen</p>
+          <span class="save-tag">Save INR 600/year</span>
+          <ul class="plan-list">
+            <li>Unlimited invoices</li>
+            <li>Voice-to-invoice AI</li>
+            <li>GST reports and exports</li>
+          </ul>
+          <a class="btn btn-primary plan-cta" href="login.html?plan=growth">Choose Growth</a>
+        </article>
+        <article class="plan" data-monthly="799" data-yearly="679">
+          <p class="plan-kicker">Advanced</p>
+          <h3>Pro</h3>
+          <p class="plan-price"><span class="price-value">INR 799</span><small>/month</small></p>
+          <p class="plan-sub">For advanced operations</p>
+          <span class="save-tag">Save INR 1,440/year</span>
+          <ul class="plan-list">
+            <li>Multi-user support</li>
+            <li>Advanced business analytics</li>
+            <li>Priority support</li>
+          </ul>
+          <a class="btn plan-cta" href="login.html?plan=enterprise">Contact Sales</a>
+        </article>
+      </div>
+    </section>
+
+    <section class="section reveal">
+      <h2>Plan Comparison</h2>
+      <p class="lead">
+        Compare feature availability side-by-side and choose the right plan confidently.
+      </p>
+      <div class="table-wrap">
+        <table class="compare">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>Starter</th>
+              <th>Growth</th>
+              <th>Pro</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Monthly Invoices</strong></td>
+              <td>20</td>
+              <td>Unlimited</td>
+              <td>Unlimited</td>
+            </tr>
+            <tr>
+              <td><strong>Voice-to-Invoice</strong></td>
+              <td>No</td>
+              <td>Yes</td>
+              <td>Yes</td>
+            </tr>
+            <tr>
+              <td><strong>GST Reports</strong></td>
+              <td>Basic</td>
+              <td>Advanced</td>
+              <td>Advanced</td>
+            </tr>
+            <tr>
+              <td><strong>Users</strong></td>
+              <td>1</td>
+              <td>1</td>
+              <td>Multi-user</td>
+            </tr>
+            <tr>
+              <td><strong>Support</strong></td>
+              <td>Standard</td>
+              <td>Priority</td>
+              <td>Priority + Dedicated</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section reveal">
+      <h2>ROI Calculator</h2>
+      <p class="lead">
+        Estimate monthly savings from faster billing and fewer manual correction cycles.
+      </p>
+      <div class="roi-wrap">
+        <div class="roi-controls">
+          <div class="field">
+            <label for="invoicesPerDay">Invoices per day</label>
+            <input id="invoicesPerDay" type="number" min="1" value="25" />
+          </div>
+          <div class="field">
+            <label for="minutesSaved">Minutes saved per invoice</label>
+            <input id="minutesSaved" type="number" min="1" value="3" />
+          </div>
+          <div class="field">
+            <label for="costPerHour">Team cost per hour (INR)</label>
+            <input id="costPerHour" type="number" min="1" value="250" />
+          </div>
+        </div>
+        <div class="roi-result">
+          <div class="roi-kpi">
+            <span>Estimated hours saved / month</span>
+            <strong id="hoursSavedOut">0</strong>
+          </div>
+          <div class="roi-kpi">
+            <span>Estimated monthly savings</span>
+            <strong id="moneySavedOut">INR 0</strong>
+          </div>
+          <p class="lead">Numbers are indicative, based on 26 working days per month.</p>
+          <a class="btn btn-primary" href="#signup">Start Free & Save Time</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section reveal">
+      <h2>Customer Stories</h2>
+      <p class="lead">
+        Real usage outcomes from teams that shifted from manual billing to Taxinvoo.
+      </p>
+      <div class="case-grid">
+        <article class="case-card">
+          <h3>Retail Chain · Surat</h3>
+          <p>Reduced billing time by 42% and improved on-time collections in 30 days.</p>
+        </article>
+        <article class="case-card">
+          <h3>Service Agency · Bengaluru</h3>
+          <p>Standardized invoice quality across teams and lowered tax rework cycles.</p>
+        </article>
+        <article class="case-card">
+          <h3>Wholesale Distributor · Jaipur</h3>
+          <p>Managed high-volume monthly billing with cleaner reconciliation and reports.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section reveal">
+      <h2>Leadership & Support</h2>
+      <p class="lead">
+        A product and support team focused on reliable releases, fast issue resolution, and practical onboarding.
+      </p>
+      <div class="case-grid">
+        <article class="case-card">
+          <h3>Product Team</h3>
+          <p>Builds GST-focused workflows with regular usability and performance improvements.</p>
+        </article>
+        <article class="case-card">
+          <h3>Implementation Support</h3>
+          <p>Guides setup, migration, and day-1 billing activation for new businesses.</p>
+        </article>
+        <article class="case-card">
+          <h3>Compliance Advisory</h3>
+          <p>Helps teams follow invoice structure and report hygiene best practices.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section reveal" id="faq">
+      <h2>FAQ</h2>
+      <p class="lead">
+        Quick answers to the most common onboarding and billing questions.
+      </p>
+      <div class="faq-list">
+        <article class="faq-item">
+          <h3>Is Metrox Taxinvoo suitable for GST businesses?</h3>
+          <p>Yes. It is designed with GST-focused invoice logic and tax breakup support.</p>
+        </article>
+        <article class="faq-item">
+          <h3>Can we use both light and dark mode?</h3>
+          <p>Yes. Theme preference stays saved and your existing brand colors remain consistent.</p>
+        </article>
+        <article class="faq-item">
+          <h3>How quickly can we start using it?</h3>
+          <p>Most teams can begin invoicing on the same day after account setup.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section reveal">
+      <h2>Free GST Checklist</h2>
+      <p class="lead">
+        Download a practical pre-filing checklist your team can use every month.
+      </p>
+      <div class="lead-box">
+        <p class="lead">Includes invoice hygiene checks, payment follow-up points, and GST summary checkpoints.</p>
+        <a class="btn btn-primary" href="#">Download Checklist PDF</a>
+      </div>
+    </section>
+
+    <section class="section reveal" id="contact">
+      <h2>Talk to Our Team</h2>
+      <p class="lead">
+        Get a walkthrough of Metrox Taxinvoo and see how it fits your business workflow.
+      </p>
+      <div class="contact-grid">
+        <article class="contact-card">
+          <h3>Quick Contact</h3>
+          <p class="contact-meta">Email: hello@metroxtaxinvoo.com</p>
+          <p class="contact-meta">Phone: +91 90000 00000</p>
+          <p class="contact-meta">Working hours: Mon-Sat, 9:00 AM to 7:00 PM</p>
+          <a class="btn btn-primary" href="https://wa.me/919000000000">Chat on WhatsApp</a>
+        </article>
+        <form class="contact-form">
+          <h3>Request Callback</h3>
+          <div class="contact-form-row">
+            <input type="text" name="name" placeholder="Your name" />
+            <input type="text" name="phone" placeholder="Phone number" />
+          </div>
+          <input type="email" name="email" placeholder="Work email" />
+          <textarea name="message" placeholder="Tell us about your billing needs"></textarea>
+          <button class="btn" type="button">Submit Request</button>
+        </form>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-hero">
+      <div class="container footer-hero-inner">
+        <div>
+          <p class="footer-kicker">Metrox Taxinvoo</p>
+          <h3>Ready to simplify billing and grow <span>faster</span>?</h3>
+          <div class="hero-cta">
+            <a class="btn btn-primary" href="login.html?plan=trial">Start Free Trial</a>
+            <a class="btn" href="https://wa.me/919000000000">Talk on WhatsApp</a>
+          </div>
+        </div>
+        <p>
+          Start sending GST-ready invoices in minutes with a cleaner workflow, better tracking, and less manual effort.
+        </p>
+      </div>
+    </div>
+    <div class="container footer-links-wrap">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="brand">
+            <div class="brand-mark" aria-hidden="true">
+              <svg viewBox="0 0 100 100" role="img" aria-label="Metrox Taxinvoo logo mark">
+                <defs>
+                  <linearGradient id="metroxGradientFooter" x1="12" y1="88" x2="88" y2="10" gradientUnits="userSpaceOnUse">
+                    <stop offset="0" stop-color="#69d7d8" />
+                    <stop offset="0.56" stop-color="#3d8bde" />
+                    <stop offset="1" stop-color="#6a4df5" />
+                  </linearGradient>
+                </defs>
+                <path d="M6 6H94V94C50 94 6 50 6 6Z" fill="url(#metroxGradientFooter)" />
+                <path d="M6 65C22 65 35 78 35 94H6Z" fill="#69d7d8" />
+              </svg>
+            </div>
+            <div class="brand-text">
+              <span class="up">Metrox</span>
+              <span class="down">taxinvoo<span class="dot">.</span></span>
+            </div>
+          </div>
+          <p class="contact-meta">Your trusted tax-ready invoicing partner for modern GST businesses.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Product</h4>
+          <ul class="footer-links">
+            <li><a href="#features">Core Features</a></li>
+            <li><a href="#workflow">Workflow</a></li>
+            <li><a href="#pricing">Pricing</a></li>
+            <li><a href="#faq">FAQ</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Resources</h4>
+          <ul class="footer-links">
+            <li><a href="#">GST Checklist</a></li>
+            <li><a href="#">Help Center</a></li>
+            <li><a href="#">API Docs</a></li>
+            <li><a href="#">Release Notes</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Company</h4>
+          <ul class="footer-links">
+            <li><a href="#">About</a></li>
+            <li><a href="#">Privacy</a></li>
+            <li><a href="#">Terms</a></li>
+            <li><a href="#">Contact</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>Metrox Taxinvoo © <span id="yearOut">2026</span></span>
+        <span>Built for modern GST billing and compliance workflows.</span>
+      </div>
+    </div>
+  </footer>
+
+  <div class="sticky-mobile">
+    <a class="btn btn-primary" href="login.html?plan=trial">Start Free</a>
+    <a class="btn" href="https://wa.me/919000000000">WhatsApp</a>
+  </div>
+
+  <script>
+    (function initTheme() {
+      const root = document.documentElement;
+      const toggle = document.getElementById("themeToggle");
+      const saved = localStorage.getItem("metrox-theme");
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const theme = saved || (prefersDark ? "dark" : "light");
+      root.setAttribute("data-theme", theme);
+      toggle.textContent = theme === "dark" ? "☀" : "☾";
+
+      toggle.addEventListener("click", function () {
+        const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+        root.setAttribute("data-theme", next);
+        localStorage.setItem("metrox-theme", next);
+        toggle.textContent = next === "dark" ? "☀" : "☾";
+      });
+    })();
+
+    (function revealOnScroll() {
+      const els = document.querySelectorAll(".reveal");
+      const obs = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+            obs.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.18 });
+      els.forEach(function (el) { obs.observe(el); });
+    })();
+
+    (function initRoiCalculator() {
+      const invoicesEl = document.getElementById("invoicesPerDay");
+      const minutesEl = document.getElementById("minutesSaved");
+      const costEl = document.getElementById("costPerHour");
+      const hoursOut = document.getElementById("hoursSavedOut");
+      const moneyOut = document.getElementById("moneySavedOut");
+      if (!invoicesEl || !minutesEl || !costEl || !hoursOut || !moneyOut) return;
+
+      function formatInr(value) {
+        return "INR " + Math.round(value).toLocaleString("en-IN");
+      }
+
+      function calculate() {
+        const invoices = Math.max(0, Number(invoicesEl.value) || 0);
+        const minutes = Math.max(0, Number(minutesEl.value) || 0);
+        const cost = Math.max(0, Number(costEl.value) || 0);
+        const monthlyHours = (invoices * minutes * 26) / 60;
+        const monthlySavings = monthlyHours * cost;
+        hoursOut.textContent = monthlyHours.toFixed(1) + " hrs";
+        moneyOut.textContent = formatInr(monthlySavings);
+      }
+
+      [invoicesEl, minutesEl, costEl].forEach(function (el) {
+        el.addEventListener("input", calculate);
+      });
+      calculate();
+    })();
+
+    (function initPricingToggle() {
+      const pricing = document.getElementById("pricing");
+      if (!pricing) return;
+      const buttons = pricing.querySelectorAll("[data-billing-option]");
+      const cards = pricing.querySelectorAll(".plan");
+
+      function formatInr(value) {
+        return "INR " + Math.round(value).toLocaleString("en-IN");
+      }
+
+      function applyBilling(mode) {
+        pricing.setAttribute("data-billing", mode);
+        buttons.forEach(function (btn) {
+          btn.setAttribute("aria-pressed", String(btn.dataset.billingOption === mode));
+        });
+
+        cards.forEach(function (card) {
+          const priceEl = card.querySelector(".price-value");
+          const unitEl = card.querySelector(".plan-price small");
+          const monthlyRaw = String(card.dataset.monthly || "").trim().toLowerCase();
+          const yearlyRaw = String(card.dataset.yearly || "").trim().toLowerCase();
+
+          if (monthlyRaw === "free" || yearlyRaw === "free") {
+            if (priceEl) priceEl.textContent = "Free Forever";
+            if (unitEl) unitEl.textContent = "";
+            return;
+          }
+
+          const monthly = Number(card.dataset.monthly || 0);
+          const yearly = Number(card.dataset.yearly || monthly);
+          const perMonth = mode === "yearly" ? yearly : monthly;
+          if (priceEl) priceEl.textContent = formatInr(perMonth);
+          if (unitEl) unitEl.textContent = mode === "yearly" ? "/month, billed yearly" : "/month";
+        });
+      }
+
+      buttons.forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          applyBilling(btn.dataset.billingOption || "monthly");
+        });
+      });
+
+      applyBilling(pricing.getAttribute("data-billing") || "monthly");
+    })();
+
+    (function setYear() {
+      const yearOut = document.getElementById("yearOut");
+      if (yearOut) yearOut.textContent = String(new Date().getFullYear());
+    })();
+
+  </script>
+</body>
+</html>

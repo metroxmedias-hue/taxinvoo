@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GST Sales (With HSN) Export</title>
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    @page { size: A4 landscape; margin: 10mm; }
+    body {
+      margin: 0;
+      font-family: "Inter", "Segoe UI", Arial, sans-serif;
+      color: #0f172a;
+      background: #fff;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+    .sheet { width: 100%; }
+    .head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      border-bottom: 1px solid #dbe1ea;
+      padding-bottom: 8px;
+      margin-bottom: 10px;
+    }
+    .brand { display: flex; gap: 10px; align-items: center; }
+    .logo {
+      width: 42px;
+      height: 42px;
+      object-fit: contain;
+      border-radius: 10px;
+      border: 1px solid #dbe1ea;
+      background: #fff;
+    }
+    .logo-fallback {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: #fff;
+      background: #1d4ed8;
+    }
+    .company-title { margin: 0; font-size: 16px; font-weight: 700; }
+    .company-meta { margin-top: 2px; color: #475569; font-size: 10px; white-space: pre-line; }
+    .report-title { text-align: right; }
+    .report-title h1 { margin: 0; font-size: 17px; font-weight: 700; }
+    .report-title p { margin: 2px 0 0; color: #475569; font-size: 10px; }
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .kpi {
+      border: 1px solid #dbe1ea;
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 7px 8px;
+    }
+    .kpi .label { color: #475569; font-size: 10px; }
+    .kpi .value { margin-top: 2px; font-weight: 700; font-size: 13px; }
+    .section-title {
+      margin: 8px 0 5px;
+      padding: 6px 8px;
+      border: 1px solid #dbe1ea;
+      background: #f3f6fb;
+      border-radius: 8px;
+      font-weight: 700;
+    }
+    .table-wrap { border: 1px solid #dbe1ea; border-radius: 8px; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    th {
+      background: #f3f6fb;
+      color: #1e293b;
+      text-align: left;
+      font-size: 10px;
+      letter-spacing: .02em;
+      padding: 7px 8px;
+      border-bottom: 1px solid #dbe1ea;
+    }
+    td {
+      padding: 6px 8px;
+      border-top: 1px solid #edf1f7;
+      vertical-align: top;
+      color: #1f2937;
+      word-break: break-word;
+    }
+    th.num, td.num { text-align: right; white-space: nowrap; }
+    .empty {
+      border: 1px dashed #dbe1ea;
+      color: #64748b;
+      text-align: center;
+      padding: 16px;
+      border-radius: 8px;
+      margin-top: 8px;
+    }
+    .footer {
+      margin-top: 10px;
+      border-top: 1px solid #dbe1ea;
+      padding-top: 5px;
+      color: #64748b;
+      font-size: 9.5px;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+  <div class="sheet">
+    <header class="head">
+      <div class="brand">
+        <div id="logoWrap"></div>
+        <div>
+          <h2 class="company-title" id="companyName">Your Company</h2>
+          <div class="company-meta" id="companyMeta"></div>
+        </div>
+      </div>
+      <div class="report-title">
+        <h1 id="reportTitle">GST Sales (With HSN)</h1>
+        <p id="reportMeta">—</p>
+        <p id="generatedMeta"></p>
+      </div>
+    </header>
+
+    <section class="kpis" id="kpiWrap"></section>
+    <div class="section-title">HSN-wise Sales Rows</div>
+    <div id="tableHost"></div>
+    <div class="footer">Metrox TaxInvoo | GST Sales (With HSN) Export</div>
+  </div>
+
+  <script>
+    (function () {
+      const fmt = new Intl.NumberFormat("en-IN");
+      const formatCurrency = (value) => `₹${fmt.format(Number(value) || 0)}`;
+      const formatNumber = (value) => {
+        const n = Number(value) || 0;
+        const rounded = Math.round(n * 100) / 100;
+        if (Number.isInteger(rounded)) return fmt.format(rounded);
+        return rounded.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      };
+      const esc = (value) => String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+
+      const raw = localStorage.getItem("Metrox TaxInvoo_gst_sales_hsn_export");
+      if (!raw) return;
+      let payload = null;
+      try {
+        payload = JSON.parse(raw);
+      } catch (_) {
+        return;
+      }
+
+      const company = payload.company || {};
+      const rows = Array.isArray(payload.rows) ? payload.rows : [];
+      const periodDays = Number(payload.periodDays || 7);
+      const periodMap = { 7: "This Week", 30: "Last 30 Days", 90: "Last 90 Days", 365: "Last 365 Days" };
+      const generatedAt = payload.generatedAt ? new Date(payload.generatedAt) : new Date();
+
+      const logoWrap = document.getElementById("logoWrap");
+      if (company.logo) {
+        logoWrap.innerHTML = `<img src="${esc(company.logo)}" alt="Logo" class="logo" />`;
+      } else {
+        const initial = String(company.name || "M").trim().slice(0, 1).toUpperCase() || "M";
+        logoWrap.innerHTML = `<div class="logo-fallback">${esc(initial)}</div>`;
+      }
+
+      const metaParts = [];
+      if (company.address) metaParts.push(company.address);
+      if (company.phone) metaParts.push(`Phone: ${company.phone}`);
+      if (company.gstin) metaParts.push(`GSTIN: ${company.gstin}`);
+      document.getElementById("companyName").textContent = company.name || "Your Company";
+      document.getElementById("companyMeta").textContent = metaParts.join(" | ");
+      document.getElementById("reportTitle").textContent = payload?.report?.title || "GST Sales (With HSN)";
+      document.getElementById("reportMeta").textContent = `Period: ${periodMap[periodDays] || `${periodDays} days`}`;
+      document.getElementById("generatedMeta").textContent =
+        `Generated: ${generatedAt.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}, ${generatedAt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}`;
+
+      const totals = rows.reduce((acc, row) => {
+        acc.qty += Number(row.qty || 0);
+        acc.amount += Number(row.amount || 0);
+        acc.sgst += Number(row.sgst || 0);
+        acc.cgst += Number(row.cgst || 0);
+        acc.igst += Number(row.igst || 0);
+        return acc;
+      }, { qty: 0, amount: 0, sgst: 0, cgst: 0, igst: 0 });
+
+      const kpis = [
+        { label: "Rows", value: String(rows.length) },
+        { label: "Total Qty", value: formatNumber(totals.qty) },
+        { label: "Total Amount", value: formatCurrency(totals.amount) },
+        { label: "SGST+CGST", value: formatCurrency(totals.sgst + totals.cgst) },
+        { label: "IGST", value: formatCurrency(totals.igst) }
+      ];
+      document.getElementById("kpiWrap").innerHTML = kpis.map((kpi) => `
+        <article class="kpi">
+          <div class="label">${esc(kpi.label)}</div>
+          <div class="value">${esc(kpi.value)}</div>
+        </article>
+      `).join("");
+
+      const tableHost = document.getElementById("tableHost");
+      if (!rows.length) {
+        tableHost.innerHTML = '<div class="empty">No transactions available for selected period.</div>';
+      } else {
+        tableHost.innerHTML = `
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Invoice No</th>
+                  <th>Original Inv No</th>
+                  <th>Party GSTIN</th>
+                  <th>Party Name</th>
+                  <th>Item Name</th>
+                  <th>HSN Code</th>
+                  <th class="num">Qty</th>
+                  <th class="num">Price/Unit</th>
+                  <th class="num">SGST</th>
+                  <th class="num">CGST</th>
+                  <th class="num">IGST</th>
+                  <th class="num">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rows.map((row) => `
+                  <tr>
+                    <td>${esc(row.date || "—")}</td>
+                    <td>${esc(row.invoiceNo || "—")}</td>
+                    <td>${esc(row.originalInvoiceNo || "—")}</td>
+                    <td>${esc(row.partyGstin || "—")}</td>
+                    <td>${esc(row.partyName || "—")}</td>
+                    <td>${esc(row.itemName || "—")}</td>
+                    <td>${esc(row.hsnCode || "—")}</td>
+                    <td class="num">${formatNumber(row.qty || 0)}</td>
+                    <td class="num">${formatCurrency(row.pricePerUnit || 0)}</td>
+                    <td class="num">${formatCurrency(row.sgst || 0)}</td>
+                    <td class="num">${formatCurrency(row.cgst || 0)}</td>
+                    <td class="num">${formatCurrency(row.igst || 0)}</td>
+                    <td class="num">${formatCurrency(row.amount || 0)}</td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("auto") === "pdf" || params.get("auto") === "print") {
+        setTimeout(() => window.print(), 140);
+      }
+    })();
+  </script>
+</body>
+</html>
