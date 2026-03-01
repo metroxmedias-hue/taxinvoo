@@ -1,0 +1,706 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Metrox TaxInvoo Invoice</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Poppins:wght@400;600;700&family=Roboto+Slab:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap');
+
+    :root {
+      --ink: #1a1a22;
+      --muted: rgba(26,26,34,0.6);
+      --accent: #6a2fd9;
+      --accent-dark: #3b1b78;
+      --panel: #ffffff;
+      --line: rgba(0,0,0,0.08);
+      --bg: #f6f6fb;
+      --font: 'Poppins', Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: #f6f6fb;
+      color: var(--ink);
+      padding: 16px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    #invoice-stage {
+      position: relative;
+    }
+
+    .invoice {
+      width: 210mm;
+      height: 297mm;
+      display: grid;
+      grid-template-columns: 110px 1fr;
+      background: #f6f6fb;
+      border-radius: 0;
+      overflow: hidden;
+      border: none;
+      position: relative;
+      transform-origin: top left;
+    }
+
+    .band {
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,0.12) 0 8%, transparent 9% 100%),
+        radial-gradient(circle at 70% 12%, rgba(255,255,255,0.08) 0 6%, transparent 7% 100%),
+        radial-gradient(circle at 30% 55%, rgba(255,255,255,0.06) 0 7%, transparent 8% 100%),
+        linear-gradient(180deg, #6a2fd9, #3a137a 70%, #250f52);
+      color: white;
+      padding: 22px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      height: 297mm;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .band::before,
+    .band::after {
+      content: "";
+      position: absolute;
+      width: 90px;
+      height: 90px;
+      border: 2px solid rgba(255,255,255,0.18);
+      border-radius: 12px;
+      transform: rotate(45deg);
+      opacity: 0.5;
+    }
+
+    .band::before {
+      top: 24mm;
+      left: -18mm;
+    }
+
+    .band::after {
+      bottom: 30mm;
+      left: -22mm;
+    }
+
+    .band-shape {
+      position: absolute;
+      width: 46px;
+      height: 46px;
+      border: 2px solid rgba(255,255,255,0.22);
+      border-radius: 8px;
+      transform: rotate(20deg);
+      opacity: 0.5;
+    }
+
+    .band-shape.one { top: 45mm; right: -10mm; }
+    .band-shape.two { top: 95mm; left: 10mm; transform: rotate(-20deg); }
+    .band-shape.three { bottom: 60mm; right: -14mm; transform: rotate(15deg); }
+
+    .logo {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: #ffffff;
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      letter-spacing: 1px;
+      border: 2px solid rgba(255,255,255,0.8);
+      margin-top: 10px;
+      overflow: hidden;
+    }
+
+    .band small { font-size: 11px; text-align: center; opacity: 0.8; }
+
+    .main {
+      padding: 28px 34px 28px;
+      display: grid;
+      gap: 14px;
+      background: #f6f6fb;
+      color: #1a1a22;
+      height: 297mm;
+      overflow: hidden;
+    }
+
+    .header {
+      display: grid;
+      gap: 4px;
+      text-align: center;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 30px;
+      color: var(--accent-dark);
+      letter-spacing: 0.5px;
+    }
+
+    .header span { color: rgba(26,26,34,0.6); font-size: 13px; }
+
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 12px;
+      color: rgba(26,26,34,0.7);
+      font-size: 12px;
+    }
+
+    .meta .box {
+      border: 1px solid rgba(255,255,255,0.4);
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.55);
+      box-shadow: 0 8px 20px rgba(46,46,78,0.08);
+      backdrop-filter: blur(10px);
+    }
+
+    .meta .box strong { color: var(--accent-dark); }
+
+    .party-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 14px;
+    }
+
+    .party {
+      background: rgba(255,255,255,0.6);
+      border: 1px solid rgba(255,255,255,0.5);
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: rgba(26,26,34,0.8);
+      box-shadow: 0 10px 30px rgba(40,40,70,0.08);
+      backdrop-filter: blur(10px);
+    }
+
+    .party strong { color: var(--accent); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      color: rgba(26,26,34,0.85);
+    }
+
+    th, td {
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+      padding: 10px 8px;
+      text-align: left;
+    }
+
+    th { color: var(--accent); font-weight: 700; }
+
+    .totals {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .totals .box {
+      background: rgba(255,255,255,0.6);
+      border: 1px solid rgba(255,255,255,0.5);
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 12px;
+      color: rgba(26,26,34,0.8);
+      box-shadow: 0 10px 30px rgba(40,40,70,0.08);
+      backdrop-filter: blur(10px);
+    }
+
+    .totals .row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px dashed rgba(0,0,0,0.08);
+    }
+
+    .totals .row:last-child { border-bottom: none; }
+
+    .grand {
+      background: var(--accent);
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 14px;
+      display: flex;
+      justify-content: space-between;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      font-size: 11px;
+      color: rgba(26,26,34,0.6);
+      margin-top: 6px;
+    }
+
+    .sign-box {
+      display: grid;
+      grid-template-columns: repeat(2, 90px);
+      gap: 10px;
+      align-items: center;
+    }
+
+    .sign-box .box {
+      width: 90px;
+      height: 90px;
+      border-radius: 12px;
+      border: 1px dashed rgba(0,0,0,0.2);
+      display: grid;
+      place-items: center;
+      font-size: 10px;
+      color: rgba(26,26,34,0.6);
+      overflow: hidden;
+      background: rgba(255,255,255,0.6);
+      box-shadow: 0 10px 30px rgba(40,40,70,0.08);
+      backdrop-filter: blur(10px);
+    }
+
+    .sign-box .box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: center;
+      padding: 8px;
+      display: block;
+      background: #ffffff;
+      border-radius: 50%;
+    }
+
+    .watermark {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 64px;
+      letter-spacing: 6px;
+      color: rgba(0,0,0,0.08);
+      font-weight: 700;
+      pointer-events: none;
+      text-transform: uppercase;
+      transform: rotate(-12deg);
+    }
+
+    .paid-stamp {
+      position: absolute;
+      top: 10mm;
+      right: 10mm;
+      transform: none;
+      color: rgba(18, 160, 90, 0.9);
+      font-weight: 900;
+      letter-spacing: 1px;
+      font-size: 16px;
+      text-transform: uppercase;
+      display: none;
+      pointer-events: none;
+      white-space: nowrap;
+      text-align: right;
+    }
+
+    .logo-watermark {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      opacity: 0.06;
+    }
+
+    .logo-watermark img {
+      width: 320px;
+      height: 320px;
+      object-fit: contain;
+    }
+
+    .template-classic .main { background: #0b0b12; }
+    .template-classic th { color: #ffd27a; }
+    .template-minimal .main { background: #0b0b12; }
+    .template-minimal th { color: #9fdcff; }
+
+    @media print {
+      @page { size: A4; margin: 12mm; }
+      body { background: white; padding: 0; display: block; }
+      .invoice { border: none; border-radius: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div id="invoice-stage">
+    <div class="invoice" id="invoice-root">
+      <div class="paid-stamp" id="paid-stamp">PAID</div>
+      <div class="logo-watermark" id="logo-watermark"></div>
+      <aside class="band">
+        <span class="band-shape one"></span>
+        <span class="band-shape two"></span>
+        <span class="band-shape three"></span>
+        <div class="logo">EG</div>
+        <small id="band-company">Metrox TaxInvoo</small>
+      </aside>
+      <main class="main">
+        <div class="header">
+          <h1 id="doc-title">Tax Invoice</h1>
+          <span id="doc-subtitle">Original for Recipient</span>
+        </div>
+        <div class="meta">
+          <div class="box"><span id="doc-date-label">Invoice Date</span><br/><strong id="inv-date">—</strong></div>
+          <div class="box"><span>Month</span><br/><strong id="inv-month">—</strong></div>
+          <div class="box"><span id="doc-no-label">Invoice No</span><br/><strong id="inv-no">—</strong></div>
+        </div>
+        <div class="party-grid">
+          <div class="party">
+            <strong id="seller-name">Your Business</strong><br/>
+            <span id="seller-address">Registered office address</span><br/>
+            GSTIN: <span id="seller-gstin">—</span><br/>
+            Email: <span id="seller-email">—</span><br/>
+            Phone: <span id="seller-phone">—</span>
+          </div>
+          <div class="party">
+            <strong id="buyer-name">Buyer</strong><br/>
+            <span id="buyer-address">Buyer address</span><br/>
+            GSTIN: <span id="buyer-gstin">—</span><br/>
+            Email: <span id="buyer-email">—</span><br/>
+            Phone: <span id="buyer-phone">—</span>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Item/Service</th>
+              <th>HSN</th>
+              <th>SAC</th>
+              <th>Qty</th>
+              <th>Price</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody id="line-items"></tbody>
+        </table>
+        <div class="totals">
+          <div class="box">
+            <div class="row"><span>Taxable Value</span><strong id="taxable">₹0</strong></div>
+            <div class="row"><span>CGST</span><strong id="cgst">₹0</strong></div>
+            <div class="row"><span>SGST</span><strong id="sgst">₹0</strong></div>
+            <div class="row"><span>IGST</span><strong id="igst">₹0</strong></div>
+            <div class="row"><span>Round off</span><strong id="roundoff">₹0</strong></div>
+          </div>
+          <div class="box">
+            <div class="grand"><span>Grand Total</span><span id="grand">₹0</span></div>
+            <div style="margin-top:10px;">
+              <strong>Amount in words:</strong>
+              <div id="grand-words" style="margin-top:6px;">—</div>
+            </div>
+            <div class="row"><span>Notes</span><span id="notes">—</span></div>
+          </div>
+        </div>
+        <div class="totals">
+          <div class="box" id="bank-details-box">
+            <div class="row"><span>Bank</span><strong id="bank-name">—</strong></div>
+            <div class="row"><span>Account</span><strong id="bank-account">—</strong></div>
+            <div class="row"><span>IFSC</span><strong id="bank-ifsc">—</strong></div>
+            <div class="row"><span>Branch</span><strong id="bank-branch">—</strong></div>
+            <div class="row"><span>UPI</span><strong id="bank-upi">—</strong></div>
+          </div>
+          <div class="box">
+            <div class="row"><span>Buyer GSTIN</span><strong id="buyer-gstin-copy">—</strong></div>
+            <div class="row"><span>State Code</span><strong id="buyer-state-code">—</strong></div>
+            <div class="row"><span>Place of Supply</span><strong id="place-of-supply">—</strong></div>
+            <div class="row"><span id="doc-type-label">Invoice Type</span><strong id="invoice-type">—</strong></div>
+            <div class="row" id="quote-validity-row" style="display:none;"><span>Valid Until</span><strong id="quote-valid-until">—</strong></div>
+            <div class="row" id="invoice-status-row"><span>Status</span><strong id="invoice-status">—</strong></div>
+          </div>
+        </div>
+        <div class="footer">
+          <div>
+            <span id="footer-text">Thank you for your business.</span><br/>
+            Generated by Metrox TaxInvoo.
+          </div>
+          <div class="sign-box">
+            <div class="box" id="qr-box">QR</div>
+            <div class="box" id="sign-box">Sign</div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    // Client-side PDF export via jsPDF + html2canvas (loaded from CDN below).
+    const params = new URLSearchParams(window.location.search);
+    const stored = localStorage.getItem('Metrox TaxInvoo_export_invoice');
+    const data = window.INVOICE_DATA || (stored ? JSON.parse(stored) : {});
+    const invoiceTypeText = String(data.invoiceType || '');
+    const isQuotationDoc = /quotation/i.test(invoiceTypeText);
+    const isProformaDoc = /proforma/i.test(invoiceTypeText);
+    const isPurchaseOrderDoc = /purchase\s*order/i.test(invoiceTypeText);
+    const queryTemplate = params.get('template');
+    const theme = data.theme || {};
+    const fmt = new Intl.NumberFormat('en-IN');
+    const root = document.getElementById('invoice-root');
+    const stage = document.getElementById('invoice-stage');
+    let baseSize = null;
+
+    function measureBase() {
+      root.style.transform = 'scale(1)';
+      const rect = root.getBoundingClientRect();
+      baseSize = { width: rect.width, height: rect.height };
+    }
+
+    function setScale() {
+      if (window.matchMedia('print').matches || params.get('auto')) {
+        root.style.transform = 'scale(1)';
+        stage.style.width = '';
+        stage.style.height = '';
+        return;
+      }
+      if (!baseSize) measureBase();
+      const padding = 32;
+      const maxW = window.innerWidth - padding;
+      const maxH = window.innerHeight - padding;
+      const scale = Math.min(1, maxW / baseSize.width, maxH / baseSize.height);
+      root.style.transform = `scale(${scale.toFixed(3)})`;
+      stage.style.width = `${baseSize.width * scale}px`;
+      stage.style.height = `${baseSize.height * scale}px`;
+    }
+
+    window.addEventListener('resize', setScale);
+    window.addEventListener('load', setScale);
+
+    function setText(id, value) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = value || '—';
+    }
+
+    const date = data.date ? new Date(data.date) : new Date();
+    setText('inv-date', date.toLocaleDateString('en-IN'));
+    setText('inv-month', date.toLocaleString('en-IN', { month: 'long', year: 'numeric' }));
+    setText('inv-no', data.id || '—');
+
+    setText('seller-name', data.seller?.name || 'Your Business');
+    setText('band-company', data.seller?.name || 'Metrox TaxInvoo');
+    setText('seller-address', data.seller?.address || 'Registered office address');
+    setText('seller-gstin', data.seller?.gstin || '—');
+    setText('seller-email', data.seller?.email || '—');
+    setText('seller-phone', data.seller?.phone || '—');
+
+    setText('buyer-name', data.customer?.name || 'Buyer');
+    setText('buyer-address', data.customer?.address || 'Buyer address');
+    const stateLine = data.customer?.state ? `, ${data.customer.state}` : '';
+    const codeLine = data.customer?.stateCode ? ` (${data.customer.stateCode})` : '';
+    const addressLine = (data.customer?.address || 'Buyer address') + stateLine + codeLine;
+    setText('buyer-address', addressLine);
+    setText('buyer-gstin', data.customer?.gstin || '—');
+    setText('buyer-gstin-copy', data.customer?.gstin || '—');
+    setText('buyer-email', data.customer?.email || '—');
+    setText('buyer-phone', data.customer?.phone || '—');
+
+    const itemsBody = document.getElementById('line-items');
+    const items = data.items || [];
+    itemsBody.innerHTML = items.map(item => `
+      <tr>
+        <td>${item.description || ''}</td>
+        <td>${item.hsn || '-'}</td>
+        <td>${item.sac || '-'}</td>
+        <td>${item.qty || 1}</td>
+        <td>₹${fmt.format(item.price || 0)}</td>
+        <td>₹${fmt.format(item.total || 0)}</td>
+      </tr>
+    `).join('');
+
+    setText('taxable', `₹${fmt.format(data.taxable || 0)}`);
+    setText('cgst', `₹${fmt.format(data.cgst || 0)}`);
+    setText('sgst', `₹${fmt.format(data.sgst || 0)}`);
+    setText('igst', `₹${fmt.format(data.igst || 0)}`);
+    setText('roundoff', `₹${fmt.format(data.roundOff || 0)}`);
+    setText('grand', `₹${fmt.format(data.total || 0)}`);
+    setText('notes', data.notes || '—');
+    setText('footer-text', data.footer || 'Thank you for your business.');
+
+    setText('bank-name', data.bank?.name || '—');
+    setText('bank-account', data.bank?.account || '—');
+    setText('bank-ifsc', data.bank?.ifsc || '—');
+    setText('bank-branch', data.bank?.branch || '—');
+    setText('bank-upi', data.bank?.upi || '—');
+    setText('buyer-state-code', data.customer?.stateCode || '—');
+    setText('place-of-supply', data.placeOfSupply || '—');
+    setText('invoice-type', data.invoiceType || '—');
+    setText('invoice-status', data.status || '—');
+    setText('doc-title', isPurchaseOrderDoc ? 'Purchase Order' : (isQuotationDoc ? 'Quotation' : (isProformaDoc ? 'Proforma Invoice' : 'Tax Invoice')));
+    setText('doc-subtitle', isPurchaseOrderDoc ? 'Purchase Order for Supplier' : (isQuotationDoc ? 'Quotation for Reference' : (isProformaDoc ? 'Provisional Invoice for Reference' : 'Original for Recipient')));
+    setText('doc-date-label', isPurchaseOrderDoc ? 'Order Date' : (isQuotationDoc ? 'Quotation Date' : (isProformaDoc ? 'Proforma Date' : 'Invoice Date')));
+    setText('doc-no-label', isPurchaseOrderDoc ? 'PO Number' : (isQuotationDoc ? 'Quotation No' : (isProformaDoc ? 'Proforma No' : 'Invoice No')));
+    setText('doc-type-label', (isQuotationDoc || isProformaDoc || isPurchaseOrderDoc) ? 'Document Type' : 'Invoice Type');
+    setText('quote-valid-until', data.validUntil || '—');
+
+    function numberToWordsIndian(num) {
+      const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+      const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+      const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+      const twoDigits = (n) => {
+        if (n < 10) return ones[n];
+        if (n < 20) return teens[n - 10];
+        const t = Math.floor(n / 10);
+        const o = n % 10;
+        return `${tens[t]}${o ? ' ' + ones[o] : ''}`;
+      };
+
+      const threeDigits = (n) => {
+        const h = Math.floor(n / 100);
+        const r = n % 100;
+        return `${h ? ones[h] + ' Hundred' : ''}${h && r ? ' ' : ''}${r ? twoDigits(r) : ''}`.trim();
+      };
+
+      if (!num || num === 0) return 'Zero';
+      const crore = Math.floor(num / 10000000);
+      num %= 10000000;
+      const lakh = Math.floor(num / 100000);
+      num %= 100000;
+      const thousand = Math.floor(num / 1000);
+      num %= 1000;
+      const hundred = num;
+
+      const parts = [];
+      if (crore) parts.push(`${twoDigits(crore)} Crore`);
+      if (lakh) parts.push(`${twoDigits(lakh)} Lakh`);
+      if (thousand) parts.push(`${twoDigits(thousand)} Thousand`);
+      if (hundred) parts.push(threeDigits(hundred));
+      return parts.join(' ').trim();
+    }
+
+    const totalValue = Math.round(Number(data.total || 0));
+    const words = `${numberToWordsIndian(totalValue)} Rupees Only`;
+    setText('grand-words', words);
+
+    if (theme.accent) {
+      document.documentElement.style.setProperty('--accent', theme.accent);
+      document.documentElement.style.setProperty('--accent-dark', theme.band || theme.accent);
+    }
+    if (theme.bg) document.documentElement.style.setProperty('--bg', theme.bg);
+    if (data.font) document.documentElement.style.setProperty('--font', `'${data.font}', Arial, sans-serif`);
+    if (theme.band) {
+      const band = document.querySelector('.band');
+      band.style.background = `linear-gradient(180deg, ${theme.band}, #2a0e63 70%, #12062a)`;
+    }
+
+    const watermarkMode = String(data.watermarkMode || (data.watermarkPaid ? 'paid-stamp' : 'none')).toLowerCase();
+    if (data.logo) {
+      const logoEl = document.querySelector('.logo');
+      logoEl.innerHTML = `<img src="${data.logo}" alt="logo" />`;
+      const wm = document.getElementById('logo-watermark');
+      wm.innerHTML = `<img src="${data.logo}" alt="logo watermark" />`;
+      wm.style.display = (watermarkMode === 'logo-watermark' || watermarkMode === 'both') ? 'flex' : 'none';
+    }
+
+    if (data.qr) {
+      const qr = document.getElementById('qr-box');
+      qr.innerHTML = `<img src="${data.qr}" alt="qr" />`;
+    }
+
+    if (isQuotationDoc || isProformaDoc || isPurchaseOrderDoc) {
+      const bankBox = document.getElementById('bank-details-box');
+      const qrBox = document.getElementById('qr-box');
+      const statusRow = document.getElementById('invoice-status-row');
+      const validityRow = document.getElementById('quote-validity-row');
+      if (bankBox) bankBox.style.display = 'none';
+      if (qrBox) qrBox.style.display = 'none';
+      if (statusRow) statusRow.style.display = isPurchaseOrderDoc ? 'flex' : 'none';
+      if (validityRow) validityRow.style.display = (isQuotationDoc || isProformaDoc || isPurchaseOrderDoc) ? 'flex' : 'none';
+    }
+
+    if (data.signature) {
+      const sign = document.getElementById('sign-box');
+      sign.innerHTML = `<img src="${data.signature}" alt="signature" />`;
+    }
+
+    const effectiveTemplate = queryTemplate || data.template;
+    if (effectiveTemplate) {
+      root.classList.add(`template-${effectiveTemplate}`);
+    }
+
+    if (data.status && !isQuotationDoc && !isProformaDoc && !isPurchaseOrderDoc) {
+      const stamp = document.getElementById('paid-stamp');
+      if (data.status === 'Paid') {
+        stamp.innerHTML = 'PAID';
+        stamp.style.color = 'rgba(18, 160, 90, 0.9)';
+      } else if (data.status === 'Partial') {
+        stamp.innerHTML = 'PARTIALLY<br/>PAID';
+        stamp.style.color = 'rgba(20, 60, 140, 0.9)';
+      } else {
+        stamp.innerHTML = 'UNPAID';
+        stamp.style.color = 'rgba(200, 40, 40, 0.9)';
+      }
+      const stampAllowed = watermarkMode === 'paid-stamp' || watermarkMode === 'both' || (!data.watermarkMode && !!data.watermarkPaid);
+      if (stampAllowed && (data.watermarkPaid || data.status !== 'Paid')) {
+        stamp.style.display = 'block';
+      }
+    }
+
+    if (params.get('auto') === 'print') {
+      setTimeout(() => window.print(), 300);
+    }
+
+    async function downloadPdf() {
+      const target = document.getElementById('invoice-root');
+      if (!window.html2canvas || !window.jspdf) {
+        alert('PDF library not loaded. Please check your internet connection.');
+        return;
+      }
+      if (!baseSize) measureBase();
+      const prevTransform = root.style.transform;
+      const prevW = stage.style.width;
+      const prevH = stage.style.height;
+      root.style.transform = 'scale(1)';
+      stage.style.width = `${baseSize.width}px`;
+      stage.style.height = `${baseSize.height}px`;
+      await new Promise(requestAnimationFrame);
+      const canvas = await window.html2canvas(target, {
+        scale: 2,
+        backgroundColor: '#f6f6fb',
+        width: target.offsetWidth,
+        height: target.offsetHeight,
+        windowWidth: target.scrollWidth,
+        windowHeight: target.scrollHeight
+      });
+      root.style.transform = prevTransform;
+      stage.style.width = prevW;
+      stage.style.height = prevH;
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new window.jspdf.jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const scale = Math.min(pageWidth / imgWidth, pageHeight / imgHeight);
+      const renderW = imgWidth * scale;
+      const renderH = imgHeight * scale;
+      const x = (pageWidth - renderW) / 2;
+      const y = (pageHeight - renderH) / 2;
+      pdf.addImage(imgData, 'PNG', x, y, renderW, renderH);
+      pdf.save(`${data.id || 'Metrox TaxInvoo-invoice'}.pdf`);
+    }
+
+    if (params.get('auto') === 'pdf') {
+      setTimeout(downloadPdf, 500);
+    }
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+</body>
+</html>

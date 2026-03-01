@@ -1,0 +1,936 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Metrox TaxInvoo — Login</title>
+  <meta name="description" content="Metrox TaxInvoo login and signup." />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+    :root {
+      --bg: #0b0e18;
+      --panel: #11162a;
+      --panel-2: #0f1324;
+      --line: rgba(255,255,255,0.08);
+      --ink: #f2efe6;
+      --muted: rgba(242,239,230,0.65);
+      --accent: #f7b23b;
+      --accent-2: #58d6c1;
+      --shadow: 0 24px 60px rgba(0,0,0,0.35);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: radial-gradient(900px 500px at 20% -10%, rgba(247,178,59,0.18), transparent),
+                  radial-gradient(800px 420px at 110% 10%, rgba(88,214,193,0.18), transparent),
+                  linear-gradient(180deg, #0a0c14, #0a0f1b 55%, #0b0e18);
+      min-height: 100vh;
+      padding: 40px 28px;
+    }
+
+    body.preloader-active {
+      overflow: hidden;
+    }
+
+    .metrox-preloader {
+      position: fixed;
+      inset: 0;
+      z-index: 5000;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(1000px 520px at 8% -20%, rgba(88,214,193,0.28), transparent 60%),
+        radial-gradient(980px 540px at 102% -8%, rgba(247,178,59,0.28), transparent 60%),
+        radial-gradient(880px 480px at 50% 110%, rgba(126,146,255,0.24), transparent 58%),
+        linear-gradient(120deg, #090d19, #101c3d 42%, #1d1a4f 72%, #0c1224 100%);
+      background-size: 135% 135%;
+      transition: opacity 0.45s ease, visibility 0.45s ease;
+      opacity: 1;
+      visibility: visible;
+      overflow: hidden;
+      animation: metroxGradientShift 7s ease-in-out infinite;
+    }
+
+    .metrox-preloader::before,
+    .metrox-preloader::after {
+      content: "";
+      position: absolute;
+      border-radius: 999px;
+      filter: blur(2px);
+      pointer-events: none;
+      opacity: 0.78;
+      mix-blend-mode: screen;
+    }
+
+    .metrox-preloader::before {
+      width: 360px;
+      height: 360px;
+      background: radial-gradient(circle at 30% 30%, rgba(247,178,59,0.62), rgba(247,178,59,0.12) 62%, transparent 72%);
+      top: -80px;
+      left: -70px;
+      animation: metroxBlobFloatA 8s ease-in-out infinite;
+    }
+
+    .metrox-preloader::after {
+      width: 420px;
+      height: 420px;
+      background: radial-gradient(circle at 30% 30%, rgba(88,214,193,0.56), rgba(88,214,193,0.1) 64%, transparent 74%);
+      right: -110px;
+      bottom: -110px;
+      animation: metroxBlobFloatB 10s ease-in-out infinite;
+    }
+
+    .metrox-preloader.is-hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .metrox-preloader-core {
+      display: grid;
+      justify-items: center;
+      gap: 16px;
+      text-align: center;
+    }
+
+    .metrox-preloader-orbit {
+      width: 106px;
+      height: 106px;
+      border-radius: 50%;
+      position: relative;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(247,178,59,0.26);
+      box-shadow: inset 0 0 34px rgba(247,178,59,0.09), 0 20px 44px rgba(3,6,18,0.44);
+      animation: metroxSpin 5.5s linear infinite;
+    }
+
+    .metrox-preloader-orbit::before,
+    .metrox-preloader-orbit::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+    }
+
+    .metrox-preloader-orbit::before {
+      inset: 12px;
+      border: 2px dashed rgba(88,214,193,0.54);
+      animation: metroxSpinReverse 7s linear infinite;
+    }
+
+    .metrox-preloader-orbit::after {
+      width: 14px;
+      height: 14px;
+      top: -3px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: radial-gradient(circle at 30% 30%, #fff6d8, #f7b23b 60%, #c17c13);
+      box-shadow: 0 0 14px rgba(247,178,59,0.75);
+    }
+
+    .metrox-preloader-mark {
+      width: 58px;
+      height: 58px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 21px;
+      letter-spacing: 0.02em;
+      color: #1b1405;
+      background: conic-gradient(from 140deg, #f7b23b, #58d6c1, #7e92ff, #f7b23b);
+      box-shadow: 0 10px 30px rgba(247,178,59,0.36);
+      animation: metroxPulse 1.6s ease-in-out infinite;
+    }
+
+    .metrox-preloader-title {
+      margin: 0;
+      font-family: "Fraunces", serif;
+      font-size: 26px;
+      line-height: 1.05;
+      color: #f5f8ff;
+      letter-spacing: -0.01em;
+    }
+
+    .metrox-preloader-sub {
+      margin: 0;
+      color: rgba(206,216,238,0.84);
+      font-size: 13px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .metrox-preloader-dots {
+      display: flex;
+      gap: 7px;
+      margin-top: 2px;
+    }
+
+    .metrox-preloader-dots span {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: rgba(247,178,59,0.7);
+      animation: metroxDot 1.2s ease-in-out infinite;
+    }
+
+    .metrox-preloader-dots span:nth-child(2) {
+      animation-delay: 0.12s;
+      background: rgba(88,214,193,0.78);
+    }
+
+    .metrox-preloader-dots span:nth-child(3) {
+      animation-delay: 0.24s;
+      background: rgba(126,146,255,0.8);
+    }
+
+    @keyframes metroxSpin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes metroxSpinReverse {
+      to { transform: rotate(-360deg); }
+    }
+
+    @keyframes metroxPulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 10px 30px rgba(247,178,59,0.36); }
+      50% { transform: scale(1.06); box-shadow: 0 14px 36px rgba(88,214,193,0.34); }
+    }
+
+    @keyframes metroxDot {
+      0%, 80%, 100% { transform: translateY(0); opacity: 0.55; }
+      40% { transform: translateY(-6px); opacity: 1; }
+    }
+
+    @keyframes metroxGradientShift {
+      0% { background-position: 0% 40%; }
+      50% { background-position: 100% 60%; }
+      100% { background-position: 0% 40%; }
+    }
+
+    @keyframes metroxBlobFloatA {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(22px, 24px) scale(1.08); }
+    }
+
+    @keyframes metroxBlobFloatB {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(-30px, -20px) scale(1.1); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .metrox-preloader,
+      .metrox-preloader::before,
+      .metrox-preloader::after,
+      .metrox-preloader-orbit,
+      .metrox-preloader-orbit::before,
+      .metrox-preloader-mark,
+      .metrox-preloader-dots span {
+        animation: none !important;
+      }
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    .brand-mark {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: conic-gradient(from 120deg, var(--accent), var(--accent-2), #7f9cff, var(--accent));
+      display: grid;
+      place-items: center;
+      color: #0b0e18;
+      font-weight: 700;
+    }
+
+    .shell {
+      max-width: 980px;
+      margin: 0 auto;
+      display: grid;
+      gap: 20px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+    }
+
+    .card {
+      background: rgba(12,16,30,0.7);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      display: grid;
+      gap: 12px;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-family: "Fraunces", serif;
+      font-size: 30px;
+    }
+
+    .hero p { margin: 0; color: var(--muted); }
+
+    .stepper { display: grid; gap: 10px; }
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(12,16,30,0.6);
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .step strong { color: var(--ink); }
+
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+    .tab {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .tab.active {
+      background: rgba(247,178,59,0.14);
+      border-color: rgba(247,178,59,0.4);
+      color: #ffe3b0;
+    }
+
+    .form { display: grid; gap: 14px; }
+    .field { display: grid; gap: 6px; font-size: 13px; color: var(--muted); }
+    .field input {
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #0c111f;
+      color: var(--ink);
+      font-family: inherit;
+      font-size: 14px;
+    }
+    .password-wrap {
+      position: relative;
+      display: grid;
+    }
+    .password-wrap input {
+      padding-right: 82px;
+    }
+    .toggle-password {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 1px solid var(--line);
+      background: rgba(17,22,42,0.95);
+      color: var(--muted);
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+    .toggle-password:hover {
+      color: var(--ink);
+      border-color: rgba(255,255,255,0.2);
+    }
+
+    .otp-inputs {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0,1fr));
+      gap: 8px;
+    }
+    .otp-inputs input {
+      text-align: center;
+      font-size: 16px;
+      padding: 12px 0;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: #0c111f;
+      color: var(--ink);
+    }
+
+    .btn {
+      padding: 12px 16px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--ink);
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .btn.primary {
+      background: var(--accent);
+      color: #1a1407;
+      border-color: transparent;
+      box-shadow: 0 12px 30px rgba(247,178,59,0.35);
+    }
+
+    .hint { color: var(--muted); font-size: 12px; }
+    .error { color: #ffb4b4; font-size: 12px; }
+    .divider {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .divider::before,
+    .divider::after {
+      content: "";
+      height: 1px;
+      background: var(--line);
+    }
+
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 640px) {
+      body { padding: 16px; }
+      .shell { gap: 16px; }
+      .card { padding: 14px; border-radius: 14px; }
+      .hero h1 { font-size: 24px; }
+      .btn { width: 100%; justify-content: center; }
+      .tabs { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="metrox-preloader" id="metrox-preloader" aria-live="polite" aria-label="Loading Metrox TaxInvoo">
+    <div class="metrox-preloader-core">
+      <div class="metrox-preloader-orbit" aria-hidden="true">
+        <div class="metrox-preloader-mark">MX</div>
+      </div>
+      <h2 class="metrox-preloader-title">Metrox TaxInvoo</h2>
+      <p class="metrox-preloader-sub">Securing your sign-in</p>
+      <div class="metrox-preloader-dots" aria-hidden="true">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
+  <div class="shell">
+    <div class="brand">
+      <div class="brand-mark">EG</div>
+      <div>
+        <div>Metrox TaxInvoo</div>
+        <small style="color:var(--muted);font-size:12px;">AI-first billing</small>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card hero">
+        <h1>Welcome to Metrox TaxInvoo</h1>
+        <p>Sign in to access your billing, GST, and accounting workspace.</p>
+        <div class="stepper">
+          <div class="step"><strong>Step 1.</strong> Login or create account</div>
+          <div class="step"><strong>Step 2.</strong> Connect Google or email</div>
+          <div class="step"><strong>Step 3.</strong> Complete business setup</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+          <h4 style="margin:0;">Login</h4>
+          <div class="tabs">
+            <button class="tab active" type="button" id="tab-login">Login</button>
+            <button class="tab" type="button" id="tab-signup">Create</button>
+          </div>
+        </div>
+        <form class="form" id="auth-login">
+          <label class="field">Email
+            <input type="email" id="login-email" placeholder="you@company.com" required />
+          </label>
+          <label class="field">Password
+            <div class="password-wrap">
+              <input type="password" id="login-password" placeholder="Minimum 8 characters" required />
+              <button class="toggle-password" type="button" data-toggle-password="login-password" aria-label="Show password">Show</button>
+            </div>
+          </label>
+          <button class="btn primary" type="submit">Login</button>
+          <button class="btn" type="button" id="resend-verify" style="display:none;">Resend verification email</button>
+          <div class="divider">or</div>
+          <button class="btn" type="button" id="google-login">Continue with Google</button>
+          <div class="error" id="login-error" style="display:none;"></div>
+          <div class="hint" id="login-hint" style="display:none;"></div>
+        </form>
+
+        <form class="form" id="auth-signup" style="display:none;">
+          <label class="field">Full name
+            <input type="text" id="signup-name" placeholder="Your name" required />
+          </label>
+          <label class="field">Email
+            <input type="email" id="signup-email" placeholder="you@company.com" required />
+          </label>
+          <label class="field">Password
+            <div class="password-wrap">
+              <input type="password" id="signup-password" placeholder="Minimum 8 characters" required />
+              <button class="toggle-password" type="button" data-toggle-password="signup-password" aria-label="Show password">Show</button>
+            </div>
+          </label>
+          <button class="btn primary" type="submit">Create account</button>
+          <button class="btn" type="button" id="check-verified" style="display:none;">I have verified, continue</button>
+          <button class="btn" type="button" id="resend-signup-verify" style="display:none;">Resend verification email</button>
+          <div class="divider">or</div>
+          <button class="btn" type="button" id="google-signup">Continue with Google</button>
+          <div class="error" id="signup-error" style="display:none;"></div>
+          <div class="hint" id="signup-hint" style="display:none;"></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, updateProfile, sendEmailVerification, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+    import { getFirestore, collection, collectionGroup, doc, getDoc, getDocs, query, where, limit, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA5vhi43CcL_ff_NZLIN3BUxa0CAYOvwh8",
+      authDomain: "metrox-taxinvo.firebaseapp.com",
+      projectId: "metrox-taxinvo",
+      storageBucket: "metrox-taxinvo.firebasestorage.app",
+      messagingSenderId: "1089587049670",
+      appId: "1:1089587049670:web:4f3b663c767762749853c7",
+      measurementId: "G-8JVQCSZX0P"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
+
+    const tabLogin = document.getElementById('tab-login');
+    const tabSignup = document.getElementById('tab-signup');
+    const loginForm = document.getElementById('auth-login');
+    const signupForm = document.getElementById('auth-signup');
+    const loginSubmitBtn = loginForm.querySelector('button[type="submit"]');
+    const signupSubmitBtn = signupForm.querySelector('button[type="submit"]');
+    const resendVerifyBtn = document.getElementById('resend-verify');
+    const checkVerifiedBtn = document.getElementById('check-verified');
+    const resendSignupVerifyBtn = document.getElementById('resend-signup-verify');
+    const loginHint = document.getElementById('login-hint');
+    const signupHint = document.getElementById('signup-hint');
+    let verifyPollTimer = null;
+
+    const urlPlan = new URLSearchParams(window.location.search).get('plan');
+    if (urlPlan) {
+      localStorage.setItem('metrox_plan', urlPlan);
+    }
+
+    function clearDemoState() {
+      localStorage.removeItem('metrox_taxdesk_demo_state');
+      localStorage.removeItem('metrox_taxdesk_demo_state_backup');
+      localStorage.removeItem('metrox_taxinvoo_demo_state');
+      localStorage.removeItem('metrox_taxinvoo_demo_state_backup');
+      localStorage.setItem('metrox_fresh_start', '1');
+    }
+
+    async function claimAccountantInvite(user) {
+      const email = (user?.email || '').trim().toLowerCase();
+      if (!email) return null;
+      try {
+        const inviteQ = query(
+          collectionGroup(db, 'accountant_invites'),
+          where('email_lower', '==', email),
+          where('status', '==', 'pending'),
+          limit(1)
+        );
+        const inviteSnap = await getDocs(inviteQ);
+        if (inviteSnap.empty) return null;
+        const inviteDoc = inviteSnap.docs[0];
+        const inviteData = inviteDoc.data() || {};
+        const businessId = inviteData.business_id || inviteDoc.ref.parent.parent?.id || '';
+        if (!businessId) return null;
+        await setDoc(doc(db, 'users', user.uid), {
+          email: user.email || '',
+          business_id: businessId,
+          role: 'accountant',
+          permissions: inviteData.permissions || {},
+          updated_at: serverTimestamp()
+        }, { merge: true });
+        await updateDoc(inviteDoc.ref, {
+          status: 'accepted',
+          accepted_by_uid: user.uid,
+          accepted_at: serverTimestamp()
+        });
+        return { business_id: businessId };
+      } catch (err) {
+        // Continue to fallback state-based invite claim.
+      }
+
+      try {
+        const businessesSnap = await getDocs(collection(db, 'businesses'));
+        for (const business of businessesSnap.docs) {
+          const businessId = business.id;
+          const stateRef = doc(db, 'businesses', businessId, 'app_meta', 'state');
+          const stateSnap = await getDoc(stateRef);
+          if (!stateSnap.exists()) continue;
+          const data = stateSnap.data() || {};
+          const invites = Array.isArray(data.accountant_invites) ? data.accountant_invites : [];
+          const idx = invites.findIndex((inv) =>
+            (inv?.email || '').trim().toLowerCase() === email &&
+            (inv?.status || 'pending') === 'pending'
+          );
+          if (idx === -1) continue;
+
+          const matched = invites[idx] || {};
+          await setDoc(doc(db, 'users', user.uid), {
+            email: user.email || '',
+            business_id: businessId,
+            role: 'accountant',
+            permissions: matched.permissions || {},
+            updated_at: serverTimestamp()
+          }, { merge: true });
+
+          const nextInvites = invites.map((inv, i) =>
+            i === idx
+              ? {
+                  ...inv,
+                  status: 'accepted',
+                  accepted_by_uid: user.uid,
+                  accepted_at: new Date().toISOString()
+                }
+              : inv
+          );
+          await setDoc(stateRef, {
+            accountant_invites: nextInvites,
+            updated_at: serverTimestamp()
+          }, { merge: true });
+          return { business_id: businessId };
+        }
+      } catch (err) {
+        console.error('Invite claim failed:', err);
+      }
+      return null;
+    }
+
+    async function routeAfterAuth(user) {
+      if (!user) return;
+      const selectedPlan = localStorage.getItem('metrox_plan') || 'trial';
+      const userRef = doc(db, 'users', user.uid);
+      let userSnap;
+      try {
+        userSnap = await getDoc(userRef);
+      } catch (err) {
+        console.error('User fetch failed:', err);
+        window.location.href = 'login.html';
+        return;
+      }
+
+      if (!userSnap.exists()) {
+        const claimed = await claimAccountantInvite(user);
+        if (claimed?.business_id) {
+          window.location.href = 'index.html';
+          return;
+        }
+        clearDemoState();
+        await setDoc(userRef, {
+          email: user.email || '',
+          plan: selectedPlan,
+          role: 'owner',
+          created_at: serverTimestamp()
+        }, { merge: true });
+        window.location.href = 'business-setup.html';
+        return;
+      }
+
+      const userData = userSnap.data() || {};
+      if (!userData.business_id) {
+        const claimed = await claimAccountantInvite(user);
+        if (claimed?.business_id) {
+          window.location.href = 'index.html';
+          return;
+        }
+        window.location.href = 'business-setup.html';
+        return;
+      }
+      window.location.href = 'index.html';
+    }
+
+    function showLogin() {
+      tabLogin.classList.add('active');
+      tabSignup.classList.remove('active');
+      loginForm.style.display = 'grid';
+      signupForm.style.display = 'none';
+      checkVerifiedBtn.style.display = 'none';
+      resendSignupVerifyBtn.style.display = 'none';
+    }
+
+    function showSignup() {
+      tabSignup.classList.add('active');
+      tabLogin.classList.remove('active');
+      signupForm.style.display = 'grid';
+      loginForm.style.display = 'none';
+    }
+
+    function stopVerifyPolling() {
+      if (!verifyPollTimer) return;
+      clearInterval(verifyPollTimer);
+      verifyPollTimer = null;
+    }
+
+    function beginVerifyPolling(user) {
+      stopVerifyPolling();
+      if (!user) return;
+      const checkNow = async () => {
+        try {
+          await user.reload();
+          if (user.emailVerified) {
+            stopVerifyPolling();
+            setHint(signupHint, 'Email verified. Redirecting...');
+            await routeAfterAuth(user);
+          }
+        } catch (_) {}
+      };
+      verifyPollTimer = setInterval(checkNow, 5000);
+      checkNow();
+    }
+
+    tabLogin.addEventListener('click', showLogin);
+    tabSignup.addEventListener('click', showSignup);
+
+    function setError(el, msg) {
+      if (!el) return;
+      el.textContent = msg;
+      el.style.display = msg ? 'block' : 'none';
+    }
+
+    function setHint(el, msg) {
+      if (!el) return;
+      el.textContent = msg || '';
+      el.style.display = msg ? 'block' : 'none';
+    }
+
+    document.querySelectorAll('[data-toggle-password]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const inputId = btn.getAttribute('data-toggle-password');
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        const show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        btn.textContent = show ? 'Hide' : 'Show';
+        btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+      });
+    });
+
+    function setBusy(btn, busy, busyText, idleText) {
+      if (!btn) return;
+      btn.disabled = !!busy;
+      btn.textContent = busy ? busyText : idleText;
+      btn.style.opacity = busy ? '0.75' : '1';
+      btn.style.cursor = busy ? 'not-allowed' : 'pointer';
+    }
+
+    async function withTimeout(promise, ms, label) {
+      let timer;
+      const timeout = new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${label} timeout`)), ms);
+      });
+      try {
+        return await Promise.race([promise, timeout]);
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      setError(document.getElementById('login-error'), '');
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      try {
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+        if (!cred.user.emailVerified) {
+          setError(document.getElementById('login-error'), 'Please verify your email before logging in.');
+          setHint(loginHint, 'We sent a verification link to your email. After verifying, try again.');
+          resendVerifyBtn.style.display = 'block';
+          await signOut(auth);
+          return;
+        }
+        console.log('AUTH OK:', cred.user.uid);
+        await routeAfterAuth(cred.user);
+      } catch (err) {
+        setError(document.getElementById('login-error'), err.message || 'Login failed.');
+      }
+    });
+
+    signupForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      setError(document.getElementById('signup-error'), '');
+      setHint(signupHint, '');
+      const name = document.getElementById('signup-name').value.trim();
+      const email = document.getElementById('signup-email').value.trim();
+      const password = document.getElementById('signup-password').value;
+      if (password.length < 8) {
+        setError(document.getElementById('signup-error'), 'Password must be at least 8 characters.');
+        return;
+      }
+      try {
+        setBusy(signupSubmitBtn, true, 'Creating account...', 'Create account');
+        console.log('SIGNUP: start', email);
+        const cred = await withTimeout(
+          createUserWithEmailAndPassword(auth, email, password),
+          15000,
+          'Create account'
+        );
+        console.log('SIGNUP: auth user created', cred.user.uid);
+        if (name) await updateProfile(cred.user, { displayName: name });
+        await withTimeout(setDoc(doc(db, 'users', cred.user.uid), {
+          email: cred.user.email || email,
+          plan: localStorage.getItem('metrox_plan') || 'trial',
+          created_at: serverTimestamp()
+        }, { merge: true }), 15000, 'Create user profile');
+        await withTimeout(sendEmailVerification(cred.user), 15000, 'Send verification email');
+        showSignup();
+        setHint(signupHint, 'Verification link sent. Please check email and verify. This page will continue automatically after verification.');
+        checkVerifiedBtn.style.display = 'block';
+        resendSignupVerifyBtn.style.display = 'block';
+        beginVerifyPolling(cred.user);
+      } catch (err) {
+        const code = err?.code || '';
+        if (code === 'auth/email-already-in-use') {
+          setError(document.getElementById('signup-error'), 'Email already exists. Please login instead.');
+          showLogin();
+          document.getElementById('login-email').value = email;
+          setHint(loginHint, 'Account already exists. Please login.');
+        } else if ((err?.message || '').includes('timeout')) {
+          setError(document.getElementById('signup-error'), 'Request timed out. Check internet and Firebase rules, then try again.');
+        } else {
+          setError(document.getElementById('signup-error'), err.message || 'Signup failed.');
+        }
+      } finally {
+        setBusy(signupSubmitBtn, false, 'Creating account...', 'Create account');
+      }
+    });
+
+    checkVerifiedBtn.addEventListener('click', async () => {
+      const user = auth.currentUser;
+      if (!user) {
+        setError(document.getElementById('signup-error'), 'Session expired. Please login and try again.');
+        return;
+      }
+      try {
+        await user.reload();
+        if (!user.emailVerified) {
+          setError(document.getElementById('signup-error'), 'Email not verified yet. Please verify first.');
+          return;
+        }
+        await routeAfterAuth(user);
+      } catch (err) {
+        setError(document.getElementById('signup-error'), err.message || 'Verification check failed.');
+      }
+    });
+
+    resendSignupVerifyBtn.addEventListener('click', async () => {
+      const user = auth.currentUser;
+      if (!user) {
+        setError(document.getElementById('signup-error'), 'Session expired. Please create account again.');
+        return;
+      }
+      try {
+        await sendEmailVerification(user);
+        setHint(signupHint, 'Verification email resent. Check inbox/spam.');
+      } catch (err) {
+        setError(document.getElementById('signup-error'), err.message || 'Failed to resend verification.');
+      }
+    });
+
+    resendVerifyBtn.addEventListener('click', async () => {
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      if (!email || !password) {
+        setError(document.getElementById('login-error'), 'Enter email and password to resend verification.');
+        return;
+      }
+      try {
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+        if (!cred.user.emailVerified) {
+          await sendEmailVerification(cred.user);
+          setHint(loginHint, 'Verification link resent. Check your inbox.');
+        }
+        await signOut(auth);
+      } catch (err) {
+        setError(document.getElementById('login-error'), err.message || 'Failed to resend verification.');
+      }
+    });
+
+    document.getElementById('google-login').addEventListener('click', async () => {
+      setError(document.getElementById('login-error'), '');
+      try {
+        const cred = await signInWithPopup(auth, provider);
+        if (cred?.user?.uid) {
+          console.log('AUTH OK:', cred.user.uid);
+          await routeAfterAuth(cred.user);
+        }
+      } catch (err) {
+        setError(document.getElementById('login-error'), err.message || 'Google login failed.');
+      }
+    });
+
+    document.getElementById('google-signup').addEventListener('click', async () => {
+      setError(document.getElementById('signup-error'), '');
+      try {
+        const cred = await signInWithPopup(auth, provider);
+        if (cred?.user?.uid) {
+          console.log('AUTH OK:', cred.user.uid);
+          await routeAfterAuth(cred.user);
+        }
+      } catch (err) {
+        setError(document.getElementById('signup-error'), err.message || 'Google signup failed.');
+      }
+    });
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        stopVerifyPolling();
+        return;
+      }
+      if (user.emailVerified) {
+        await routeAfterAuth(user);
+        return;
+      }
+      showSignup();
+      setHint(signupHint, 'Please verify your email to continue to business setup.');
+      checkVerifiedBtn.style.display = 'block';
+      resendSignupVerifyBtn.style.display = 'block';
+      beginVerifyPolling(user);
+    });
+  </script>
+  <script>
+    (function () {
+      const preloader = document.getElementById('metrox-preloader');
+      if (!preloader) return;
+      document.body.classList.add('preloader-active');
+      const hide = () => {
+        preloader.classList.add('is-hidden');
+        document.body.classList.remove('preloader-active');
+        setTimeout(() => preloader.remove(), 520);
+      };
+      window.addEventListener('load', () => setTimeout(hide, 360), { once: true });
+      setTimeout(hide, 2200);
+    })();
+  </script>
+</body>
+</html>

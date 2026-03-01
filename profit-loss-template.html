@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Profit & Loss Export</title>
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    @page { size: A4 portrait; margin: 12mm; }
+    body {
+      margin: 0;
+      font-family: "Inter", "Segoe UI", Arial, sans-serif;
+      color: #0f172a;
+      background: #fff;
+      font-size: 12px;
+    }
+    .sheet { width: 100%; }
+    .head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      border-bottom: 1px solid #dbe1ea;
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+    }
+    .brand { display: flex; gap: 10px; align-items: center; min-width: 0; }
+    .logo {
+      width: 44px;
+      height: 44px;
+      object-fit: contain;
+      border-radius: 10px;
+      border: 1px solid #dbe1ea;
+      background: #fff;
+      flex: 0 0 auto;
+    }
+    .logo-fallback {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: #fff;
+      background: #1d4ed8;
+      flex: 0 0 auto;
+    }
+    .company-title { margin: 0; font-size: 18px; font-weight: 700; }
+    .company-meta { margin-top: 3px; color: #475569; font-size: 11px; line-height: 1.4; white-space: pre-line; }
+    .report-title { text-align: right; }
+    .report-title h1 { margin: 0; font-size: 19px; font-weight: 700; }
+    .report-title p { margin: 3px 0 0; color: #475569; font-size: 11px; }
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .kpi {
+      border: 1px solid #dbe1ea;
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 8px 9px;
+    }
+    .kpi .label { color: #475569; font-size: 10px; }
+    .kpi .value { margin-top: 2px; font-size: 15px; font-weight: 700; }
+    .kpi .note { margin-top: 2px; color: #64748b; font-size: 10px; }
+    .kpi.positive { border-color: #bbf7d0; background: #f0fdf4; }
+    .kpi.positive .value { color: #166534; }
+    .kpi.negative { border-color: #fecaca; background: #fef2f2; }
+    .kpi.negative .value { color: #991b1b; }
+    .section-bar {
+      border: 1px solid #dbe1ea;
+      background: #f3f6fb;
+      padding: 7px 8px;
+      border-radius: 8px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .table-wrap {
+      border: 1px solid #dbe1ea;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    th {
+      background: #f3f6fb;
+      color: #1e293b;
+      text-align: left;
+      font-size: 11px;
+      letter-spacing: .01em;
+      padding: 8px 10px;
+      border-bottom: 1px solid #dbe1ea;
+    }
+    td {
+      padding: 8px 10px;
+      border-top: 1px solid #edf1f7;
+      color: #1f2937;
+      vertical-align: top;
+    }
+    th.num, td.num { text-align: right; white-space: nowrap; }
+    tr.total td { background: #f8fafc; font-weight: 700; }
+    .empty {
+      border: 1px dashed #dbe1ea;
+      border-radius: 8px;
+      padding: 16px;
+      color: #64748b;
+      text-align: center;
+    }
+    .footer {
+      margin-top: 10px;
+      border-top: 1px solid #dbe1ea;
+      padding-top: 6px;
+      text-align: right;
+      color: #64748b;
+      font-size: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="sheet">
+    <header class="head">
+      <div class="brand">
+        <div id="logoWrap"></div>
+        <div>
+          <h2 class="company-title" id="companyName">Your Company</h2>
+          <div class="company-meta" id="companyMeta"></div>
+        </div>
+      </div>
+      <div class="report-title">
+        <h1 id="reportTitle">Profit And Loss Report</h1>
+        <p id="periodMeta">—</p>
+        <p id="generatedMeta"></p>
+      </div>
+    </header>
+
+    <section class="kpis" id="kpiWrap"></section>
+    <div class="section-bar">Profit & Loss Statement</div>
+    <div id="tableHost"></div>
+    <div class="footer">Metrox TaxInvoo | Profit & Loss Export</div>
+  </div>
+
+  <script>
+    (function () {
+      const fmt = new Intl.NumberFormat('en-IN');
+      const formatCurrency = (v) => `₹${fmt.format(Number(v) || 0)}`;
+      const esc = (value) => String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+
+      const raw = localStorage.getItem('Metrox TaxInvoo_profit_loss_export');
+      if (!raw) return;
+      let payload = null;
+      try {
+        payload = JSON.parse(raw);
+      } catch (_) {
+        return;
+      }
+      const report = payload?.report || {};
+      const company = payload?.company || {};
+      const rows = Array.isArray(report.rows) ? report.rows : [];
+      const kpis = report.kpis || {};
+      const generatedAt = payload?.generatedAt ? new Date(payload.generatedAt) : new Date();
+
+      const logoWrap = document.getElementById('logoWrap');
+      if (company.logo) {
+        logoWrap.innerHTML = `<img src="${esc(company.logo)}" alt="Logo" class="logo" />`;
+      } else {
+        const initial = String(company.name || 'M').trim().slice(0, 1).toUpperCase() || 'M';
+        logoWrap.innerHTML = `<div class="logo-fallback">${esc(initial)}</div>`;
+      }
+
+      const metaParts = [];
+      if (company.address) metaParts.push(company.address);
+      if (company.phone) metaParts.push(`Phone: ${company.phone}`);
+      if (company.gstin) metaParts.push(`GSTIN: ${company.gstin}`);
+      document.getElementById('companyName').textContent = company.name || 'Your Company';
+      document.getElementById('companyMeta').textContent = metaParts.join(' | ');
+      document.getElementById('reportTitle').textContent = report.title || 'Profit And Loss Report';
+      document.getElementById('periodMeta').textContent = `Period: ${report.periodText || report.periodLabel || '-'}`;
+      document.getElementById('generatedMeta').textContent =
+        `Generated: ${generatedAt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}, ${generatedAt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
+
+      const netProfit = Number(kpis.netProfit) || 0;
+      const netLabel = netProfit >= 0 ? 'Net Profit' : 'Net Loss';
+      const netClass = netProfit >= 0 ? 'positive' : 'negative';
+      const cards = [
+        { label: 'Revenue', value: formatCurrency(kpis.revenue || 0), note: 'Taxable sales', className: '' },
+        { label: 'Purchases', value: formatCurrency(kpis.purchases || 0), note: 'Taxable purchases', className: '' },
+        { label: 'Expenses', value: formatCurrency(kpis.expenses || 0), note: 'Total expenses', className: '' },
+        { label: netLabel, value: formatCurrency(netProfit), note: netProfit >= 0 ? 'Business in profit' : 'Business in loss', className: netClass }
+      ];
+      document.getElementById('kpiWrap').innerHTML = cards.map((c) => `
+        <article class="kpi ${esc(c.className)}">
+          <div class="label">${esc(c.label)}</div>
+          <div class="value">${esc(c.value)}</div>
+          <div class="note">${esc(c.note)}</div>
+        </article>
+      `).join('');
+
+      const tableHost = document.getElementById('tableHost');
+      if (!rows.length) {
+        tableHost.innerHTML = '<div class="empty">No data available for selected period.</div>';
+      } else {
+        const body = rows.map((r) => `
+          <tr class="${r.total ? 'total' : ''}">
+            <td>${esc(r.label || '')}</td>
+            <td class="num">${formatCurrency(r.value || 0)}</td>
+          </tr>
+        `).join('');
+        tableHost.innerHTML = `
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Particulars</th><th class="num">Amount</th></tr>
+              </thead>
+              <tbody>${body}</tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('auto') === 'pdf' || params.get('auto') === 'print') {
+        setTimeout(() => window.print(), 120);
+      }
+    })();
+  </script>
+</body>
+</html>

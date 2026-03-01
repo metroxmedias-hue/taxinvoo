@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Metrox TaxInvoo — Business Setup</title>
+  <meta name="description" content="Create your business profile for Metrox TaxInvoo." />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+    :root {
+      --bg: #0b0e18;
+      --panel: #11162a;
+      --panel-2: #0f1324;
+      --line: rgba(255,255,255,0.08);
+      --ink: #f2efe6;
+      --muted: rgba(242,239,230,0.65);
+      --accent: #f7b23b;
+      --shadow: 0 24px 60px rgba(0,0,0,0.35);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: radial-gradient(900px 500px at 20% -10%, rgba(247,178,59,0.18), transparent),
+                  radial-gradient(800px 420px at 110% 10%, rgba(88,214,193,0.18), transparent),
+                  linear-gradient(180deg, #0a0c14, #0a0f1b 55%, #0b0e18);
+      min-height: 100vh;
+      padding: 40px 24px;
+    }
+
+    .shell {
+      max-width: 720px;
+      margin: 0 auto;
+      display: grid;
+      gap: 18px;
+    }
+
+    .card {
+      background: rgba(12,16,30,0.7);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      display: grid;
+      gap: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: "Fraunces", serif;
+      font-size: 28px;
+    }
+
+    .muted { color: var(--muted); font-size: 13px; }
+
+    .form { display: grid; gap: 14px; }
+    .field { display: grid; gap: 6px; font-size: 13px; color: var(--muted); }
+    .field input, .field select {
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #0c111f;
+      color: var(--ink);
+      font-family: inherit;
+      font-size: 14px;
+    }
+    .split {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 12px;
+    }
+    .btn {
+      padding: 12px 16px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--ink);
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .btn.primary {
+      background: var(--accent);
+      color: #1a1407;
+      border-color: transparent;
+      box-shadow: 0 12px 30px rgba(247,178,59,0.35);
+    }
+    .error { color: #ffb4b4; font-size: 12px; }
+
+    @media (max-width: 640px) {
+      .split { grid-template-columns: 1fr; }
+      body { padding: 16px; }
+      .card { padding: 14px; border-radius: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="card">
+      <h1>Business Setup</h1>
+      <div class="muted">Create your business profile to continue.</div>
+    </div>
+
+    <div class="card">
+      <form class="form" id="business-form">
+        <label class="field">Business Name *
+          <input type="text" id="biz-name" required placeholder="Orion Auto Solutions" />
+        </label>
+        <div class="split">
+          <label class="field">GSTIN (optional)
+            <input type="text" id="biz-gstin" placeholder="27AAAAA0000A1Z5" />
+          </label>
+          <label class="field">Business type *
+            <select id="biz-type" required>
+              <option value="services">Services</option>
+              <option value="goods">Goods</option>
+            </select>
+          </label>
+        </div>
+        <div class="split">
+          <label class="field">State *
+            <select id="biz-state" required>
+              <option value="">Select state</option>
+              <option value="Jammu & Kashmir">Jammu & Kashmir</option>
+              <option value="Himachal Pradesh">Himachal Pradesh</option>
+              <option value="Punjab">Punjab</option>
+              <option value="Chandigarh">Chandigarh</option>
+              <option value="Uttarakhand">Uttarakhand</option>
+              <option value="Haryana">Haryana</option>
+              <option value="Delhi">Delhi</option>
+              <option value="Rajasthan">Rajasthan</option>
+              <option value="Uttar Pradesh">Uttar Pradesh</option>
+              <option value="Bihar">Bihar</option>
+              <option value="Sikkim">Sikkim</option>
+              <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+              <option value="Nagaland">Nagaland</option>
+              <option value="Manipur">Manipur</option>
+              <option value="Mizoram">Mizoram</option>
+              <option value="Tripura">Tripura</option>
+              <option value="Meghalaya">Meghalaya</option>
+              <option value="Assam">Assam</option>
+              <option value="West Bengal">West Bengal</option>
+              <option value="Jharkhand">Jharkhand</option>
+              <option value="Odisha">Odisha</option>
+              <option value="Chattisgarh">Chattisgarh</option>
+              <option value="Madhya Pradesh">Madhya Pradesh</option>
+              <option value="Gujarat">Gujarat</option>
+              <option value="Daman & Diu">Daman & Diu</option>
+              <option value="Dadra & Nagar Haveli">Dadra & Nagar Haveli</option>
+              <option value="Maharashtra">Maharashtra</option>
+              <option value="Andhra Pradesh (Before Division)">Andhra Pradesh (Before Division)</option>
+              <option value="Karnataka">Karnataka</option>
+              <option value="Goa">Goa</option>
+              <option value="Lakshadweep">Lakshadweep</option>
+              <option value="Kerala">Kerala</option>
+              <option value="Tamil Nadu">Tamil Nadu</option>
+              <option value="Puducherry">Puducherry</option>
+              <option value="Andaman & Nicobar Islands">Andaman & Nicobar Islands</option>
+              <option value="Telangana">Telangana</option>
+              <option value="Andhra Pradesh (Newly Added)">Andhra Pradesh (Newly Added)</option>
+              <option value="Ladakh">Ladakh</option>
+            </select>
+          </label>
+          <label class="field">Business logo (optional)
+            <input type="file" id="biz-logo" accept="image/*" />
+          </label>
+        </div>
+        <div class="split">
+          <label class="field">Business phone (optional)
+            <input type="tel" id="biz-phone" placeholder="+91 90000 00000" />
+          </label>
+          <label class="field">Financial Year Start (optional)
+            <input type="date" id="biz-fy-start" />
+          </label>
+        </div>
+        <label class="field">Business address
+          <input type="text" id="biz-address" placeholder="Registered business address" />
+        </label>
+        <button class="btn primary" type="submit">Create Business</button>
+        <div class="error" id="form-error" style="display:none;"></div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA5vhi43CcL_ff_NZLIN3BUxa0CAYOvwh8",
+      authDomain: "metrox-taxinvo.firebaseapp.com",
+      projectId: "metrox-taxinvo",
+      storageBucket: "metrox-taxinvo.firebasestorage.app",
+      messagingSenderId: "1089587049670",
+      appId: "1:1089587049670:web:4f3b663c767762749853c7",
+      measurementId: "G-8JVQCSZX0P"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const form = document.getElementById('business-form');
+    const errorEl = document.getElementById('form-error');
+    let logoDataUrl = '';
+    const MAX_LOGO_FILE_BYTES = 350 * 1024;
+    const MAX_LOGO_DATAURL_LENGTH = 120000;
+
+    function setError(msg) {
+      if (!errorEl) return;
+      errorEl.textContent = msg || '';
+      errorEl.style.display = msg ? 'block' : 'none';
+    }
+
+    function mockCodexCreateBusiness(payload) {
+      const businessId = `biz_${Date.now()}`;
+      return Promise.resolve({ status: 'success', business_id: businessId });
+    }
+
+    const logoInput = document.getElementById('biz-logo');
+    if (logoInput) {
+      logoInput.addEventListener('change', () => {
+        const file = logoInput.files?.[0];
+        if (!file) {
+          logoDataUrl = '';
+          return;
+        }
+        if (file.size > MAX_LOGO_FILE_BYTES) {
+          logoDataUrl = '';
+          logoInput.value = '';
+          setError('Logo is too large. Please upload an image under 350KB.');
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+          logoDataUrl = typeof reader.result === 'string' ? reader.result : '';
+          if (logoDataUrl && logoDataUrl.length > MAX_LOGO_DATAURL_LENGTH) {
+            logoDataUrl = '';
+            setError('Logo is too detailed for cloud save. Continue without logo, then upload in Settings.');
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function formatFirestoreError(err) {
+      const code = String(err?.code || '').trim();
+      if (code === 'permission-denied') {
+        return 'Permission denied by Firestore rules. Please allow create/write for your logged-in user.';
+      }
+      if (code === 'unauthenticated') {
+        return 'Session expired. Please login again and retry.';
+      }
+      if (code === 'resource-exhausted' || code === 'invalid-argument') {
+        return 'Business payload is too large for Firestore. Retry without logo and upload it later in Settings.';
+      }
+      const message = String(err?.message || '').trim();
+      return message ? `Failed to save business: ${message}` : 'Failed to save business. Please retry.';
+    }
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = 'login.html';
+      }
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      setError('');
+
+      const businessName = document.getElementById('biz-name').value.trim();
+      const gstin = document.getElementById('biz-gstin').value.trim();
+      const bizType = document.getElementById('biz-type').value;
+      const state = document.getElementById('biz-state').value;
+      const phone = document.getElementById('biz-phone').value.trim();
+      const address = document.getElementById('biz-address').value.trim();
+      const fyStart = document.getElementById('biz-fy-start').value || '';
+
+      if (!businessName || !state) {
+        setError('Please fill all required fields.');
+        return;
+      }
+
+      const user = auth.currentUser;
+      if (!user) {
+        setError('You must be logged in.');
+        return;
+      }
+
+      const intentPayload = {
+        intent: 'create_business',
+        user_id: user.uid,
+        business_name: businessName,
+        gstin: gstin,
+        business_type: bizType,
+        state: state,
+        business_phone: phone,
+        business_address: address,
+        financial_year_start: fyStart
+      };
+
+      let codexResponse;
+      try {
+        codexResponse = await mockCodexCreateBusiness(intentPayload);
+      } catch (err) {
+        setError('Failed to create business. Please try again.');
+        return;
+      }
+
+      if (!codexResponse || codexResponse.status !== 'success') {
+        setError('Business creation failed.');
+        return;
+      }
+
+      try {
+        const now = new Date();
+        const trialEnds = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        const safeLogo = logoDataUrl && logoDataUrl.length <= MAX_LOGO_DATAURL_LENGTH ? logoDataUrl : '';
+        const businessPayload = {
+          name: businessName,
+          gstin: gstin || '',
+          type: bizType || 'services',
+          state,
+          phone: phone || '',
+          address: address || '',
+          logo: safeLogo || '',
+          owner_uid: user.uid,
+          current_plan: 'trial',
+          subscription_status: 'trial',
+          trial_started_at: now.toISOString(),
+          trial_ends_at: trialEnds.toISOString(),
+          financial_year_start: fyStart || '',
+          created_at: serverTimestamp()
+        };
+        const requestedBusinessId = String(codexResponse.business_id || '').trim();
+        const candidateIds = Array.from(new Set([
+          requestedBusinessId,
+          `biz_${user.uid}`,
+          user.uid
+        ].filter(Boolean)));
+        let businessId = '';
+        let createErr = null;
+        for (const candidateId of candidateIds) {
+          try {
+            await setDoc(doc(db, 'businesses', candidateId), businessPayload);
+            businessId = candidateId;
+            break;
+          } catch (err) {
+            createErr = err;
+          }
+        }
+        if (!businessId) throw createErr || new Error('Unable to create business document.');
+
+        await setDoc(doc(db, 'users', user.uid), { business_id: businessId }, { merge: true });
+
+        const onboardingSeed = {
+          business_id: businessId,
+          company: {
+            name: businessName,
+            gstin: gstin || '',
+            type: bizType || 'services',
+            state: state,
+            phone: phone || '',
+            address: address || '',
+            logo: logoDataUrl || '',
+            financial_year_start: fyStart || ''
+          }
+        };
+        localStorage.removeItem('metrox_taxdesk_demo_state');
+        localStorage.removeItem('metrox_taxdesk_demo_state_backup');
+        localStorage.removeItem('metrox_taxinvoo_demo_state');
+        localStorage.removeItem('metrox_taxinvoo_demo_state_backup');
+        localStorage.setItem('metrox_onboarding_seed', JSON.stringify(onboardingSeed));
+        localStorage.removeItem('metrox_fresh_start');
+
+        console.log('BUSINESS CREATED:', businessId);
+        window.location.href = 'index.html';
+      } catch (err) {
+        console.error('Business setup save failed:', err);
+        setError(formatFirestoreError(err));
+      }
+    });
+  </script>
+</body>
+</html>

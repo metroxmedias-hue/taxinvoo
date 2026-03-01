@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Metrox TaxInvoo - Create Purchase Order</title>
+  <meta name="description" content="Dedicated Purchase Order creation form." />
+  <style>
+    :root {
+      --bg: #0b0e18;
+      --panel: #11162a;
+      --line: rgba(255,255,255,0.12);
+      --ink: #f2efe6;
+      --muted: rgba(242,239,230,0.72);
+      --accent: #5b52f3;
+      --danger: #ff8f8f;
+      --input: rgba(255,255,255,0.03);
+    }
+    body.light {
+      --bg: #f4f7ff;
+      --panel: #ffffff;
+      --line: rgba(15,23,42,0.15);
+      --ink: #0f172a;
+      --muted: rgba(15,23,42,0.66);
+      --accent: #4f46e5;
+      --danger: #dc2626;
+      --input: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 24px;
+      font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(920px 520px at 18% -10%, rgba(91,82,243,0.16), transparent),
+        radial-gradient(900px 520px at 112% 3%, rgba(88,214,193,0.12), transparent),
+        linear-gradient(180deg, #0a0d16, var(--bg));
+      display: grid;
+      place-items: center;
+    }
+    .shell {
+      width: min(900px, 100%);
+      background: color-mix(in oklab, var(--panel) 90%, transparent);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 22px;
+      display: grid;
+      gap: 16px;
+      backdrop-filter: blur(6px);
+    }
+    .head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    h1 { margin: 0; font-size: 26px; letter-spacing: -0.01em; }
+    .muted { color: var(--muted); font-size: 13px; }
+    form { display: grid; gap: 12px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    label { display: grid; gap: 7px; font-size: 13px; color: var(--muted); }
+    input, select, textarea {
+      width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px;
+      background: var(--input); color: var(--ink); font: inherit; outline: none;
+    }
+    textarea { min-height: 88px; resize: vertical; }
+    .summary {
+      display: grid;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: rgba(255,255,255,0.02);
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .row strong { color: var(--ink); }
+    .error { color: var(--danger); font-size: 12px; min-height: 16px; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    button {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.03);
+      color: var(--ink);
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button.primary {
+      border-color: transparent;
+      background: linear-gradient(135deg, #5b52f3, #4b43d1);
+      color: #ffffff;
+    }
+    @media (max-width: 760px) {
+      body { padding: 12px; }
+      .shell { padding: 14px; }
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="head">
+      <div>
+        <h1 id="form-title">Create Purchase Order</h1>
+        <div class="muted">Create or edit purchase order in a separate page and return to the Purchase Orders list.</div>
+      </div>
+      <button type="button" id="back-btn">Back to Purchase Orders</button>
+    </div>
+
+    <form id="purchase-order-form">
+      <div class="grid-2">
+        <label>Supplier
+          <input type="text" id="supplier" list="supplier-list" placeholder="Ram Traders" required />
+          <datalist id="supplier-list"></datalist>
+        </label>
+        <label>Purchase type
+          <select id="purchase-type">
+            <option value="goods">Goods</option>
+            <option value="services">Services</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="grid-2">
+        <label>Item / Service
+          <input type="text" id="item" placeholder="Inventory item" />
+        </label>
+        <label>Amount (INR)
+          <input type="number" id="amount" min="0" step="0.01" placeholder="12000" required />
+        </label>
+      </div>
+
+      <div class="grid-2">
+        <label>Place of supply
+          <select id="supply">
+            <option value="intra">Intra-state (CGST/SGST)</option>
+            <option value="inter">Inter-state (IGST)</option>
+          </select>
+        </label>
+        <label>GST rate (%)
+          <select id="gst-rate">
+            <option value="0">0%</option>
+            <option value="5">5%</option>
+            <option value="12">12%</option>
+            <option value="18" selected>18%</option>
+            <option value="28">28%</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="grid-2">
+        <label>PO Number
+          <input type="text" id="po-number" placeholder="PO-001" />
+        </label>
+        <label>Status
+          <select id="status">
+            <option value="open">Open</option>
+            <option value="partial">Partial</option>
+            <option value="closed">Closed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="grid-2">
+        <label>Order date
+          <input type="date" id="date" required />
+        </label>
+        <label>Expected date
+          <input type="date" id="expected-date" />
+        </label>
+      </div>
+
+      <div class="grid-2">
+        <label>Due in (days)
+          <input type="number" id="due-days" min="0" step="1" value="30" />
+        </label>
+        <label>Reference bill no (optional)
+          <input type="text" id="bill-no" placeholder="INV-REF-001" />
+        </label>
+      </div>
+
+      <label>Notes
+        <textarea id="notes" placeholder="Terms, delivery notes, approvals, etc."></textarea>
+      </label>
+
+      <div class="summary">
+        <div class="row"><span>Taxable</span><strong id="taxable">INR 0</strong></div>
+        <div class="row"><span>Tax</span><strong id="tax">INR 0</strong></div>
+        <div class="row"><span>Total</span><strong id="total">INR 0</strong></div>
+      </div>
+
+      <div class="error" id="error"></div>
+      <div class="actions">
+        <button type="submit" class="primary" id="save-btn">Save Purchase Order</button>
+        <button type="button" id="cancel-btn">Cancel</button>
+      </div>
+    </form>
+  </main>
+
+  <script>
+    (function () {
+      const STORAGE_KEY = 'metrox_taxinvoo_demo_state';
+      const BACKUP_KEY = 'metrox_taxinvoo_demo_state_backup';
+      const LAST_GOOD_KEY = 'metrox_taxinvoo_last_good_state';
+      const FOCUS_KEY = 'metrox_open_purchase_order_form';
+      const EDIT_KEY = 'metrox_edit_purchase_order_id';
+      const target = 'index.html#/purchase-orders';
+      const fmt = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 });
+
+      const theme = localStorage.getItem('Metrox TaxInvoo_theme');
+      if (theme === 'light') document.body.classList.add('light');
+
+      const formTitle = document.getElementById('form-title');
+      const supplierEl = document.getElementById('supplier');
+      const supplierListEl = document.getElementById('supplier-list');
+      const purchaseTypeEl = document.getElementById('purchase-type');
+      const itemEl = document.getElementById('item');
+      const amountEl = document.getElementById('amount');
+      const supplyEl = document.getElementById('supply');
+      const gstRateEl = document.getElementById('gst-rate');
+      const poNumberEl = document.getElementById('po-number');
+      const statusEl = document.getElementById('status');
+      const dateEl = document.getElementById('date');
+      const expectedDateEl = document.getElementById('expected-date');
+      const dueDaysEl = document.getElementById('due-days');
+      const billNoEl = document.getElementById('bill-no');
+      const notesEl = document.getElementById('notes');
+      const taxableEl = document.getElementById('taxable');
+      const taxEl = document.getElementById('tax');
+      const totalEl = document.getElementById('total');
+      const errorEl = document.getElementById('error');
+      const saveBtn = document.getElementById('save-btn');
+
+      dateEl.value = new Date().toISOString().slice(0, 10);
+
+      function esc(value) {
+        return String(value || '').replace(/[&<>'"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[ch] || ch));
+      }
+
+      function goBack() {
+        try { localStorage.setItem(FOCUS_KEY, '1'); } catch (_) {}
+        window.location.href = target;
+      }
+
+      document.getElementById('back-btn').addEventListener('click', goBack);
+      document.getElementById('cancel-btn').addEventListener('click', goBack);
+
+      function parseState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          const parsed = raw ? JSON.parse(raw) : {};
+          return parsed && typeof parsed === 'object' ? parsed : {};
+        } catch (_) {
+          return {};
+        }
+      }
+
+      function saveState(next) {
+        const payload = next && typeof next === 'object' ? next : {};
+        payload._meta = { ...(payload._meta || {}), updated_at: new Date().toISOString() };
+        const serialized = JSON.stringify(payload);
+        localStorage.setItem(STORAGE_KEY, serialized);
+        localStorage.setItem(BACKUP_KEY, serialized);
+        localStorage.setItem(LAST_GOOD_KEY, serialized);
+      }
+
+      const state = parseState();
+      state.purchases = Array.isArray(state.purchases) ? state.purchases : [];
+      state.purchaseOrders = Array.isArray(state.purchaseOrders) ? state.purchaseOrders : [];
+      const editingId = localStorage.getItem(EDIT_KEY) || '';
+      if (editingId) localStorage.removeItem(EDIT_KEY);
+      const editingOrder = editingId ? state.purchaseOrders.find((x) => x.id === editingId) : null;
+
+      if (editingOrder) {
+        formTitle.textContent = 'Edit Purchase Order';
+        saveBtn.textContent = 'Update Purchase Order';
+      }
+
+      const supplierNames = Array.from(new Set(state.purchases.map((p) => String(p.supplier || '').trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b));
+      supplierListEl.innerHTML = supplierNames.map((name) => `<option value="${esc(name)}"></option>`).join('');
+
+      function computeSummary() {
+        const amount = Number(amountEl.value) || 0;
+        const rate = Number(gstRateEl.value) || 0;
+        const tax = amount * (rate / 100);
+        taxableEl.textContent = `INR ${fmt.format(amount)}`;
+        taxEl.textContent = `INR ${fmt.format(tax)}`;
+        totalEl.textContent = `INR ${fmt.format(amount + tax)}`;
+        return { amount, rate, tax, total: amount + tax };
+      }
+
+      if (editingOrder) {
+        supplierEl.value = editingOrder.supplier || '';
+        purchaseTypeEl.value = editingOrder.purchaseType || 'goods';
+        itemEl.value = editingOrder.item || '';
+        amountEl.value = Number(editingOrder.amount || 0) || '';
+        supplyEl.value = editingOrder.supply || 'intra';
+        gstRateEl.value = String(editingOrder.rate ?? 18);
+        poNumberEl.value = editingOrder.id || '';
+        statusEl.value = editingOrder.status || 'open';
+        dateEl.value = editingOrder.date || new Date().toISOString().slice(0, 10);
+        expectedDateEl.value = editingOrder.expectedDate || '';
+        dueDaysEl.value = Number(editingOrder.dueDays) || 30;
+        billNoEl.value = editingOrder.billNo || '';
+        notesEl.value = editingOrder.notes || '';
+      }
+
+      ['input', 'change'].forEach((evt) => {
+        amountEl.addEventListener(evt, computeSummary);
+        gstRateEl.addEventListener(evt, computeSummary);
+      });
+      computeSummary();
+
+      document.getElementById('purchase-order-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        errorEl.textContent = '';
+
+        const supplier = supplierEl.value.trim();
+        const item = itemEl.value.trim() || 'Item';
+        if (!supplier) {
+          errorEl.textContent = 'Supplier is required.';
+          return;
+        }
+        const calc = computeSummary();
+        if (calc.amount <= 0) {
+          errorEl.textContent = 'Amount should be greater than zero.';
+          return;
+        }
+
+        const id = (poNumberEl.value || '').trim() || editingId || `PO-${Date.now()}`;
+        const payload = {
+          id,
+          supplier,
+          purchaseType: purchaseTypeEl.value || 'goods',
+          item,
+          amount: calc.amount,
+          rate: calc.rate,
+          supply: supplyEl.value || 'intra',
+          status: statusEl.value || 'open',
+          date: dateEl.value || new Date().toISOString().slice(0, 10),
+          expectedDate: expectedDateEl.value || '',
+          dueDays: Math.max(0, Number(dueDaysEl.value) || 0),
+          billNo: billNoEl.value.trim(),
+          notes: notesEl.value.trim()
+        };
+
+        if (editingId) {
+          const idx = state.purchaseOrders.findIndex((x) => x.id === editingId);
+          if (idx !== -1) state.purchaseOrders[idx] = payload;
+          else state.purchaseOrders.push(payload);
+        } else {
+          const existing = state.purchaseOrders.find((x) => x.id === payload.id);
+          if (existing) {
+            errorEl.textContent = 'PO Number already exists. Use a different number.';
+            return;
+          }
+          state.purchaseOrders.push(payload);
+        }
+
+        saveState(state);
+        goBack();
+      });
+    })();
+  </script>
+</body>
+</html>

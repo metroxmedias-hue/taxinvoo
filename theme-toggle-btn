@@ -1,0 +1,79 @@
+delivery-challan-generation.html:34:      font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+purchase-invoice-generation.html:34:      font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+business-setup.html:9:    @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+business-setup.html:26:      font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+business-setup.html:54:      font-family: "Fraunces", serif;
+purchase-order-generation.html:34:      font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+login.html:9:    @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+login.html:27:      font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+login.html:153:      font-family: "Fraunces", serif;
+login.html:247:    .brand-mark {
+login.html:283:      font-family: "Fraunces", serif;
+login.html:435:      <div class="brand-mark">EG</div>
+purchase-return-generation.html:34:      font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+index-landing.html:155:    .brand-mark {
+index-landing.html:168:    .brand-mark svg {
+index-landing.html:1467:    .site-footer .brand-mark {
+index-landing.html:1661:      .brand-mark {
+index-landing.html:1755:        <div class="brand-mark" aria-hidden="true">
+index-landing.html:2305:            <div class="brand-mark" aria-hidden="true">
+proforma-generation.html:34:      font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+quotation-generation.html:23:      font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+index_broken_before_restore_2026-02-25.html:9:    @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+index_broken_before_restore_2026-02-25.html:43:      font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+index_broken_before_restore_2026-02-25.html:230:    .brand-mark {
+index_broken_before_restore_2026-02-25.html:379:      font-family: "Fraunces", serif;
+index_broken_before_restore_2026-02-25.html:798:      font-family: "Fraunces", serif;
+index_broken_before_restore_2026-02-25.html:2353:      font-family: "Fraunces", serif;
+index_broken_before_restore_2026-02-25.html:2692:      font-family: "Fraunces", serif;
+index_broken_before_restore_2026-02-25.html:3041:      font-family: "Space Grotesk", sans-serif;
+index_broken_before_restore_2026-02-25.html:9311:      font-family: "Fraunces", serif;
+index_broken_before_restore_2026-02-25.html:9776:        <div class="brand-mark">EG</div>
+index_broken_before_restore_2026-02-25.html:12395:                      <option value="Space Grotesk">Space Grotesk</option>
+sales-return-generation.html:34:      font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+credit-note-generation.html:34:      font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+invoice-generation.html:23:      font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+create-invoice.html:9:    @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+create-invoice.html:26:      font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+create-invoice.html:45:    h1 { margin: 0; font-family: "Fraunces", serif; font-size: 28px; }
+payment-out-generation.html:34:      font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+payment-in-generation.html:34:      font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+debit-note-generation.html:34:      font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+record-payment.html:9:    @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+record-payment.html:26:      font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+record-payment.html:45:    h1 { margin: 0; font-family: "Fraunces", serif; font-size: 28px; }
+settings.html:9:    @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+settings.html:38:      font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+settings.html:321:    .brand-mark {
+settings.html:448:      font-family: "Fraunces", serif;
+settings.html:851:      font-family: "Fraunces", serif;
+settings.html:2946:      font-family: "Fraunces", serif;
+settings.html:3141:      font-family: "Fraunces", serif;
+settings.html:3490:      font-family: "Space Grotesk", sans-serif;
+settings.html:9711:      font-family: "Fraunces", serif;
+settings.html:10062:        <div class="brand-mark">EG</div>
+settings.html:12505:                            <button type="button" class="invoice-pill" data-invoice-font="Space Grotesk">Space Grotesk</button>
+settings.html:12511:                            <option value="Space Grotesk">Space Grotesk</option>
+index.html:333:      font-family: "Fraunces", serif;
+index.html:962:    .sidebar .brand-mark {
+index.html:972:    .sidebar .brand-mark svg {
+index.html:1021:      .sidebar .brand-mark {
+index.html:1241:      font-family: "Fraunces", serif;
+index.html:1875:      font-family: "Fraunces", serif;
+index.html:2007:      font-family: "Fraunces", serif;
+index.html:2165:      font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+index.html:3629:      font-family: "Fraunces", serif;
+index.html:3677:      font-family: "Fraunces", serif;
+index.html:4642:      font-family: "Fraunces", serif;
+index.html:4929:      font-family: "Fraunces", serif;
+index.html:5278:      font-family: "Space Grotesk", sans-serif;
+index.html:8535:      font-family: "Fraunces", Georgia, serif;
+index.html:8542:      font-family: "Space Grotesk", system-ui, sans-serif;
+index.html:11965:      font-family: "Fraunces", serif;
+index.html:12087:      font-family: "Fraunces", serif;
+index.html:12368:      font-family: "Fraunces", serif;
+index.html:12722:      font-family: "Fraunces", serif;
+index.html:12825:      font-family: "Fraunces", serif;
+index.html:14125:        <div class="brand-mark" aria-hidden="true">
+index.html:17258:                            <button type="button" class="invoice-pill" data-invoice-font="Space Grotesk">Space Grotesk</button>
+index.html:17264:                            <option value="Space Grotesk">Space Grotesk</option>

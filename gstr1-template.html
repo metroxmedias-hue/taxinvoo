@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GSTR-1 Export</title>
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    @page { size: A4 landscape; margin: 10mm; }
+    body {
+      margin: 0;
+      font-family: "Inter", "Segoe UI", Arial, sans-serif;
+      color: #0f172a;
+      background: #fff;
+      font-size: 11px;
+    }
+    .sheet { width: 100%; }
+    .head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      border-bottom: 1px solid #dbe1ea;
+      padding-bottom: 8px;
+      margin-bottom: 10px;
+    }
+    .brand { display: flex; gap: 10px; align-items: center; }
+    .logo {
+      width: 42px;
+      height: 42px;
+      object-fit: contain;
+      border-radius: 10px;
+      border: 1px solid #dbe1ea;
+      background: #fff;
+    }
+    .logo-fallback {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: #fff;
+      background: #1d4ed8;
+    }
+    .company-title { margin: 0; font-size: 16px; font-weight: 700; }
+    .company-meta { margin-top: 2px; color: #475569; font-size: 10px; white-space: pre-line; }
+    .report-title { text-align: right; }
+    .report-title h1 { margin: 0; font-size: 17px; font-weight: 700; }
+    .report-title p { margin: 2px 0 0; color: #475569; font-size: 10px; }
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .kpi {
+      border: 1px solid #dbe1ea;
+      background: #f8fafc;
+      padding: 7px 8px;
+      border-radius: 8px;
+    }
+    .kpi .label { color: #475569; font-size: 10px; }
+    .kpi .value { margin-top: 2px; font-weight: 700; font-size: 13px; }
+    .section-bar {
+      margin: 10px 0 6px;
+      padding: 6px 8px;
+      border: 1px solid #dbe1ea;
+      background: #f3f6fb;
+      border-radius: 8px;
+      font-weight: 700;
+    }
+    .table-wrap { border: 1px solid #dbe1ea; border-radius: 8px; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    th {
+      background: #f3f6fb;
+      color: #1e293b;
+      text-align: left;
+      font-size: 10px;
+      letter-spacing: .02em;
+      padding: 7px 8px;
+      border-bottom: 1px solid #dbe1ea;
+    }
+    td {
+      padding: 6px 8px;
+      border-top: 1px solid #edf1f7;
+      vertical-align: top;
+      color: #1f2937;
+      word-break: break-word;
+    }
+    td.num, th.num { text-align: right; white-space: nowrap; }
+    .empty {
+      border: 1px dashed #dbe1ea;
+      color: #64748b;
+      text-align: center;
+      padding: 16px;
+      border-radius: 8px;
+      margin-top: 8px;
+    }
+    .subhead {
+      margin-top: 10px;
+      margin-bottom: 4px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .footer {
+      margin-top: 10px;
+      border-top: 1px solid #dbe1ea;
+      padding-top: 5px;
+      color: #64748b;
+      font-size: 9.5px;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+  <div class="sheet">
+    <header class="head">
+      <div class="brand">
+        <div id="logoWrap"></div>
+        <div>
+          <h2 class="company-title" id="companyName">Your Company</h2>
+          <div class="company-meta" id="companyMeta"></div>
+        </div>
+      </div>
+      <div class="report-title">
+        <h1 id="reportTitle">GSTR-1 (Sales)</h1>
+        <p id="reportMeta">—</p>
+        <p id="generatedMeta"></p>
+      </div>
+    </header>
+
+    <section class="kpis" id="kpiWrap"></section>
+
+    <div class="section-bar" id="sectionLabel">Section</div>
+    <div id="tableHost"></div>
+
+    <div class="footer">Metrox TaxInvoo | GSTR-1 Export</div>
+  </div>
+
+  <script>
+    (function () {
+      const fmt = new Intl.NumberFormat('en-IN');
+      const formatCurrency = (v) => `₹${fmt.format(Number(v) || 0)}`;
+      const esc = (value) => String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+
+      const payloadRaw = localStorage.getItem('Metrox TaxInvoo_gstr1_export');
+      if (!payloadRaw) return;
+      let payload = null;
+      try {
+        payload = JSON.parse(payloadRaw);
+      } catch (_) {
+        return;
+      }
+      const company = payload.company || {};
+      const rows = Array.isArray(payload.rows) ? payload.rows : [];
+      const portalRows = Array.isArray(payload.portalRows) ? payload.portalRows : [];
+      const viewMode = String(payload.viewMode || 'invoice');
+      const tab = String(payload.tab || 'sales');
+      const portalTab = String(payload.portalTab || 'b2b');
+      const docsIssued = payload.docsIssued || {};
+
+      const logoWrap = document.getElementById('logoWrap');
+      if (company.logo) {
+        logoWrap.innerHTML = `<img src="${esc(company.logo)}" alt="Logo" class="logo" />`;
+      } else {
+        const initial = String(company.name || 'M').trim().slice(0, 1).toUpperCase() || 'M';
+        logoWrap.innerHTML = `<div class="logo-fallback">${esc(initial)}</div>`;
+      }
+
+      const companyMetaParts = [];
+      if (company.address) companyMetaParts.push(company.address);
+      if (company.phone) companyMetaParts.push(`Phone: ${company.phone}`);
+      if (company.gstin) companyMetaParts.push(`GSTIN: ${company.gstin}`);
+      document.getElementById('companyName').textContent = company.name || 'Your Company';
+      document.getElementById('companyMeta').textContent = companyMetaParts.join(' | ');
+
+      const generatedAt = payload.generatedAt ? new Date(payload.generatedAt) : new Date();
+      const periodDays = Number(payload.periodDays || 30);
+      const periodMap = { 7: 'This Week', 30: 'Last 30 Days', 90: 'Last 90 Days', 365: 'Last 365 Days' };
+      const viewLabel = viewMode === 'portal' ? 'GST Portal View' : 'Invoice View';
+      document.getElementById('reportTitle').textContent = payload?.report?.title || 'GSTR-1 (Sales)';
+      document.getElementById('reportMeta').textContent = `${viewLabel} • ${periodMap[periodDays] || `${periodDays} days`}`;
+      document.getElementById('generatedMeta').textContent =
+        `Generated: ${generatedAt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}, ${generatedAt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
+
+      const baseRows = viewMode === 'portal' ? portalRows : rows;
+      const recipients = new Set((rows || []).map((r) => String(r.customerName || '').trim()).filter(Boolean)).size;
+      const notes = baseRows.length;
+      const noteValue = baseRows.reduce((sum, r) => sum + (Number(r.invoiceValue ?? r.noteValue) || 0), 0);
+      const taxable = baseRows.reduce((sum, r) => sum + (Number(r.taxableValue) || 0), 0);
+      const cess = baseRows.reduce((sum, r) => sum + (Number(r.cess) || 0), 0);
+
+      const kpiWrap = document.getElementById('kpiWrap');
+      const cards = [
+        { label: 'Number of Recipients', value: String(recipients) },
+        { label: 'Number of Notes', value: String(notes) },
+        { label: 'Total Note Value', value: formatCurrency(noteValue) },
+        { label: 'Total Taxable Value', value: formatCurrency(taxable) },
+        { label: 'Total Cess', value: formatCurrency(cess) }
+      ];
+      kpiWrap.innerHTML = cards.map((c) => `<article class="kpi"><div class="label">${esc(c.label)}</div><div class="value">${esc(c.value)}</div></article>`).join('');
+
+      const tabLabelMap = {
+        sales: 'Sales',
+        'sr-cn': 'Sales Return / Credit Note',
+        'pr-dn': 'Purchase Return / Debit Note'
+      };
+      const portalLabelMap = {
+        b2b: 'B2B',
+        b2cl: 'B2CL',
+        b2cs: 'B2CS',
+        cdnr: 'CDNR',
+        cdnur: 'CDNUR',
+        exemp: 'EXEMP',
+        'hsn-b2b': 'HSN (B2B)',
+        'hsn-b2c': 'HSN (B2C)',
+        docs: 'DOCUMENTS ISSUED'
+      };
+      document.getElementById('sectionLabel').textContent =
+        viewMode === 'portal' ? `Section: ${portalLabelMap[portalTab] || portalTab}` : `Section: ${tabLabelMap[tab] || tab}`;
+
+      const tableHost = document.getElementById('tableHost');
+      const renderEmpty = () => {
+        tableHost.innerHTML = '<div class="empty">No transactions available for selected period.</div>';
+      };
+
+      if (viewMode === 'portal' && portalTab === 'docs') {
+        const renderDocTable = (title, stat) => `
+          <div class="subhead">${esc(title)}</div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>From</th>
+                  <th>To</th>
+                  <th class="num">Total Number</th>
+                  <th class="num">Cancelled</th>
+                  <th class="num">Net Issued</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>${esc(stat?.from || '-')}</td>
+                  <td>${esc(stat?.to || '-')}</td>
+                  <td class="num">${esc(String(stat?.total || 0))}</td>
+                  <td class="num">${esc(String(stat?.cancelled || 0))}</td>
+                  <td class="num">${esc(String(stat?.netIssued || 0))}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        `;
+        tableHost.innerHTML = [
+          renderDocTable('1. Invoices for Outward Supply', docsIssued.invoices || {}),
+          renderDocTable('2. Debit Note', docsIssued.debitNotes || {}),
+          renderDocTable('3. Credit Note', docsIssued.creditNotes || {})
+        ].join('');
+      } else if (viewMode === 'portal') {
+        if (!portalRows.length) return renderEmpty();
+        tableHost.innerHTML = `
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>GSTIN/UIN</th>
+                  <th>Receiver</th>
+                  <th>Note Number</th>
+                  <th>Note Date</th>
+                  <th>Note Type</th>
+                  <th>Place Of Supply</th>
+                  <th class="num">Rate</th>
+                  <th class="num">Taxable Value</th>
+                  <th class="num">Cess</th>
+                  <th class="num">Note Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${portalRows.map((r) => `
+                  <tr>
+                    <td>${esc(r.gstin || '—')}</td>
+                    <td>${esc(r.receiverName || '—')}</td>
+                    <td>${esc(r.noteNumber || '—')}</td>
+                    <td>${esc(r.noteDate || '—')}</td>
+                    <td>${esc(r.noteType || '—')}</td>
+                    <td>${esc(r.placeOfSupply || '—')}</td>
+                    <td class="num">${esc(r.rate || '0%')}</td>
+                    <td class="num">${formatCurrency(r.taxableValue || 0)}</td>
+                    <td class="num">${formatCurrency(r.cess || 0)}</td>
+                    <td class="num">${formatCurrency(r.noteValue || 0)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      } else {
+        if (!rows.length) return renderEmpty();
+        tableHost.innerHTML = `
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>GSTIN</th>
+                  <th>Customer Name</th>
+                  <th>State Code</th>
+                  <th>State Name</th>
+                  <th>Invoice No</th>
+                  <th>Invoice Date</th>
+                  <th class="num">Invoice Value</th>
+                  <th class="num">Tax %</th>
+                  <th class="num">Taxable Value</th>
+                  <th class="num">CGST</th>
+                  <th class="num">SGST/UTGST</th>
+                  <th class="num">IGST</th>
+                  <th class="num">CESS</th>
+                  <th class="num">Total Tax</th>
+                  <th class="num">Total Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rows.map((r) => `
+                  <tr>
+                    <td>${esc(r.gstin || '—')}</td>
+                    <td>${esc(r.customerName || '—')}</td>
+                    <td>${esc(r.stateCode || '—')}</td>
+                    <td>${esc(r.stateName || '—')}</td>
+                    <td>${esc(r.invoiceNo || '—')}</td>
+                    <td>${esc(r.invoiceDate || '—')}</td>
+                    <td class="num">${formatCurrency(r.invoiceValue || 0)}</td>
+                    <td class="num">${esc(String(r.taxRate || 0))}%</td>
+                    <td class="num">${formatCurrency(r.taxableValue || 0)}</td>
+                    <td class="num">${formatCurrency(r.cgst || 0)}</td>
+                    <td class="num">${formatCurrency(r.sgst || 0)}</td>
+                    <td class="num">${formatCurrency(r.igst || 0)}</td>
+                    <td class="num">${formatCurrency(r.cess || 0)}</td>
+                    <td class="num">${formatCurrency(r.totalTax || 0)}</td>
+                    <td class="num">${formatCurrency(r.totalAmount || 0)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('auto') === 'pdf' || params.get('auto') === 'print') {
+        setTimeout(() => window.print(), 140);
+      }
+    })();
+  </script>
+</body>
+</html>

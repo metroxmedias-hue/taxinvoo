@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Metrox TaxInvoo - Create Sales Return</title>
+  <meta name="description" content="Dedicated Sales Return creation form." />
+  <style>
+    :root {
+      --bg: #0b0e18;
+      --panel: #11162a;
+      --line: rgba(255,255,255,0.12);
+      --ink: #f2efe6;
+      --muted: rgba(242,239,230,0.72);
+      --accent: #5b52f3;
+      --danger: #ff8f8f;
+      --input: rgba(255,255,255,0.03);
+    }
+    body.light {
+      --bg: #f4f7ff;
+      --panel: #ffffff;
+      --line: rgba(15,23,42,0.15);
+      --ink: #0f172a;
+      --muted: rgba(15,23,42,0.66);
+      --accent: #4f46e5;
+      --danger: #dc2626;
+      --input: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 24px;
+      font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(920px 520px at 18% -10%, rgba(91,82,243,0.16), transparent),
+        radial-gradient(900px 520px at 112% 3%, rgba(88,214,193,0.12), transparent),
+        linear-gradient(180deg, #0a0d16, var(--bg));
+      display: grid;
+      place-items: center;
+    }
+    .shell {
+      width: min(900px, 100%);
+      background: color-mix(in oklab, var(--panel) 90%, transparent);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 22px;
+      display: grid;
+      gap: 16px;
+      backdrop-filter: blur(6px);
+    }
+    .head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    h1 {
+      margin: 0;
+      font-size: 26px;
+      letter-spacing: -0.01em;
+    }
+    .muted { color: var(--muted); font-size: 13px; }
+    form { display: grid; gap: 12px; }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    label {
+      display: grid;
+      gap: 7px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: var(--input);
+      color: var(--ink);
+      font: inherit;
+      outline: none;
+    }
+    textarea { min-height: 88px; resize: vertical; }
+    .summary {
+      display: grid;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: rgba(255,255,255,0.02);
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .row strong { color: var(--ink); }
+    .error {
+      color: var(--danger);
+      font-size: 12px;
+      min-height: 16px;
+    }
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    button {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.03);
+      color: var(--ink);
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button.primary {
+      border-color: transparent;
+      background: linear-gradient(135deg, #5b52f3, #4b43d1);
+      color: #ffffff;
+    }
+    @media (max-width: 760px) {
+      body { padding: 12px; }
+      .shell { padding: 14px; }
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="head">
+      <div>
+        <h1>Create Sales Return</h1>
+        <div class="muted">Create return against existing invoice and track it in Sales Return list.</div>
+      </div>
+      <button type="button" id="back-btn">Back to Sales Return</button>
+    </div>
+
+    <form id="sales-return-form">
+      <div class="grid-2">
+        <label>Customer
+          <select id="customer" required>
+            <option value="">Select customer</option>
+          </select>
+        </label>
+        <label>Invoice
+          <select id="invoice" required>
+            <option value="">Select invoice</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="summary">
+        <div class="row"><span>Invoice total</span><strong id="invoice-total">INR 0</strong></div>
+        <div class="row"><span>Already returned</span><strong id="already-returned">INR 0</strong></div>
+        <div class="row"><span>Max return allowed</span><strong id="max-return">INR 0</strong></div>
+      </div>
+
+      <div class="grid-2">
+        <label>Return amount
+          <input type="number" id="amount" min="0" step="0.01" placeholder="1000" required />
+        </label>
+        <label>Return date
+          <input type="date" id="date" />
+        </label>
+      </div>
+
+      <div class="grid-2">
+        <label>Reason
+          <select id="reason">
+            <option value="goods_damaged">Goods damaged</option>
+            <option value="service_cancelled">Service cancelled</option>
+            <option value="pricing_adjustment">Pricing adjustment</option>
+            <option value="other">Other</option>
+          </select>
+        </label>
+        <label>Status
+          <select id="status">
+            <option value="Issued">Issued</option>
+            <option value="Processed">Processed</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+        </label>
+      </div>
+
+      <label>Notes
+        <textarea id="notes" placeholder="Reason details, item returned, quantity, approvals, etc."></textarea>
+      </label>
+
+      <div class="error" id="error"></div>
+      <div class="actions">
+        <button type="submit" class="primary" id="save-btn">Save Sales Return</button>
+        <button type="button" id="cancel-btn">Cancel</button>
+      </div>
+    </form>
+  </main>
+
+  <script>
+    (function () {
+      const STORAGE_KEY = 'metrox_taxinvoo_demo_state';
+      const BACKUP_KEY = 'metrox_taxinvoo_demo_state_backup';
+      const LAST_GOOD_KEY = 'metrox_taxinvoo_last_good_state';
+      const FOCUS_KEY = 'metrox_open_sales_return_form';
+      const target = 'index.html#/sales-transactions';
+      const fmt = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 });
+
+      const theme = localStorage.getItem('Metrox TaxInvoo_theme');
+      if (theme === 'light') document.body.classList.add('light');
+
+      const customerEl = document.getElementById('customer');
+      const invoiceEl = document.getElementById('invoice');
+      const invoiceTotalEl = document.getElementById('invoice-total');
+      const alreadyReturnedEl = document.getElementById('already-returned');
+      const maxReturnEl = document.getElementById('max-return');
+      const amountEl = document.getElementById('amount');
+      const dateEl = document.getElementById('date');
+      const reasonEl = document.getElementById('reason');
+      const statusEl = document.getElementById('status');
+      const notesEl = document.getElementById('notes');
+      const errorEl = document.getElementById('error');
+      const saveBtn = document.getElementById('save-btn');
+
+      dateEl.value = new Date().toISOString().slice(0, 10);
+
+      function goBack() {
+        try { localStorage.setItem(FOCUS_KEY, '1'); } catch (_) {}
+        window.location.href = target;
+      }
+
+      document.getElementById('back-btn').addEventListener('click', goBack);
+      document.getElementById('cancel-btn').addEventListener('click', goBack);
+
+      function parseState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          const parsed = raw ? JSON.parse(raw) : {};
+          return parsed && typeof parsed === 'object' ? parsed : {};
+        } catch (_) {
+          return {};
+        }
+      }
+
+      function saveState(next) {
+        const payload = next && typeof next === 'object' ? next : {};
+        payload._meta = { ...(payload._meta || {}), updated_at: new Date().toISOString() };
+        const serialized = JSON.stringify(payload);
+        localStorage.setItem(STORAGE_KEY, serialized);
+        localStorage.setItem(BACKUP_KEY, serialized);
+        localStorage.setItem(LAST_GOOD_KEY, serialized);
+      }
+
+      const state = parseState();
+      state.customers = state.customers && typeof state.customers === 'object' ? state.customers : {};
+      state.invoices = Array.isArray(state.invoices) ? state.invoices : [];
+      state.salesReturns = Array.isArray(state.salesReturns) ? state.salesReturns : [];
+
+      const customers = Object.keys(state.customers)
+        .filter((name) => !state.customers[name]?.deleted)
+        .sort((a, b) => a.localeCompare(b));
+
+      customerEl.innerHTML = ['<option value="">Select customer</option>']
+        .concat(customers.map((name) => `<option value="${name}">${name}</option>`))
+        .join('');
+
+      function getInvoiceById(id) {
+        return state.invoices.find((inv) => String(inv.id) === String(id));
+      }
+
+      function getReturnedAmount(invoiceId) {
+        return (state.salesReturns || [])
+          .filter((r) => String(r.invoiceId) === String(invoiceId) && String(r.status || '').toLowerCase() !== 'cancelled')
+          .reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+      }
+
+      function renderInvoiceOptions(customerName) {
+        const rows = state.invoices
+          .filter((inv) => !customerName || inv.customer === customerName)
+          .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+        invoiceEl.innerHTML = ['<option value="">Select invoice</option>']
+          .concat(rows.map((inv) => `<option value="${inv.id}">${inv.id} | ${inv.customer}</option>`))
+          .join('');
+      }
+
+      function syncInvoiceSummary() {
+        const inv = getInvoiceById(invoiceEl.value);
+        if (!inv) {
+          invoiceTotalEl.textContent = 'INR 0';
+          alreadyReturnedEl.textContent = 'INR 0';
+          maxReturnEl.textContent = 'INR 0';
+          errorEl.textContent = '';
+          return;
+        }
+        const total = Number(inv.total) || 0;
+        const returned = getReturnedAmount(inv.id);
+        const maxAllowed = Math.max(0, total - returned);
+        invoiceTotalEl.textContent = `INR ${fmt.format(total)}`;
+        alreadyReturnedEl.textContent = `INR ${fmt.format(returned)}`;
+        maxReturnEl.textContent = `INR ${fmt.format(maxAllowed)}`;
+
+        if (!amountEl.value || Number(amountEl.value) <= 0) {
+          amountEl.value = maxAllowed.toFixed(2);
+        }
+
+        const amount = Number(amountEl.value) || 0;
+        if (amount > maxAllowed) {
+          errorEl.textContent = 'Return amount cannot exceed max return allowed.';
+        } else {
+          errorEl.textContent = '';
+        }
+      }
+
+      customerEl.addEventListener('change', () => {
+        renderInvoiceOptions(customerEl.value);
+        syncInvoiceSummary();
+      });
+
+      invoiceEl.addEventListener('change', () => {
+        const inv = getInvoiceById(invoiceEl.value);
+        if (inv && customerEl.value !== inv.customer) customerEl.value = inv.customer;
+        syncInvoiceSummary();
+      });
+
+      amountEl.addEventListener('input', syncInvoiceSummary);
+
+      renderInvoiceOptions('');
+      syncInvoiceSummary();
+
+      if (!state.invoices.length) {
+        saveBtn.disabled = true;
+        errorEl.textContent = 'No invoices available. Create invoice first, then create sales return.';
+      }
+
+      document.getElementById('sales-return-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const invoice = getInvoiceById(invoiceEl.value);
+        const amount = Number(amountEl.value) || 0;
+        const date = dateEl.value || new Date().toISOString().slice(0, 10);
+
+        if (!invoice) {
+          errorEl.textContent = 'Select an invoice.';
+          return;
+        }
+        if (amount <= 0) {
+          errorEl.textContent = 'Return amount must be greater than 0.';
+          return;
+        }
+        const alreadyReturned = getReturnedAmount(invoice.id);
+        const maxAllowed = Math.max(0, (Number(invoice.total) || 0) - alreadyReturned);
+        if (amount > maxAllowed) {
+          errorEl.textContent = 'Return amount cannot exceed max return allowed.';
+          return;
+        }
+
+        const payload = {
+          id: `SR-${Date.now()}`,
+          date,
+          customer: invoice.customer,
+          invoiceId: invoice.id,
+          amount,
+          reason: reasonEl.value || 'other',
+          status: statusEl.value || 'Issued',
+          notes: String(notesEl.value || '').trim(),
+          createdAt: new Date().toISOString()
+        };
+
+        state.salesReturns.push(payload);
+        saveState(state);
+        goBack();
+      });
+    })();
+  </script>
+</body>
+</html>
