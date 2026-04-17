@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="assets/poppins.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Metrox TaxInvoo — Create Invoice</title>
+  <meta name="description" content="Create an invoice in Metrox TaxInvoo." />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+    :root {
+      --bg: #0b0e18;
+      --panel: #11162a;
+      --panel-2: #0f1324;
+      --line: rgba(255,255,255,0.08);
+      --ink: #f2efe6;
+      --muted: rgba(242,239,230,0.65);
+      --accent: #f7b23b;
+      --shadow: 0 24px 60px rgba(0,0,0,0.35);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: radial-gradient(900px 500px at 20% -10%, rgba(247,178,59,0.18), transparent),
+                  radial-gradient(800px 420px at 110% 10%, rgba(88,214,193,0.18), transparent),
+                  linear-gradient(180deg, #0a0c14, #0a0f1b 55%, #0b0e18);
+      min-height: 100vh;
+      padding: 32px 24px;
+    }
+
+    .shell { max-width: 760px; margin: 0 auto; display: grid; gap: 18px; }
+    .card {
+      background: rgba(12,16,30,0.7);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      display: grid;
+      gap: 14px;
+    }
+    h1 { margin: 0; font-family: "Fraunces", serif; font-size: 28px; }
+    .muted { color: var(--muted); font-size: 13px; }
+    .form { display: grid; gap: 14px; }
+    .field { display: grid; gap: 6px; font-size: 13px; color: var(--muted); }
+    .field input, .field select {
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #0c111f;
+      color: var(--ink);
+      font-family: inherit;
+      font-size: 14px;
+    }
+    .split { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
+    .btn {
+      padding: 12px 16px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--ink);
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .btn.primary {
+      background: var(--accent);
+      color: #1a1407;
+      border-color: transparent;
+      box-shadow: 0 12px 30px rgba(247,178,59,0.35);
+    }
+    .btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+    .error { color: #ffb4b4; font-size: 12px; }
+    .summary {
+      display: grid;
+      gap: 8px;
+      background: #0e1425;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      padding: 14px;
+    }
+    .row { display:flex; justify-content:space-between; gap:12px; color: var(--muted); font-size: 13px; }
+    .sub-banner {
+      border: 1px solid rgba(247,178,59,0.34);
+      background: rgba(247,178,59,0.12);
+      color: #f6d69b;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.5;
+      display: none;
+    }
+    .sub-banner.warn {
+      border-color: rgba(255,180,180,0.42);
+      background: rgba(255,120,120,0.12);
+      color: #ffd0d0;
+    }
+    .lock-modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(7, 9, 14, 0.64);
+      z-index: 50;
+      padding: 16px;
+    }
+    .lock-modal.open { display: flex; }
+    .lock-card {
+      width: min(460px, 100%);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #0f1628;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+      padding: 18px;
+      display: grid;
+      gap: 10px;
+    }
+    .lock-card h3 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.3;
+      color: var(--ink);
+    }
+    .lock-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    .lock-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+    @media (max-width: 640px) {
+      body { padding: 16px; }
+      .card { padding: 14px; border-radius: 14px; }
+      .split { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="card">
+      <h1>Create Invoice</h1>
+      <div class="muted">GST and Non‑GST invoices supported.</div>
+      <div class="sub-banner" id="subscription-banner"></div>
+    </div>
+
+    <div class="card">
+      <form class="form" id="invoice-form">
+        <label class="field">Customer Name *
+          <input type="text" id="inv-customer" required placeholder="Rahul Motors" />
+        </label>
+        <div class="split">
+          <label class="field">Invoice Type
+            <select id="inv-type">
+              <option value="gst">GST</option>
+              <option value="non-gst">Non-GST</option>
+            </select>
+          </label>
+          <label class="field">Amount (₹) *
+            <input type="number" id="inv-amount" min="0" step="0.01" required placeholder="10000" />
+          </label>
+        </div>
+        <label class="field">GST Percentage
+          <select id="inv-gst">
+            <option value="0">0%</option>
+            <option value="5">5%</option>
+            <option value="12">12%</option>
+            <option value="18" selected>18%</option>
+            <option value="28">28%</option>
+          </select>
+        </label>
+        <div class="summary">
+          <div class="row"><span>GST amount</span><strong id="gst-amount">₹0</strong></div>
+          <div class="row"><span>Total amount</span><strong id="total-amount">₹0</strong></div>
+        </div>
+        <button class="btn primary" id="save-invoice" type="submit">Save Invoice</button>
+        <div class="muted" id="trial-message" style="display:none;"></div>
+        <div class="error" id="form-error" style="display:none;"></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="lock-modal" id="feature-lock-modal" role="dialog" aria-modal="true" aria-labelledby="feature-lock-title">
+    <div class="lock-card">
+      <h3 id="feature-lock-title">Feature locked</h3>
+      <p id="feature-lock-message">Upgrade to Growth to use this feature.</p>
+      <div class="lock-actions">
+        <button class="btn" type="button" id="feature-lock-close">Close</button>
+        <a class="btn primary" href="index.html#settings">Upgrade Plan</a>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/invoice.js"></script>
+</body>
+</html>

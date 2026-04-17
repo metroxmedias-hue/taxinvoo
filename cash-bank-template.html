@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="assets/poppins.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cash &amp; Bank Report Export</title>
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    @page { size: A4 landscape; margin: 10mm; }
+    body { margin: 0; font-family: "Inter", "Segoe UI", Arial, sans-serif; color: #0f172a; background: #fff; font-size: 11px; line-height: 1.35; }
+    .sheet { width: 100%; }
+    .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; border-bottom: 1px solid #dbe1ea; padding-bottom: 8px; margin-bottom: 10px; }
+    .brand { display: flex; gap: 10px; align-items: center; }
+    .logo { width: 42px; height: 42px; object-fit: contain; border-radius: 10px; border: 1px solid #dbe1ea; background: #fff; }
+    .logo-fallback { width: 42px; height: 42px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; background: #1d4ed8; }
+    .company-title { margin: 0; font-size: 16px; font-weight: 700; }
+    .company-meta { margin-top: 2px; color: #475569; font-size: 10px; white-space: pre-line; }
+    .report-title { text-align: right; }
+    .report-title h1 { margin: 0; font-size: 17px; font-weight: 700; }
+    .report-title p { margin: 2px 0 0; color: #475569; font-size: 10px; }
+    .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 8px; }
+    .kpi { border: 1px solid #dbe1ea; background: #f8fafc; border-radius: 8px; padding: 7px 8px; }
+    .kpi .label { color: #475569; font-size: 10px; }
+    .kpi .value { margin-top: 2px; font-weight: 700; font-size: 13px; }
+    .section-title { margin: 8px 0 5px; padding: 6px 8px; border: 1px solid #dbe1ea; background: #f3f6fb; border-radius: 8px; font-weight: 700; }
+    .table-wrap { border: 1px solid #dbe1ea; border-radius: 8px; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    th { background: #f3f6fb; color: #1e293b; text-align: left; font-size: 10px; letter-spacing: .02em; padding: 7px 8px; border-bottom: 1px solid #dbe1ea; }
+    td { padding: 6px 8px; border-top: 1px solid #edf1f7; vertical-align: top; color: #1f2937; word-break: break-word; }
+    .num { text-align: right; white-space: nowrap; }
+    .empty { border: 1px dashed #dbe1ea; color: #64748b; text-align: center; padding: 16px; border-radius: 8px; margin-top: 8px; }
+    .footer { margin-top: 10px; border-top: 1px solid #dbe1ea; padding-top: 5px; color: #64748b; font-size: 9.5px; text-align: right; }
+  </style>
+</head>
+<body>
+  <div class="sheet">
+    <header class="head">
+      <div class="brand"><div id="logoWrap"></div><div><h2 class="company-title" id="companyName">Your Company</h2><div class="company-meta" id="companyMeta"></div></div></div>
+      <div class="report-title"><h1 id="reportTitle">Cash and Bank Report</h1><p id="reportMeta">—</p><p id="generatedMeta"></p></div>
+    </header>
+    <section class="kpis" id="kpiWrap"></section>
+    <div class="section-title">Transactions</div>
+    <div id="tableHost"></div>
+    <div class="footer">Metrox TaxInvoo | Cash &amp; Bank Report Export</div>
+  </div>
+  <script>
+    (function () {
+      const esc = (v) => String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+      const fmt = new Intl.NumberFormat("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+      const inr = (n) => `INR ${fmt.format(Number(n) || 0)}`;
+      const raw = (sessionStorage.getItem('Metrox TaxInvoo_cash_bank_export') || localStorage.getItem('Metrox TaxInvoo_cash_bank_export'));
+      if (!raw) return;
+      let payload = null;
+      try { payload = JSON.parse(raw); } catch (_) { return; }
+
+      const company = payload.company || {};
+      const rows = Array.isArray(payload.rows) ? payload.rows : [];
+      const balances = payload.balances || {};
+      const totalIn = Number(payload.totalIn) || 0;
+      const totalOut = Number(payload.totalOut) || 0;
+      const openingBalance = Number(payload.openingBalance) || 0;
+      const closingBalance = Number(payload.closingBalance) || Number(balances.totalBalance) || 0;
+      const periodValue = String(payload.periodDays || 30);
+      const periodMap = {
+        this_week: "This Week",
+        this_month: "This Month",
+        this_year: "This Year",
+        "7": "Last 7 Days",
+        "30": "Last 30 Days",
+        "90": "Last 90 Days",
+        "365": "Last 365 Days",
+        all: "All Time"
+      };
+      const generatedAt = payload.generatedAt ? new Date(payload.generatedAt) : new Date();
+      const options = payload.options || {};
+      const includeSummary = options.includeSummary !== false;
+      const typeMap = {
+        all: "All Types",
+        inflow: "Inflow",
+        outflow: "Outflow",
+        transfer: "Transfers",
+        payment_in: "Payment In",
+        payment_out: "Payment Out",
+        expense: "Expenses",
+        manual: "Manual Entries"
+      };
+
+      const logoWrap = document.getElementById("logoWrap");
+      if (company.logo) logoWrap.innerHTML = `<img src="${esc(company.logo)}" alt="Logo" class="logo" />`;
+      else logoWrap.innerHTML = `<div class="logo-fallback">${esc(String(company.name || "M").trim().slice(0, 1).toUpperCase() || "M")}</div>`;
+
+      const metaParts = [];
+      if (company.address) metaParts.push(company.address);
+      if (company.phone) metaParts.push(`Phone: ${company.phone}`);
+      if (company.gstin) metaParts.push(`GSTIN: ${company.gstin}`);
+      document.getElementById("companyName").textContent = company.name || "Your Company";
+      document.getElementById("companyMeta").textContent = metaParts.join(" | ");
+      document.getElementById("reportTitle").textContent = payload?.report?.title || "Cash and Bank Report (All Payments)";
+      const reportMeta = [
+        `Period: ${periodMap[periodValue] || "Custom"}`,
+        `Account: ${options.accountLabel || "All Accounts"}`,
+        `Type: ${typeMap[String(options.type || "all")] || "All Types"}`
+      ];
+      if (options.dateFrom) reportMeta.push(`From: ${options.dateFrom}`);
+      if (options.dateTo) reportMeta.push(`To: ${options.dateTo}`);
+      if (options.search) reportMeta.push(`Search: ${options.search}`);
+      document.getElementById("reportMeta").textContent = reportMeta.join(" | ");
+      document.getElementById("generatedMeta").textContent = `Generated: ${generatedAt.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}, ${generatedAt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}`;
+
+      const kpiWrap = document.getElementById("kpiWrap");
+      if (includeSummary) {
+        kpiWrap.innerHTML = [
+          { label: "Opening Balance", value: inr(openingBalance) },
+          { label: "Total Inflow", value: inr(totalIn) },
+          { label: "Total Outflow", value: inr(totalOut) },
+          { label: "Closing Balance", value: inr(closingBalance) }
+        ].map((k) => `<article class="kpi"><div class="label">${esc(k.label)}</div><div class="value">${esc(k.value)}</div></article>`).join("");
+      } else {
+        kpiWrap.style.display = "none";
+      }
+
+      const host = document.getElementById("tableHost");
+      if (!rows.length) {
+        host.innerHTML = '<div class="empty">No transactions available for the selected period.</div>';
+      } else {
+        host.innerHTML = `
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:12%">Date</th>
+                  <th style="width:25%">Particular</th>
+                  <th style="width:14%">Source</th>
+                  <th style="width:13%">Account</th>
+                  <th style="width:10%">Mode</th>
+                  <th style="width:9%" class="num">Inflow</th>
+                  <th style="width:9%" class="num">Outflow</th>
+                  <th style="width:12%" class="num">Running Balance</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="7"><strong>Opening Balance</strong></td>
+                  <td class="num"><strong>${esc(inr(openingBalance))}</strong></td>
+                </tr>
+                ${rows.map((r) => `
+                  <tr>
+                    <td>${esc(r.date || "—")}</td>
+                    <td>${esc(r.particular || "—")}</td>
+                    <td>${esc(r.source || "—")}</td>
+                    <td>${esc(r.account || "—")}</td>
+                    <td>${esc(r.mode || "—")}</td>
+                    <td class="num">${Number(r.inAmount) > 0 ? esc(inr(r.inAmount)) : "—"}</td>
+                    <td class="num">${Number(r.outAmount) > 0 ? esc(inr(r.outAmount)) : "—"}</td>
+                    <td class="num">${esc(inr(r.runningBalance || 0))}</td>
+                  </tr>
+                `).join("")}
+                <tr>
+                  <td colspan="7"><strong>Closing Balance</strong></td>
+                  <td class="num"><strong>${esc(inr(closingBalance))}</strong></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("auto") === "pdf" || params.get("auto") === "print") setTimeout(() => window.print(), 140);
+    })();
+  </script>
+</body>
+</html>

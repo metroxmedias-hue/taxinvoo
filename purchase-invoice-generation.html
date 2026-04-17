@@ -1,0 +1,1271 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="assets/poppins.css" />
+  <link rel="stylesheet" href="assets/light-theme-generation-overrides.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Metrox TaxInvoo - Create Purchase Invoice</title>
+  <meta name="description" content="Dedicated Purchase Invoice creation form." />
+  <style>
+    :root {
+      --bg: #10163b;
+      --panel: rgba(22, 29, 74, 0.72);
+      --line: rgba(214,222,255,0.16);
+      --ink: #eef2ff;
+      --muted: #b2badf;
+      --accent: #5b52f3;
+      --danger: #ff8f8f;
+      --input: #151c45;
+      --good: #69d7d8;
+      --warn: #f59e0b;
+    }
+    body.light {
+      --bg: #f4f7ff;
+      --panel: #ffffff;
+      --line: rgba(15,23,42,0.15);
+      --ink: #0f172a;
+      --muted: rgba(15,23,42,0.66);
+      --accent: #4f46e5;
+      --danger: #dc2626;
+      --input: #ffffff;
+      --good: #0f766e;
+      --warn: #b45309;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 24px;
+      font-family: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(920px 520px at 18% -10%, rgba(106,77,245,0.16), transparent),
+        radial-gradient(900px 520px at 112% 3%, rgba(105,215,216,0.14), transparent),
+        linear-gradient(180deg, #0a0d16, var(--bg));
+      display: grid;
+      place-items: center;
+    }
+    .shell {
+      width: min(1120px, 100%);
+      background: color-mix(in oklab, var(--panel) 90%, transparent);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 22px;
+      display: grid;
+      gap: 16px;
+      backdrop-filter: blur(6px);
+    }
+    .head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    h1 { margin: 0; font-size: 26px; letter-spacing: -0.01em; }
+    .muted { color: var(--muted); font-size: 13px; }
+    form { display: grid; gap: 12px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+    label { display: grid; gap: 7px; font-size: 13px; color: var(--muted); }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: var(--input);
+      color: var(--ink);
+      font: inherit;
+      outline: none;
+    }
+    textarea { min-height: 82px; resize: vertical; }
+    .section-card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+      background: rgba(255,255,255,0.02);
+    }
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .section-head h3 {
+      margin: 0;
+      font-size: 15px;
+      letter-spacing: 0.01em;
+    }
+    .summary {
+      display: grid;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: rgba(255,255,255,0.02);
+    }
+    .tax-summary-card { gap: 10px; }
+    .tax-summary-card .grand-total-row {
+      margin-top: 2px;
+      padding-top: 8px;
+      border-top: 1px dashed var(--line);
+      font-size: 16px;
+    }
+    .tax-summary-card .grand-total-row strong {
+      font-size: 21px;
+      letter-spacing: 0.01em;
+    }
+    .tax-flow-box { display: none; }
+    .tax-flow-box.active { display: grid; }
+    .row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--muted); }
+    .row strong { color: var(--ink); }
+    .error { color: var(--danger); font-size: 12px; min-height: 16px; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .inline-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    button {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 14px;
+      background: #151c45;
+      color: var(--ink);
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button.primary { border-color: transparent; background: linear-gradient(120deg, #69d7d8, #3d8bde, #6a4df5); color: #fff; }
+    button.ghost { background: transparent; }
+    .item-table-wrap {
+      width: 100%;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(8, 12, 30, 0.25);
+    }
+    .item-table {
+      width: 100%;
+      min-width: 980px;
+      border-collapse: collapse;
+    }
+    .item-table th,
+    .item-table td {
+      border-bottom: 1px solid var(--line);
+      padding: 8px;
+      text-align: left;
+      font-size: 12px;
+      vertical-align: middle;
+    }
+    .item-table th {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      position: sticky;
+      top: 0;
+      background: color-mix(in oklab, var(--panel) 96%, transparent);
+      z-index: 1;
+    }
+    .item-table td.number-cell,
+    .item-table th.number-cell { text-align: right; }
+    .item-table td input {
+      min-width: 96px;
+      padding: 8px 9px;
+      border-radius: 9px;
+      font-size: 12px;
+    }
+    .item-table td .cell-value {
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      color: var(--ink);
+    }
+    .item-table tbody tr:last-child td { border-bottom: none; }
+    body.light .section-card {
+      background: #ffffff;
+      border-color: rgba(15,23,42,0.12);
+    }
+    body.light .summary {
+      background: #f8fbff;
+      border-color: rgba(15,23,42,0.1);
+    }
+    body.light .item-table-wrap {
+      background: #ffffff;
+      border-color: rgba(15,23,42,0.14);
+    }
+    body.light .item-table th {
+      background: #f3f6fb;
+      color: #4b5563;
+      border-bottom-color: rgba(15,23,42,0.16);
+    }
+    body.light .item-table td {
+      background: #ffffff;
+      border-bottom-color: rgba(15,23,42,0.1);
+    }
+    body.light .item-table td input {
+      background: #ffffff;
+      border-color: rgba(15,23,42,0.16);
+      color: #0f172a;
+    }
+    body.light .item-table td .cell-value {
+      color: #1e293b;
+    }
+    .table-actions { white-space: nowrap; text-align: center; width: 74px; }
+    .table-actions button { padding: 7px 10px; font-size: 12px; }
+    .payment-status-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    .payment-status-pill.status-paid {
+      color: #86efac;
+      border-color: rgba(34, 197, 94, 0.35);
+      background: rgba(34, 197, 94, 0.12);
+    }
+    .payment-status-pill.status-partial {
+      color: #fdba74;
+      border-color: rgba(251, 146, 60, 0.36);
+      background: rgba(251, 146, 60, 0.12);
+    }
+    .payment-status-pill.status-unpaid {
+      color: #fca5a5;
+      border-color: rgba(248, 113, 113, 0.36);
+      background: rgba(248, 113, 113, 0.12);
+    }
+    body.light .payment-status-pill.status-paid {
+      color: #047857;
+      border-color: rgba(16, 185, 129, 0.34);
+      background: rgba(16, 185, 129, 0.12);
+    }
+    body.light .payment-status-pill.status-partial {
+      color: #c2410c;
+      border-color: rgba(249, 115, 22, 0.34);
+      background: rgba(251, 146, 60, 0.14);
+    }
+    body.light .payment-status-pill.status-unpaid {
+      color: #b91c1c;
+      border-color: rgba(239, 68, 68, 0.32);
+      background: rgba(248, 113, 113, 0.12);
+    }
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(4,6,12,0.68); display: none;
+      align-items: center; justify-content: center; padding: 16px; z-index: 90;
+    }
+    .modal-backdrop.active { display: flex; }
+    .modal { width: min(620px, 100%); background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 10px; }
+    .modal-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .picker-tabs { display: inline-flex; gap: 6px; }
+    .picker-tab.active { background: linear-gradient(120deg, #69d7d8, #3d8bde, #6a4df5); color: #fff; border-color: transparent; }
+    .picker-pane { display: none; gap: 10px; }
+    .picker-pane.active { display: grid; }
+    .picker-list { display: flex; flex-wrap: wrap; gap: 8px; max-height: 120px; overflow: auto; }
+    .picker-chip { padding: 7px 10px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255,255,255,0.04); color: var(--ink); cursor: pointer; }
+    @media (max-width: 980px) {
+      .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 760px) {
+      body { padding: 12px; }
+      .shell { padding: 14px; }
+      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+      .section-card { padding: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="head">
+      <div>
+        <h1 id="form-title">Create Purchase Invoice</h1>
+        <div class="muted">Record supplier invoice and claim input GST credit.</div>
+      </div>
+      <button type="button" id="back-btn">Back to Purchase Invoices</button>
+    </div>
+
+    <form id="purchase-form">
+      <section class="section-card">
+        <div class="section-head">
+          <h3>Supplier Info</h3>
+        </div>
+        <div class="grid-2">
+          <label>Supplier
+            <input type="text" id="supplier" list="supplier-list" placeholder="Ram Traders" required />
+            <datalist id="supplier-list"></datalist>
+            <select id="supplier-select" style="margin-top:8px;">
+              <option value="">Select existing supplier</option>
+            </select>
+            <div class="muted" id="supplier-options-hint" style="font-size:12px;margin-top:6px;">Loading suppliers…</div>
+          </label>
+          <label>Purchase type
+            <select id="purchase-type">
+              <option value="goods">Goods</option>
+              <option value="services">Services</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section class="section-card">
+        <div class="section-head">
+          <h3>Invoice Details</h3>
+        </div>
+        <div class="grid-3">
+          <label>Purchase invoice number
+            <input type="text" id="bill-no" placeholder="PINV-001" />
+          </label>
+          <label>Invoice date
+            <input type="date" id="date" required />
+          </label>
+          <label>Due in (days)
+            <input type="number" id="due-days" min="0" step="1" value="30" />
+          </label>
+        </div>
+        <div class="grid-2">
+          <label>Place of supply
+            <select id="supply">
+              <option value="intra">Intra-state (CGST/SGST)</option>
+              <option value="inter">Inter-state (IGST)</option>
+            </select>
+          </label>
+          <label>Default GST rate (%)
+            <select id="gst-rate">
+              <option value="0">0%</option>
+              <option value="5">5%</option>
+              <option value="12">12%</option>
+              <option value="18" selected>18%</option>
+              <option value="28">28%</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section class="section-card">
+        <div class="section-head">
+          <h3>Items</h3>
+          <div class="inline-actions">
+            <button type="button" id="pick-item" class="ghost">Pick Product/Service</button>
+            <button type="button" id="add-item-btn">Add Item</button>
+          </div>
+        </div>
+        <div class="item-table-wrap">
+          <table class="item-table" aria-label="Purchase item grid">
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th>HSN/SAC</th>
+                <th class="number-cell">Qty</th>
+                <th class="number-cell">Rate</th>
+                <th class="number-cell">Tax %</th>
+                <th class="number-cell">Tax Amt</th>
+                <th class="number-cell">Amount</th>
+                <th class="table-actions">Action</th>
+              </tr>
+            </thead>
+            <tbody id="items-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section-card">
+        <div class="section-head">
+          <h3>Tax &amp; Total</h3>
+        </div>
+
+        <div class="summary tax-flow-box" id="purchase-compliance-box">
+          <div class="row">
+            <span>Compliance flow</span>
+            <strong id="purchase-compliance-label">TDS / TCS active</strong>
+          </div>
+          <div class="grid-2">
+            <div id="purchase-tds-block" style="display:none;">
+              <div class="muted" style="margin-bottom:8px;">TDS reduces the amount payable to the supplier.</div>
+              <div class="grid-2">
+                <label>TDS section
+                  <input type="text" id="tds-section" placeholder="194C" />
+                </label>
+                <label>TDS rate (%)
+                  <input type="number" id="tds-rate" min="0" step="0.01" placeholder="1" />
+                </label>
+              </div>
+            </div>
+            <div id="purchase-tcs-block" style="display:none;">
+              <div class="muted" style="margin-bottom:8px;">TCS adds an extra payable amount on the bill.</div>
+              <div class="grid-2">
+                <label>TCS section
+                  <input type="text" id="tcs-section" placeholder="206C" />
+                </label>
+                <label>TCS rate (%)
+                  <input type="number" id="tcs-rate" min="0" step="0.01" placeholder="1" />
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="summary tax-summary-card">
+          <div class="row"><span>Taxable Value</span><strong id="taxable">INR 0</strong></div>
+          <div class="row"><span>Input CGST</span><strong id="cgst">INR 0</strong></div>
+          <div class="row"><span>Input SGST</span><strong id="sgst">INR 0</strong></div>
+          <div class="row"><span>Input IGST</span><strong id="igst">INR 0</strong></div>
+          <div class="row" id="tcs-row" style="display:none;"><span>TCS</span><strong id="tcs-amount">INR 0</strong></div>
+          <div class="row" id="tds-row" style="display:none;"><span>TDS</span><strong id="tds-amount">INR 0</strong></div>
+          <div class="row"><span>Total Tax</span><strong id="tax">INR 0</strong></div>
+          <div class="row grand-total-row"><span>Grand Total</span><strong id="total">INR 0</strong></div>
+          <div class="row" id="net-payable-row" style="display:none;"><span>Net payable</span><strong id="net-payable">INR 0</strong></div>
+        </div>
+      </section>
+
+      <section class="section-card">
+        <div class="section-head">
+          <h3>Payment</h3>
+          <button type="button" id="record-payment-btn">Record Payment</button>
+        </div>
+        <div class="summary">
+          <div class="row">
+            <span>Payment Status</span>
+            <strong><span id="payment-status-pill" class="payment-status-pill status-unpaid">Unpaid</span></strong>
+          </div>
+          <div class="grid-2">
+            <div class="row"><span>Amount paid</span><strong id="amount-paid">INR 0</strong></div>
+            <div class="row"><span>Remaining balance</span><strong id="remaining-balance">INR 0</strong></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-card">
+        <div class="section-head">
+          <h3>Notes</h3>
+        </div>
+        <label>Notes
+          <textarea id="notes" placeholder="Reference / notes"></textarea>
+        </label>
+      </section>
+
+      <div class="error" id="error"></div>
+      <div class="actions">
+        <button type="submit" class="primary" id="save-btn">Save Purchase Invoice</button>
+        <button type="button" id="cancel-btn">Cancel</button>
+      </div>
+    </form>
+  </main>
+
+  <div class="modal-backdrop" id="item-picker-modal">
+    <div class="modal">
+      <div class="modal-head">
+        <strong>Pick Product/Service</strong>
+        <button type="button" id="item-picker-close">Close</button>
+      </div>
+      <div class="picker-tabs">
+        <button type="button" id="picker-tab-existing" class="picker-tab active">Select existing</button>
+        <button type="button" id="picker-tab-create" class="picker-tab">Create new</button>
+      </div>
+      <div id="picker-pane-existing" class="picker-pane active">
+        <label>Type
+          <select id="picker-type">
+            <option value="service">Service</option>
+            <option value="product">Product</option>
+          </select>
+        </label>
+        <label>Saved items
+          <select id="picker-existing">
+            <option value="">Choose item</option>
+          </select>
+        </label>
+        <div class="muted" id="picker-meta">No saved items yet.</div>
+        <div class="picker-list" id="picker-list"></div>
+        <button type="button" class="primary" id="picker-add-selected">Use Selected</button>
+      </div>
+      <div id="picker-pane-create" class="picker-pane">
+        <div class="grid-2">
+          <label>Name
+            <input type="text" id="picker-name" placeholder="Item/service name" />
+          </label>
+          <label>Default Price
+            <input type="number" min="0" step="0.01" id="picker-price" placeholder="0" />
+          </label>
+        </div>
+        <button type="button" class="primary" id="picker-create-add">Create &amp; Use</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const STORAGE_KEY = 'metrox_taxinvoo_demo_state';
+      const BACKUP_KEY = 'metrox_taxinvoo_demo_state_backup';
+      const LAST_GOOD_KEY = 'metrox_taxinvoo_last_good_state';
+      const ACTIVE_BUSINESS_PROFILE_KEY = 'metrox_active_business_profile_v1';
+      const SCOPED_STATE_KEY_SEPARATOR = '__';
+      const FOCUS_KEY = 'metrox_open_purchase_invoice_form';
+      const EDIT_KEY = 'metrox_edit_purchase_invoice_id';
+      const PREFILL_PO_KEY = 'metrox_prefill_purchase_invoice_from_po';
+      const target = 'index.html#/purchases';
+      const fmt = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 });
+
+      const theme = localStorage.getItem('Metrox TaxInvoo_theme');
+      if (theme === 'light') document.body.classList.add('light');
+
+      const form = document.getElementById('purchase-form');
+      const formTitle = document.getElementById('form-title');
+      const supplierEl = document.getElementById('supplier');
+      const supplierListEl = document.getElementById('supplier-list');
+      const supplierSelectEl = document.getElementById('supplier-select');
+      const supplierOptionsHintEl = document.getElementById('supplier-options-hint');
+      const purchaseTypeEl = document.getElementById('purchase-type');
+      const supplyEl = document.getElementById('supply');
+      const gstRateEl = document.getElementById('gst-rate');
+      const billNoEl = document.getElementById('bill-no');
+      const dateEl = document.getElementById('date');
+      const dueDaysEl = document.getElementById('due-days');
+      const notesEl = document.getElementById('notes');
+      const itemsBody = document.getElementById('items-body');
+      const addItemBtn = document.getElementById('add-item-btn');
+      const taxableEl = document.getElementById('taxable');
+      const cgstEl = document.getElementById('cgst');
+      const sgstEl = document.getElementById('sgst');
+      const igstEl = document.getElementById('igst');
+      const taxEl = document.getElementById('tax');
+      const totalEl = document.getElementById('total');
+      const purchaseComplianceBox = document.getElementById('purchase-compliance-box');
+      const purchaseComplianceLabel = document.getElementById('purchase-compliance-label');
+      const purchaseTdsBlock = document.getElementById('purchase-tds-block');
+      const purchaseTcsBlock = document.getElementById('purchase-tcs-block');
+      const tdsSectionEl = document.getElementById('tds-section');
+      const tdsRateEl = document.getElementById('tds-rate');
+      const tcsSectionEl = document.getElementById('tcs-section');
+      const tcsRateEl = document.getElementById('tcs-rate');
+      const tcsRow = document.getElementById('tcs-row');
+      const tdsRow = document.getElementById('tds-row');
+      const tcsAmountEl = document.getElementById('tcs-amount');
+      const tdsAmountEl = document.getElementById('tds-amount');
+      const netPayableRow = document.getElementById('net-payable-row');
+      const netPayableEl = document.getElementById('net-payable');
+      const paymentStatusPill = document.getElementById('payment-status-pill');
+      const amountPaidEl = document.getElementById('amount-paid');
+      const remainingBalanceEl = document.getElementById('remaining-balance');
+      const recordPaymentBtn = document.getElementById('record-payment-btn');
+      const errorEl = document.getElementById('error');
+      const saveBtn = document.getElementById('save-btn');
+      const pickItemBtn = document.getElementById('pick-item');
+      const pickerModal = document.getElementById('item-picker-modal');
+      const pickerCloseBtn = document.getElementById('item-picker-close');
+      const pickerTabExisting = document.getElementById('picker-tab-existing');
+      const pickerTabCreate = document.getElementById('picker-tab-create');
+      const pickerPaneExisting = document.getElementById('picker-pane-existing');
+      const pickerPaneCreate = document.getElementById('picker-pane-create');
+      const pickerType = document.getElementById('picker-type');
+      const pickerExisting = document.getElementById('picker-existing');
+      const pickerMeta = document.getElementById('picker-meta');
+      const pickerList = document.getElementById('picker-list');
+      const pickerAddSelectedBtn = document.getElementById('picker-add-selected');
+      const pickerName = document.getElementById('picker-name');
+      const pickerPrice = document.getElementById('picker-price');
+      const pickerCreateAddBtn = document.getElementById('picker-create-add');
+      const ITEM_CATALOG_KEY_PREFIX = 'metrox_item_catalog_v1__';
+
+      let activeItemRow = null;
+
+      dateEl.value = new Date().toISOString().slice(0, 10);
+
+      function escapeHtml(value) {
+        return String(value || '').replace(/[&<>'"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[ch] || ch));
+      }
+
+      function goBack() {
+        try { localStorage.setItem(FOCUS_KEY, '1'); } catch (_) {}
+        window.location.href = target;
+      }
+
+      document.getElementById('back-btn').addEventListener('click', goBack);
+      document.getElementById('cancel-btn').addEventListener('click', goBack);
+
+      function getScopedLocalStateKeys() {
+        const profileId = String(localStorage.getItem(ACTIVE_BUSINESS_PROFILE_KEY) || '').trim().replace(/[^a-zA-Z0-9_-]/g, '');
+        if (!profileId) {
+          return { primary: STORAGE_KEY, backup: BACKUP_KEY, lastGood: LAST_GOOD_KEY };
+        }
+        return {
+          primary: STORAGE_KEY + SCOPED_STATE_KEY_SEPARATOR + profileId,
+          backup: BACKUP_KEY + SCOPED_STATE_KEY_SEPARATOR + profileId,
+          lastGood: LAST_GOOD_KEY + SCOPED_STATE_KEY_SEPARATOR + profileId
+        };
+      }
+
+      function parseState() {
+        try {
+          const scoped = getScopedLocalStateKeys();
+          const raw = localStorage.getItem(scoped.primary)
+            || localStorage.getItem(scoped.backup)
+            || localStorage.getItem(scoped.lastGood)
+            || localStorage.getItem(STORAGE_KEY)
+            || localStorage.getItem(BACKUP_KEY)
+            || localStorage.getItem(LAST_GOOD_KEY);
+          const parsed = raw ? JSON.parse(raw) : {};
+          return parsed && typeof parsed === 'object' ? parsed : {};
+        } catch (_) {
+          return {};
+        }
+      }
+
+      function saveState(next) {
+        const payload = next && typeof next === 'object' ? next : {};
+        payload._meta = { ...(payload._meta || {}), updated_at: new Date().toISOString() };
+        const serialized = JSON.stringify(payload);
+        const scoped = getScopedLocalStateKeys();
+        localStorage.setItem(scoped.primary, serialized);
+        localStorage.setItem(scoped.backup, serialized);
+        localStorage.setItem(scoped.lastGood, serialized);
+      }
+
+      function addDays(dateStr, days) {
+        const date = dateStr ? new Date(dateStr) : new Date();
+        if (Number.isNaN(date.getTime())) return '';
+        date.setDate(date.getDate() + (Number(days) || 0));
+        return date.toISOString().slice(0, 10);
+      }
+
+      function normalizeRate(value) {
+        const num = Number(value);
+        if (!Number.isFinite(num) || num <= 0) return 0;
+        return Number(num.toFixed(4));
+      }
+
+      function currency(value) {
+        return Number((Number(value) || 0).toFixed(2));
+      }
+
+      function syncComplianceVisibility() {
+        const tdsEnabled = !!state.company?.tdsEnabled;
+        const tcsEnabled = !!state.company?.tcsEnabled;
+        if (purchaseComplianceBox) purchaseComplianceBox.classList.toggle('active', tdsEnabled || tcsEnabled);
+        if (purchaseTdsBlock) purchaseTdsBlock.style.display = tdsEnabled ? 'block' : 'none';
+        if (purchaseTcsBlock) purchaseTcsBlock.style.display = tcsEnabled ? 'block' : 'none';
+        if (purchaseComplianceLabel) {
+          purchaseComplianceLabel.textContent = [
+            tdsEnabled ? 'TDS on' : '',
+            tcsEnabled ? 'TCS on' : ''
+          ].filter(Boolean).join(' • ') || 'Compliance off';
+        }
+        if (!tdsEnabled) {
+          if (tdsSectionEl) tdsSectionEl.value = '';
+          if (tdsRateEl) tdsRateEl.value = '';
+        }
+        if (!tcsEnabled) {
+          if (tcsSectionEl) tcsSectionEl.value = '';
+          if (tcsRateEl) tcsRateEl.value = '';
+        }
+      }
+
+      function createItemRow(data = {}) {
+        const row = document.createElement('tr');
+        const defaultTax = Number(gstRateEl?.value || 0) || 0;
+        const description = String(data.description || data.item || '').trim();
+        const hsnSac = String(data.hsnSac || data.hsn || data.sac || '').trim();
+        const qty = Math.max(0, Number(data.qty ?? data.quantity ?? 1) || 1);
+        const rate = Math.max(0, Number(data.rate ?? data.price ?? data.unit_price ?? 0) || 0);
+        const taxRate = Math.max(0, Number(data.taxRate ?? data.ratePercent ?? defaultTax) || 0);
+        row.innerHTML = `
+          <td><input type="text" class="item-desc" placeholder="Description" value="${escapeHtml(description)}" /></td>
+          <td><input type="text" class="item-hsn" placeholder="HSN/SAC" value="${escapeHtml(hsnSac)}" /></td>
+          <td class="number-cell"><input type="number" class="item-qty" min="0" step="0.01" value="${qty}" /></td>
+          <td class="number-cell"><input type="number" class="item-rate" min="0" step="0.01" value="${rate}" /></td>
+          <td class="number-cell"><input type="number" class="item-tax" min="0" step="0.01" value="${taxRate}" /></td>
+          <td class="number-cell"><span class="cell-value item-tax-amt">INR 0</span></td>
+          <td class="number-cell"><span class="cell-value item-amount">INR 0</span></td>
+          <td class="table-actions"><button type="button" class="ghost remove-item-btn">Remove</button></td>
+        `;
+        row.querySelectorAll('input').forEach((input) => {
+          ['input', 'change'].forEach((evt) => input.addEventListener(evt, calculate));
+          input.addEventListener('focus', () => {
+            activeItemRow = row;
+          });
+        });
+        const removeBtn = row.querySelector('.remove-item-btn');
+        if (removeBtn) {
+          removeBtn.addEventListener('click', () => {
+            const currentRows = itemsBody.querySelectorAll('tr');
+            if (currentRows.length <= 1) {
+              alert('At least one item row is required.');
+              return;
+            }
+            if (activeItemRow === row) activeItemRow = null;
+            row.remove();
+            calculate();
+          });
+        }
+        return row;
+      }
+
+      function ensureAtLeastOneItemRow() {
+        if (!itemsBody.children.length) {
+          itemsBody.appendChild(createItemRow({ description: '', qty: 1, rate: 0, taxRate: Number(gstRateEl.value) || 0 }));
+        }
+      }
+
+      function collectItems() {
+        return Array.from(itemsBody.querySelectorAll('tr')).map((row) => {
+          const description = String(row.querySelector('.item-desc')?.value || '').trim();
+          const hsnSac = String(row.querySelector('.item-hsn')?.value || '').trim();
+          const qty = Math.max(0, Number(row.querySelector('.item-qty')?.value || 0) || 0);
+          const rate = Math.max(0, Number(row.querySelector('.item-rate')?.value || 0) || 0);
+          const taxRate = Math.max(0, Number(row.querySelector('.item-tax')?.value || 0) || 0);
+          const amount = currency(qty * rate);
+          const taxAmount = currency(amount * (taxRate / 100));
+          return {
+            description: description || 'Item',
+            hsnSac,
+            hsn: hsnSac,
+            sac: hsnSac,
+            qty,
+            quantity: qty,
+            rate,
+            price: rate,
+            unit_price: rate,
+            taxRate,
+            taxAmount,
+            total: amount,
+            amount
+          };
+        }).filter((item) => item.qty > 0 || item.rate > 0 || String(item.description || '').trim());
+      }
+
+      function getPaidForPurchase(purchaseId) {
+        if (!purchaseId) return 0;
+        return (state.supplierPayments || [])
+          .filter((payment) => String(payment.purchaseId || '') === String(purchaseId))
+          .reduce((sum, payment) => sum + (Number(payment.amount) || 0), 0);
+      }
+
+      function updatePaymentStatusPreview(grandTotal, purchaseId = '') {
+        const paid = currency(getPaidForPurchase(purchaseId));
+        const remaining = currency(Math.max(0, grandTotal - paid));
+        let status = 'Unpaid';
+        let statusClass = 'status-unpaid';
+        if (remaining <= 0 && grandTotal > 0) {
+          status = 'Paid';
+          statusClass = 'status-paid';
+        } else if (paid > 0) {
+          status = 'Partial';
+          statusClass = 'status-partial';
+        }
+        if (paymentStatusPill) {
+          paymentStatusPill.textContent = status;
+          paymentStatusPill.className = `payment-status-pill ${statusClass}`;
+        }
+        if (amountPaidEl) amountPaidEl.textContent = `INR ${fmt.format(paid)}`;
+        if (remainingBalanceEl) remainingBalanceEl.textContent = `INR ${fmt.format(remaining)}`;
+        return { status, paid, remaining };
+      }
+
+      function calculate() {
+        ensureAtLeastOneItemRow();
+        const supply = supplyEl.value || 'intra';
+        const rows = Array.from(itemsBody.querySelectorAll('tr'));
+        let taxableValue = 0;
+        let totalTax = 0;
+
+        rows.forEach((row) => {
+          const qty = Math.max(0, Number(row.querySelector('.item-qty')?.value || 0) || 0);
+          const rate = Math.max(0, Number(row.querySelector('.item-rate')?.value || 0) || 0);
+          const taxRate = Math.max(0, Number(row.querySelector('.item-tax')?.value || 0) || 0);
+          const lineAmount = currency(qty * rate);
+          const lineTax = currency(lineAmount * (taxRate / 100));
+          taxableValue += lineAmount;
+          totalTax += lineTax;
+          const amountEl = row.querySelector('.item-amount');
+          const taxAmtEl = row.querySelector('.item-tax-amt');
+          if (amountEl) amountEl.textContent = `INR ${fmt.format(lineAmount)}`;
+          if (taxAmtEl) taxAmtEl.textContent = `INR ${fmt.format(lineTax)}`;
+        });
+
+        taxableValue = currency(taxableValue);
+        totalTax = currency(totalTax);
+        const inputCgst = supply === 'inter' ? 0 : currency(totalTax / 2);
+        const inputSgst = supply === 'inter' ? 0 : currency(totalTax / 2);
+        const inputIgst = supply === 'inter' ? totalTax : 0;
+        const tdsRate = !!state.company?.tdsEnabled ? normalizeRate(tdsRateEl?.value) : 0;
+        const tcsRate = !!state.company?.tcsEnabled ? normalizeRate(tcsRateEl?.value) : 0;
+        const tdsAmount = currency(taxableValue * (tdsRate / 100));
+        const tcsAmount = currency(taxableValue * (tcsRate / 100));
+        const grandTotal = currency(taxableValue + totalTax + tcsAmount);
+        const netPayable = currency(Math.max(0, grandTotal - tdsAmount));
+
+        if (taxableEl) taxableEl.textContent = `INR ${fmt.format(taxableValue)}`;
+        if (cgstEl) cgstEl.textContent = `INR ${fmt.format(inputCgst)}`;
+        if (sgstEl) sgstEl.textContent = `INR ${fmt.format(inputSgst)}`;
+        if (igstEl) igstEl.textContent = `INR ${fmt.format(inputIgst)}`;
+        if (taxEl) taxEl.textContent = `INR ${fmt.format(totalTax)}`;
+        if (totalEl) totalEl.textContent = `INR ${fmt.format(grandTotal)}`;
+        if (tcsRow && tcsAmountEl) {
+          tcsRow.style.display = tcsAmount > 0 ? 'flex' : 'none';
+          tcsAmountEl.textContent = `INR ${fmt.format(tcsAmount)}`;
+        }
+        if (tdsRow && tdsAmountEl) {
+          tdsRow.style.display = tdsAmount > 0 ? 'flex' : 'none';
+          tdsAmountEl.textContent = `INR ${fmt.format(tdsAmount)}`;
+        }
+        if (netPayableRow && netPayableEl) {
+          const hasAdjustment = tdsAmount > 0 || tcsAmount > 0;
+          netPayableRow.style.display = hasAdjustment ? 'flex' : 'none';
+          netPayableEl.textContent = `INR ${fmt.format(netPayable)}`;
+        }
+
+        updatePaymentStatusPreview(grandTotal, editingId);
+
+        return {
+          supply,
+          taxableValue,
+          inputCgst,
+          inputSgst,
+          inputIgst,
+          totalTax,
+          tdsRate,
+          tdsAmount,
+          tcsRate,
+          tcsAmount,
+          total: grandTotal,
+          netPayable
+        };
+      }
+
+      const state = parseState();
+      state.company = state.company && typeof state.company === 'object' ? state.company : {};
+      state.purchases = Array.isArray(state.purchases) ? state.purchases : [];
+      state.supplierPayments = Array.isArray(state.supplierPayments) ? state.supplierPayments : [];
+      state.supplierMeta = state.supplierMeta && typeof state.supplierMeta === 'object' ? state.supplierMeta : {};
+      state.invoices = Array.isArray(state.invoices) ? state.invoices : [];
+      state.serviceCatalog = Array.isArray(state.serviceCatalog) ? state.serviceCatalog : [];
+      const editingId = localStorage.getItem(EDIT_KEY) || '';
+      if (editingId) localStorage.removeItem(EDIT_KEY);
+      let poPrefill = null;
+      try {
+        const prefillRaw = localStorage.getItem(PREFILL_PO_KEY) || '';
+        if (prefillRaw) poPrefill = JSON.parse(prefillRaw);
+      } catch (_) {
+        poPrefill = null;
+      }
+      try { localStorage.removeItem(PREFILL_PO_KEY); } catch (_) {}
+
+      function getSupplierNames() {
+        const names = new Map();
+        const addName = (value) => {
+          const name = String(value || '').trim();
+          if (!name) return;
+          const key = name.toLowerCase();
+          if (!names.has(key)) names.set(key, name);
+        };
+        (state.purchases || []).forEach((purchase) => addName(purchase?.supplier));
+        (state.supplierPayments || []).forEach((payment) => addName(payment?.supplier));
+        Object.entries(state.supplierMeta || {}).forEach(([name, meta]) => {
+          if (meta && typeof meta === 'object' && meta.deleted) return;
+          addName(name);
+        });
+        return Array.from(names.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+      }
+
+      const supplierNames = getSupplierNames();
+      supplierListEl.innerHTML = supplierNames.map((name) => `<option value="${escapeHtml(name)}"></option>`).join('');
+      if (supplierSelectEl) {
+        supplierSelectEl.innerHTML = ['<option value="">Select existing supplier</option>']
+          .concat(supplierNames.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`))
+          .join('');
+      }
+      if (supplierOptionsHintEl) {
+        supplierOptionsHintEl.textContent = supplierNames.length
+          ? `${supplierNames.length} existing supplier${supplierNames.length === 1 ? '' : 's'} loaded`
+          : 'No existing suppliers found for this profile.';
+      }
+
+      function getItemCatalogStorageKey() {
+        const profileId = String(localStorage.getItem(ACTIVE_BUSINESS_PROFILE_KEY) || '').trim().replace(/[^a-zA-Z0-9_-]/g, '');
+        return `${ITEM_CATALOG_KEY_PREFIX}${profileId || 'default'}`;
+      }
+
+      function normalizeCatalogType(type) {
+        return String(type || '').toLowerCase() === 'product' ? 'product' : 'service';
+      }
+
+      function toCatalogEntry(raw = {}) {
+        const name = String(raw.name || raw.description || raw.item || '').trim();
+        if (!name) return null;
+        return {
+          id: String(raw.id || `${normalizeCatalogType(raw.type)}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`),
+          type: normalizeCatalogType(raw.type),
+          name,
+          price: Math.max(0, Number(raw.price) || 0)
+        };
+      }
+
+      function loadSavedItemCatalog() {
+        try {
+          const parsed = JSON.parse(localStorage.getItem(getItemCatalogStorageKey()) || '[]');
+          return Array.isArray(parsed) ? parsed.map(toCatalogEntry).filter(Boolean) : [];
+        } catch (_) {
+          return [];
+        }
+      }
+
+      function saveItemCatalog(entries = []) {
+        const safe = Array.isArray(entries) ? entries.map(toCatalogEntry).filter(Boolean) : [];
+        localStorage.setItem(getItemCatalogStorageKey(), JSON.stringify(safe));
+      }
+
+      function collectCatalogFromState() {
+        const out = [];
+        (state.purchases || []).forEach((purchase) => {
+          const purchaseItems = Array.isArray(purchase.items) && purchase.items.length
+            ? purchase.items
+            : [{ description: purchase.item || '', price: Number(purchase.amount) || Number(purchase.total) || 0 }];
+          purchaseItems.forEach((row) => {
+            const entry = toCatalogEntry({
+              type: String(purchase.purchaseType || '').toLowerCase() === 'goods' ? 'product' : 'service',
+              name: row.description || row.item || purchase.item || '',
+              price: Number(row.rate ?? row.price ?? row.unit_price ?? purchase.amount ?? purchase.total) || 0
+            });
+            if (entry) out.push(entry);
+          });
+        });
+        (state.invoices || []).forEach((invoice) => {
+          (Array.isArray(invoice.items) ? invoice.items : []).forEach((row) => {
+            const entry = toCatalogEntry({
+              type: row.sac ? 'service' : 'product',
+              name: row.description || row.item || '',
+              price: Number(row.price) || Number(row.unit_price) || 0
+            });
+            if (entry) out.push(entry);
+          });
+        });
+        (state.serviceCatalog || []).forEach((service) => {
+          const entry = toCatalogEntry({
+            type: service.type || (service.sac ? 'service' : 'product'),
+            name: service.name || service.description || '',
+            price: Number(service.price) || 0
+          });
+          if (entry) out.push(entry);
+        });
+        return out;
+      }
+
+      function getUnifiedCatalog() {
+        const merged = [...collectCatalogFromState(), ...loadSavedItemCatalog()];
+        const seen = new Set();
+        return merged.filter((entry) => {
+          const key = `${entry.type}::${entry.name.toLowerCase()}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+      }
+
+      function renderPickerOptions() {
+        const selectedType = normalizeCatalogType(pickerType?.value || 'service');
+        const options = getUnifiedCatalog().filter((entry) => normalizeCatalogType(entry.type) === selectedType);
+        pickerExisting.innerHTML = ['<option value="">Choose item</option>']
+          .concat(options.map((entry, idx) => `<option value="${idx}">${entry.name}${entry.price ? ` • INR ${fmt.format(entry.price)}` : ''}</option>`))
+          .join('');
+        pickerExisting.dataset.options = JSON.stringify(options);
+        pickerMeta.textContent = options.length ? `${options.length} saved items found` : 'No saved items yet.';
+        pickerList.innerHTML = options.slice(0, 8)
+          .map((entry, idx) => `<button type="button" class="picker-chip" data-item-index="${idx}">${entry.name}${entry.price ? ` • INR ${fmt.format(entry.price)}` : ''}</button>`)
+          .join('');
+      }
+
+      function openPicker() {
+        if (!pickerModal) return;
+        pickerTabExisting.classList.add('active');
+        pickerTabCreate.classList.remove('active');
+        pickerPaneExisting.classList.add('active');
+        pickerPaneCreate.classList.remove('active');
+        pickerName.value = '';
+        pickerPrice.value = '';
+        renderPickerOptions();
+        pickerModal.classList.add('active');
+      }
+
+      function closePicker() {
+        pickerModal.classList.remove('active');
+      }
+
+      function applyPickedItem(selected) {
+        if (!selected) return;
+        const targetRow = activeItemRow || itemsBody.querySelector('tr:last-child') || createItemRow();
+        if (!targetRow.parentElement) itemsBody.appendChild(targetRow);
+        const descEl = targetRow.querySelector('.item-desc');
+        const rateEl = targetRow.querySelector('.item-rate');
+        if (descEl) descEl.value = selected.name || '';
+        if (rateEl) rateEl.value = String(Number(selected.price) || 0);
+        purchaseTypeEl.value = normalizeCatalogType(selected.type) === 'product' ? 'goods' : 'services';
+        calculate();
+      }
+
+      if (editingId) {
+        const current = state.purchases.find((p) => p.id === editingId);
+        if (current) {
+          formTitle.textContent = 'Edit Purchase Invoice';
+          saveBtn.textContent = 'Update Purchase Invoice';
+          supplierEl.value = current.supplier || '';
+          purchaseTypeEl.value = current.purchaseType || 'goods';
+          supplyEl.value = current.supply || 'intra';
+          gstRateEl.value = String(Number(current.rate ?? 18) || 18);
+          billNoEl.value = current.billNo || '';
+          dateEl.value = current.date || new Date().toISOString().slice(0, 10);
+          if (tdsRateEl) tdsRateEl.value = current.tdsRate ? String(current.tdsRate) : '';
+          if (tdsSectionEl) tdsSectionEl.value = current.tdsSection || '';
+          if (tcsRateEl) tcsRateEl.value = current.tcsRate ? String(current.tcsRate) : '';
+          if (tcsSectionEl) tcsSectionEl.value = current.tcsSection || '';
+          const dueDays = current.dueDays != null
+            ? Number(current.dueDays) || 0
+            : Math.max(0, Math.round((new Date(current.dueDate || current.date || Date.now()) - new Date(current.date || Date.now())) / (24 * 60 * 60 * 1000)));
+          dueDaysEl.value = dueDays;
+          notesEl.value = current.notes || '';
+
+          const sourceItems = Array.isArray(current.items) && current.items.length
+            ? current.items
+            : [{
+              description: current.item || 'Item',
+              hsnSac: current.hsn || current.sac || '',
+              qty: Number(current.qty ?? current.quantity ?? 1) || 1,
+              rate: Number(current.amount) || 0,
+              taxRate: Number(current.rate) || Number(gstRateEl.value) || 0
+            }];
+          itemsBody.innerHTML = '';
+          sourceItems.forEach((item) => {
+            itemsBody.appendChild(createItemRow({
+              description: item.description || item.item || '',
+              hsnSac: item.hsnSac || item.hsn || item.sac || '',
+              qty: Number(item.qty ?? item.quantity ?? 1) || 1,
+              rate: Number(item.rate ?? item.price ?? item.unit_price ?? item.amount ?? 0) || 0,
+              taxRate: Number(item.taxRate ?? item.rate ?? gstRateEl.value) || 0
+            }));
+          });
+        }
+      } else if (poPrefill && typeof poPrefill === 'object') {
+        const sourceItems = Array.isArray(poPrefill.items) && poPrefill.items.length
+          ? poPrefill.items
+          : [];
+        supplierEl.value = String(poPrefill.supplier || '').trim();
+        purchaseTypeEl.value = String(poPrefill.purchaseType || 'goods').toLowerCase() === 'services' ? 'services' : 'goods';
+        supplyEl.value = String(poPrefill.supply || 'intra').toLowerCase() === 'inter' ? 'inter' : 'intra';
+        billNoEl.value = String(poPrefill.billNo || '').trim();
+        if (poPrefill.date) dateEl.value = String(poPrefill.date);
+        if (poPrefill.dueDays != null && dueDaysEl) dueDaysEl.value = String(Math.max(0, Number(poPrefill.dueDays) || 0));
+        if (String(poPrefill.notes || '').trim()) {
+          const poId = String(poPrefill.purchaseOrderId || '').trim();
+          const linkText = poId ? `[PO ${poId}] ` : '';
+          notesEl.value = `${linkText}${String(poPrefill.notes || '').trim()}`.trim();
+        }
+        itemsBody.innerHTML = '';
+        sourceItems.forEach((row) => {
+          itemsBody.appendChild(createItemRow({
+            description: row.description || row.item || '',
+            hsnSac: row.hsnSac || row.hsn || row.sac || '',
+            qty: Number(row.qty ?? row.quantity ?? 1) || 1,
+            rate: Number(row.rate ?? row.price ?? row.unit_price ?? 0) || 0,
+            taxRate: Number(row.taxRate ?? row.rate ?? gstRateEl.value) || Number(gstRateEl.value) || 0
+          }));
+        });
+        if (sourceItems.length) {
+          const avgRate = sourceItems.reduce((sum, row) => sum + (Number(row.taxRate ?? row.rate ?? 0) || 0), 0) / sourceItems.length;
+          if (Number.isFinite(avgRate) && avgRate >= 0) gstRateEl.value = String(Number(avgRate.toFixed(2)));
+        }
+      }
+
+      if (supplierSelectEl && supplierEl) {
+        const normalizedCurrent = String(supplierEl.value || '').trim().toLowerCase();
+        if (normalizedCurrent) {
+          const matched = supplierNames.find((name) => name.toLowerCase() === normalizedCurrent);
+          if (matched) supplierSelectEl.value = matched;
+        }
+        supplierSelectEl.addEventListener('change', () => {
+          if (supplierSelectEl.value) supplierEl.value = supplierSelectEl.value;
+        });
+        supplierEl.addEventListener('input', () => {
+          const typed = String(supplierEl.value || '').trim().toLowerCase();
+          if (!typed) {
+            supplierSelectEl.value = '';
+            return;
+          }
+          const matched = supplierNames.find((name) => name.toLowerCase() === typed);
+          supplierSelectEl.value = matched || '';
+        });
+      }
+
+      ensureAtLeastOneItemRow();
+
+      ['input', 'change'].forEach((evt) => {
+        if (gstRateEl) gstRateEl.addEventListener(evt, () => {
+          const safeRate = Math.max(0, Number(gstRateEl.value) || 0);
+          itemsBody.querySelectorAll('.item-tax').forEach((el) => {
+            if (!String(el.value || '').trim()) el.value = String(safeRate);
+          });
+          calculate();
+        });
+        if (supplyEl) supplyEl.addEventListener(evt, calculate);
+        if (tdsRateEl) tdsRateEl.addEventListener(evt, calculate);
+        if (tcsRateEl) tcsRateEl.addEventListener(evt, calculate);
+      });
+
+      if (addItemBtn) {
+        addItemBtn.addEventListener('click', () => {
+          const row = createItemRow({ qty: 1, rate: 0, taxRate: Number(gstRateEl.value) || 0 });
+          itemsBody.appendChild(row);
+          activeItemRow = row;
+          const descInput = row.querySelector('.item-desc');
+          if (descInput) descInput.focus();
+          calculate();
+        });
+      }
+
+      syncComplianceVisibility();
+      if (pickItemBtn) pickItemBtn.addEventListener('click', openPicker);
+      if (pickerCloseBtn) pickerCloseBtn.addEventListener('click', closePicker);
+      if (pickerModal) pickerModal.addEventListener('click', (event) => {
+        if (event.target === pickerModal) closePicker();
+      });
+      if (pickerTabExisting) pickerTabExisting.addEventListener('click', () => {
+        pickerTabExisting.classList.add('active');
+        pickerTabCreate.classList.remove('active');
+        pickerPaneExisting.classList.add('active');
+        pickerPaneCreate.classList.remove('active');
+      });
+      if (pickerTabCreate) pickerTabCreate.addEventListener('click', () => {
+        pickerTabCreate.classList.add('active');
+        pickerTabExisting.classList.remove('active');
+        pickerPaneCreate.classList.add('active');
+        pickerPaneExisting.classList.remove('active');
+      });
+      if (pickerType) pickerType.addEventListener('change', renderPickerOptions);
+      if (pickerList) pickerList.addEventListener('click', (event) => {
+        const trigger = event.target.closest('[data-item-index]');
+        if (!trigger) return;
+        pickerExisting.value = String(trigger.dataset.itemIndex || '');
+        if (pickerAddSelectedBtn) pickerAddSelectedBtn.click();
+      });
+      if (pickerAddSelectedBtn) pickerAddSelectedBtn.addEventListener('click', () => {
+        const idx = Number(String(pickerExisting.value || ''));
+        if (!Number.isFinite(idx)) {
+          alert('Please select an item first.');
+          return;
+        }
+        let selected = null;
+        try {
+          selected = JSON.parse(pickerExisting.dataset.options || '[]')[idx] || null;
+        } catch (_) {}
+        if (!selected) return;
+        applyPickedItem(selected);
+        closePicker();
+      });
+      if (pickerCreateAddBtn) pickerCreateAddBtn.addEventListener('click', () => {
+        const type = normalizeCatalogType(pickerType?.value || 'service');
+        const name = String(pickerName.value || '').trim();
+        if (!name) {
+          alert('Please enter item/service name.');
+          return;
+        }
+        const created = toCatalogEntry({ type, name, price: Number(pickerPrice.value) || 0 });
+        if (!created) return;
+        const saved = loadSavedItemCatalog();
+        const deduped = saved.filter((entry) => !(entry.type === created.type && String(entry.name || '').toLowerCase() === created.name.toLowerCase()));
+        deduped.unshift(created);
+        saveItemCatalog(deduped);
+        const liveCatalog = Array.isArray(state.serviceCatalog) ? state.serviceCatalog : [];
+        state.serviceCatalog = [
+          { type: created.type, name: created.name, hsn: '', sac: '', price: created.price || 0 },
+          ...liveCatalog.filter((entry) => !(
+            normalizeCatalogType(entry?.type) === created.type
+            && String(entry?.name || '').trim().toLowerCase() === created.name.toLowerCase()
+          ))
+        ];
+        saveState(state);
+        applyPickedItem(created);
+        closePicker();
+      });
+
+      if (recordPaymentBtn) {
+        recordPaymentBtn.addEventListener('click', () => {
+          window.location.href = 'payment-out-generation.html';
+        });
+      }
+
+      calculate();
+
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        errorEl.textContent = '';
+        const supplier = supplierEl.value.trim();
+        const billNo = billNoEl.value.trim();
+        const date = dateEl.value || new Date().toISOString().slice(0, 10);
+        const dueDays = Math.max(0, Number(dueDaysEl.value) || 0);
+        if (!supplier) {
+          errorEl.textContent = 'Supplier name is required.';
+          return;
+        }
+
+        const items = collectItems();
+        const meaningfulItems = items.filter((item) => (Number(item.qty) > 0 && Number(item.rate) > 0) || String(item.description || '').trim());
+        if (!meaningfulItems.length) {
+          errorEl.textContent = 'Add at least one line item.';
+          return;
+        }
+
+        const calc = calculate();
+        if (calc.taxableValue <= 0) {
+          errorEl.textContent = 'Taxable value should be greater than zero.';
+          return;
+        }
+
+        const taxType = calc.totalTax === 0 ? 'NONE' : (calc.supply === 'inter' ? 'IGST' : 'CGST_SGST');
+        const totalQty = meaningfulItems.reduce((sum, item) => sum + (Number(item.qty) || 0), 0);
+        const firstItem = meaningfulItems[0] || {};
+        const itemLabel = firstItem.description || 'Purchase';
+        const avgRate = calc.taxableValue > 0 ? Number(((calc.totalTax / calc.taxableValue) * 100).toFixed(4)) : 0;
+
+        const payload = {
+          id: editingId || `PUR-${Date.now()}`,
+          supplier,
+          purchaseType: purchaseTypeEl.value || 'goods',
+          supply: calc.supply,
+          rate: avgRate,
+          tdsRate: calc.tdsRate,
+          tdsAmount: calc.tdsAmount,
+          tdsSection: !!state.company?.tdsEnabled ? String(tdsSectionEl?.value || '').trim() : '',
+          tcsRate: calc.tcsRate,
+          tcsAmount: calc.tcsAmount,
+          tcsSection: !!state.company?.tcsEnabled ? String(tcsSectionEl?.value || '').trim() : '',
+          item: itemLabel,
+          qty: totalQty,
+          quantity: totalQty,
+          items: meaningfulItems,
+          amount: calc.taxableValue,
+          taxable: calc.taxableValue,
+          inputCgst: calc.inputCgst,
+          inputSgst: calc.inputSgst,
+          inputIgst: calc.inputIgst,
+          totalTax: calc.totalTax,
+          total: calc.total,
+          netPayable: calc.netPayable,
+          taxType,
+          billNo,
+          date,
+          dueDays,
+          dueDate: addDays(date, dueDays),
+          notes: notesEl.value.trim()
+        };
+
+        const index = state.purchases.findIndex((p) => p.id === payload.id);
+        if (index >= 0) state.purchases[index] = payload;
+        else state.purchases.push(payload);
+
+        saveState(state);
+        goBack();
+      });
+    })();
+  </script>
+</body>
+</html>

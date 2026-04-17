@@ -1,0 +1,1457 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="assets/poppins.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Metrox TaxInvoo — Login</title>
+  <meta name="description" content="Metrox TaxInvoo login and signup." />
+  <script>
+    (function () {
+      var saved = localStorage.getItem("metrox-theme");
+      var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      var theme = saved || (prefersDark ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+    :root {
+      --brand-indigo: #6a4df5;
+      --brand-blue: #3d8bde;
+      --brand-cyan: #69d7d8;
+      --bg: #f2f6ff;
+      --panel: rgba(255, 255, 255, 0.74);
+      --panel-2: #ffffff;
+      --line: rgba(30, 36, 85, 0.13);
+      --ink: #161a3d;
+      --muted: #5d6387;
+      --input-bg: #ffffff;
+      --input-border: rgba(30, 36, 85, 0.15);
+      --step-bg: rgba(106, 77, 245, 0.06);
+      --tab-active-bg: rgba(106, 77, 245, 0.14);
+      --tab-active-border: rgba(106, 77, 245, 0.35);
+      --tab-active-text: #2a2f6f;
+      --btn-text: #ffffff;
+      --divider: rgba(30, 36, 85, 0.2);
+      --error: #c63949;
+      --shadow: 0 22px 55px rgba(36, 44, 109, 0.12);
+    }
+
+    [data-theme="dark"] {
+      --bg: #10163b;
+      --panel: rgba(22, 29, 74, 0.72);
+      --panel-2: #1e2558;
+      --line: rgba(214, 222, 255, 0.16);
+      --ink: #eef2ff;
+      --muted: #b2badf;
+      --input-bg: #151c45;
+      --input-border: rgba(214, 222, 255, 0.2);
+      --step-bg: rgba(105, 215, 216, 0.08);
+      --tab-active-bg: rgba(105, 215, 216, 0.17);
+      --tab-active-border: rgba(105, 215, 216, 0.4);
+      --tab-active-text: #eaf8ff;
+      --divider: rgba(214, 222, 255, 0.22);
+      --error: #ffb4bd;
+      --shadow: 0 28px 64px rgba(7, 10, 28, 0.46);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(700px 420px at 82% 0%, rgba(106, 77, 245, 0.12), transparent 64%),
+        radial-gradient(640px 420px at 8% 0%, rgba(105, 215, 216, 0.1), transparent 60%),
+        var(--bg);
+      min-height: 100vh;
+      padding: 40px 28px;
+      transition: background-color 0.35s ease, color 0.35s ease;
+    }
+
+    .brand {
+      display: grid;
+      gap: 4px;
+      font-weight: 700;
+      font-size: 18px;
+      width: fit-content;
+      cursor: default;
+    }
+
+    .brand-mark {
+      width: 214px;
+      height: auto;
+      display: grid;
+      place-items: center;
+      transition: transform 0.2s ease;
+    }
+
+    .brand:hover .brand-mark {
+      transform: translateY(-1px);
+    }
+
+    .brand-mark img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .brand-title {
+      font-family: "Sora", sans-serif;
+      font-size: 17px;
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .brand-sub {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 2px;
+    }
+
+    .shell {
+      max-width: 980px;
+      margin: 0 auto;
+      display: grid;
+      gap: 20px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      display: grid;
+      gap: 12px;
+      backdrop-filter: blur(10px);
+      transition: transform 0.24s ease, border-color 0.24s ease, box-shadow 0.24s ease;
+      transform-style: preserve-3d;
+      will-change: transform;
+    }
+
+    .card:hover {
+      border-color: color-mix(in srgb, var(--brand-cyan) 38%, var(--line));
+      box-shadow: 0 26px 58px rgba(24, 39, 110, 0.26);
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-family: "Sora", sans-serif;
+      font-size: 30px;
+    }
+
+    .hero p { margin: 0; color: var(--muted); }
+    .hero-lead {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.7;
+      max-width: 52ch;
+    }
+
+    .steps-title {
+      margin: 6px 0 0;
+      color: var(--ink);
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .stepper { display: grid; gap: 10px; margin-top: 2px; }
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--step-bg);
+      color: var(--muted);
+      font-size: 14px;
+      transition: transform 0.22s ease, border-color 0.22s ease, background-color 0.22s ease;
+    }
+
+    .step:hover {
+      transform: translateX(4px);
+      border-color: color-mix(in srgb, var(--brand-blue) 42%, var(--line));
+      background: color-mix(in srgb, var(--step-bg) 68%, var(--brand-blue) 32%);
+    }
+
+    .step strong { color: var(--ink); }
+    .step-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      background: linear-gradient(120deg, var(--brand-cyan), var(--brand-blue), var(--brand-indigo));
+      box-shadow: 0 8px 16px rgba(61, 139, 222, 0.32);
+    }
+    .trust-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .trust-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .trust-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: linear-gradient(120deg, var(--brand-cyan), var(--brand-blue));
+      flex-shrink: 0;
+    }
+    .value-preview {
+      margin-top: 8px;
+      border: 1px solid color-mix(in srgb, var(--brand-cyan) 35%, var(--line));
+      border-radius: 14px;
+      padding: 12px 14px;
+      background: linear-gradient(180deg, #ffffff 0%, #f6fbff 100%);
+      box-shadow: 0 10px 24px rgba(61, 139, 222, 0.12);
+      display: grid;
+      gap: 6px;
+    }
+    .value-preview h4 {
+      margin: 0;
+      font-size: 14px;
+      color: #25436d;
+      line-height: 1.3;
+    }
+    .value-preview p {
+      margin: 0;
+      color: #405978;
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.55;
+    }
+
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+    .tab {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .tab.active {
+      background: var(--tab-active-bg);
+      border-color: var(--tab-active-border);
+      color: var(--tab-active-text);
+    }
+
+    .form { display: grid; gap: 14px; }
+    .field { display: grid; gap: 6px; font-size: 13px; color: var(--muted); }
+    .field input {
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--input-border);
+      background: var(--input-bg);
+      color: var(--ink);
+      font-family: inherit;
+      font-size: 14px;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    }
+
+    .field input:focus {
+      outline: none;
+      border-color: color-mix(in srgb, var(--brand-cyan) 55%, var(--input-border));
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-cyan) 18%, transparent);
+    }
+    .password-wrap {
+      position: relative;
+      display: grid;
+    }
+    .password-wrap input {
+      padding-right: 82px;
+    }
+    .toggle-password {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 1px solid var(--input-border);
+      background: var(--panel-2);
+      color: var(--muted);
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+    .toggle-password:hover {
+      color: var(--ink);
+      border-color: var(--line);
+    }
+
+    .otp-inputs {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0,1fr));
+      gap: 8px;
+    }
+    .otp-inputs input {
+      text-align: center;
+      font-size: 16px;
+      padding: 12px 0;
+      border-radius: 10px;
+      border: 1px solid var(--input-border);
+      background: var(--input-bg);
+      color: var(--ink);
+    }
+
+    .btn {
+      padding: 12px 16px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--ink);
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      border-color: color-mix(in srgb, var(--brand-cyan) 35%, var(--line));
+    }
+    .btn.primary {
+      background: linear-gradient(120deg, var(--brand-cyan), var(--brand-blue), var(--brand-indigo));
+      color: var(--btn-text);
+      border-color: transparent;
+      box-shadow: 0 16px 34px rgba(61, 139, 222, 0.34);
+      background-size: 160% 160%;
+      animation: ctaShift 4.8s ease-in-out infinite;
+    }
+
+    .btn.google-animated {
+      position: relative;
+      isolation: isolate;
+      border: none;
+      background: var(--panel-2);
+      color: var(--ink);
+      box-shadow: none;
+      overflow: hidden;
+    }
+
+    .btn.google-animated::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      padding: 2px;
+      border-radius: inherit;
+      background: linear-gradient(
+        115deg,
+        #6DDDD9 0%,
+        #57C4EA 18%,
+        #3F7FD9 36%,
+        #5F58D7 54%,
+        #3F7FD9 72%,
+        #57C4EA 88%,
+        #6DDDD9 100%
+      );
+      background-size: 260% 260%;
+      -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+      animation: googleBorderFlow 2.4s linear infinite;
+    }
+    .btn.google-primary {
+      background: linear-gradient(120deg, var(--brand-cyan), var(--brand-blue), var(--brand-indigo));
+      color: var(--btn-text);
+      border-color: transparent;
+      box-shadow: 0 20px 38px rgba(61, 139, 222, 0.34);
+      background-size: 180% 180%;
+      animation: ctaShift 4.8s ease-in-out infinite;
+    }
+    .btn.google-primary::before {
+      background: linear-gradient(
+        115deg,
+        rgba(255, 255, 255, 0.35) 0%,
+        rgba(255, 255, 255, 0.08) 45%,
+        rgba(255, 255, 255, 0.3) 100%
+      );
+      background-size: 220% 220%;
+    }
+
+    .hint { color: var(--muted); font-size: 12px; }
+    .error { color: var(--error); font-size: 12px; }
+    .form-meta {
+      display: grid;
+      gap: 8px;
+      margin-top: -2px;
+    }
+    .subtext {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .security-line {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .help-links {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: -2px;
+    }
+    .help-links a {
+      color: var(--brand-blue);
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .help-links a:hover { text-decoration: underline; }
+    .switch-row {
+      margin-top: -2px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .switch-row button {
+      border: 0;
+      background: transparent;
+      color: var(--brand-blue);
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      padding: 0;
+      margin-left: 2px;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .proof-line {
+      margin-top: 2px;
+      color: #2f4d76;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .value-line {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .privacy-line {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .validation-msg {
+      display: none;
+      font-size: 12px;
+      margin-top: 2px;
+      line-height: 1.4;
+      font-weight: 600;
+    }
+    .validation-msg.error {
+      display: block;
+      color: var(--error);
+    }
+    .validation-msg.ok {
+      display: block;
+      color: #1b7a56;
+    }
+    .field input.input-error {
+      border-color: color-mix(in srgb, var(--error) 65%, var(--input-border));
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--error) 12%, transparent);
+    }
+    .field input.input-ok {
+      border-color: color-mix(in srgb, #1b7a56 45%, var(--input-border));
+      box-shadow: 0 0 0 4px color-mix(in srgb, #1b7a56 9%, transparent);
+    }
+    .domain-warning {
+      border: 1px solid color-mix(in srgb, var(--error) 44%, var(--line));
+      background: color-mix(in srgb, var(--error) 8%, transparent);
+      color: var(--error);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.5;
+      display: none;
+    }
+    .divider {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .divider::before,
+    .divider::after {
+      content: "";
+      height: 1px;
+      background: var(--divider);
+    }
+
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 640px) {
+      body { padding: 16px; }
+      .shell { gap: 16px; }
+      .card { padding: 14px; border-radius: 14px; }
+      .hero h1 { font-size: 24px; }
+      .btn { width: 100%; justify-content: center; }
+      .tabs { width: 100%; }
+      .brand-mark { width: 168px; }
+      .brand-title { font-size: 17px; }
+      .card:hover,
+      .step:hover { transform: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .btn.google-animated::before {
+        animation: none;
+      }
+    }
+
+    @keyframes ctaShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    @keyframes googleBorderFlow {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 220% 50%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <img src="assets/metrox-taxinvoo-logo.png" alt="Metrox TaxInvoo logo" />
+      </div>
+      <small class="brand-sub">AI-first billing</small>
+    </div>
+
+    <div class="grid">
+      <div class="card hero">
+        <h1>Run Your Business Smarter - Starting Now</h1>
+        <p class="hero-lead">Create invoices, track profit, and stay GST compliant - all in one simple dashboard.</p>
+        <p class="steps-title">Get started in 3 simple steps:</p>
+        <div class="stepper">
+          <div class="step"><span class="step-icon">1</span><span><strong>Create your account</strong></span></div>
+          <div class="step"><span class="step-icon">2</span><span><strong>Set up your business (2 mins)</strong></span></div>
+          <div class="step"><span class="step-icon">3</span><span><strong>Start billing instantly</strong></span></div>
+        </div>
+        <div class="trust-list">
+          <div class="trust-item"><span class="trust-dot" aria-hidden="true"></span>100% GST compliant</div>
+          <div class="trust-item"><span class="trust-dot" aria-hidden="true"></span>500+ businesses trust us</div>
+          <div class="trust-item"><span class="trust-dot" aria-hidden="true"></span>Secure &amp; encrypted data</div>
+        </div>
+        <div class="value-preview">
+          <h4>Today&apos;s Summary:</h4>
+          <p>₹28,400 sales</p>
+          <p>₹18,400 pending</p>
+          <p>₹9,860 profit</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="domain-warning" id="domain-warning"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+          <h4 style="margin:0;" id="auth-title">Create account</h4>
+          <div class="tabs">
+            <button class="tab" type="button" id="tab-login">Login</button>
+            <button class="tab active" type="button" id="tab-signup">Create</button>
+          </div>
+        </div>
+        <form class="form" id="auth-login" style="display:none;">
+          <label class="field">Email
+            <input type="email" id="login-email" placeholder="you@company.com" required />
+            <div class="validation-msg" id="login-email-feedback"></div>
+          </label>
+          <label class="field">Password
+            <div class="password-wrap">
+              <input type="password" id="login-password" placeholder="Minimum 8 characters" required />
+              <button class="toggle-password" type="button" data-toggle-password="login-password" aria-label="Show password">Show</button>
+            </div>
+            <div class="validation-msg" id="login-password-feedback"></div>
+          </label>
+          <button class="btn primary" type="submit">Continue to Dashboard</button>
+          <div class="form-meta">
+            <div class="subtext">No credit card required • Free plan available</div>
+            <div class="security-line">🔒 Your data is safe and encrypted</div>
+          </div>
+          <button class="btn" type="button" id="resend-verify" style="display:none;">Resend verification email</button>
+          <div class="divider">or</div>
+          <button class="btn google-animated" type="button" id="google-login">Continue with Google (1-click signup)</button>
+          <div class="subtext">Faster signup. No password needed</div>
+          <div class="help-links">
+            <a href="#" id="forgot-password-link">Forgot password</a>
+            <a href="mailto:support@taxinvoo.com">Contact support</a>
+          </div>
+          <div class="switch-row">New here?<button type="button" id="switch-to-signup">Create your free account</button></div>
+          <div class="proof-line">⭐ 4.8/5 rating from business owners</div>
+          <div class="value-line">Join 500+ businesses simplifying billing &amp; GST</div>
+          <div class="privacy-line">We never share your data. No spam.</div>
+          <div class="error" id="login-error" style="display:none;"></div>
+          <div class="hint" id="login-hint" style="display:none;"></div>
+        </form>
+
+        <form class="form" id="auth-signup">
+          <label class="field">Full name
+            <input type="text" id="signup-name" placeholder="Your name" required />
+          </label>
+          <label class="field">Email
+            <input type="email" id="signup-email" placeholder="you@company.com" required />
+            <div class="validation-msg" id="signup-email-feedback"></div>
+          </label>
+          <label class="field">Password
+            <div class="password-wrap">
+              <input type="password" id="signup-password" placeholder="Minimum 8 characters" required />
+              <button class="toggle-password" type="button" data-toggle-password="signup-password" aria-label="Show password">Show</button>
+            </div>
+            <div class="validation-msg" id="signup-password-feedback"></div>
+          </label>
+          <button class="btn primary" type="submit">Create your free account</button>
+          <div class="form-meta">
+            <div class="subtext">No credit card required • Free plan available</div>
+            <div class="security-line">🔒 Your data is safe and encrypted</div>
+          </div>
+          <button class="btn" type="button" id="check-verified" style="display:none;">I have verified, continue</button>
+          <button class="btn" type="button" id="resend-signup-verify" style="display:none;">Resend verification email</button>
+          <div class="divider">or</div>
+          <button class="btn google-animated" type="button" id="google-signup">Continue with Google (1-click signup)</button>
+          <div class="subtext">Faster signup. No password needed</div>
+          <div class="switch-row">Already have an account?<button type="button" id="switch-to-login">Continue to Dashboard</button></div>
+          <div class="proof-line">⭐ 4.8/5 rating from business owners</div>
+          <div class="value-line">Join 500+ businesses simplifying billing &amp; GST</div>
+          <div class="privacy-line">We never share your data. No spam.</div>
+          <div class="error" id="signup-error" style="display:none;"></div>
+          <div class="hint" id="signup-hint" style="display:none;"></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, fetchSignInMethodsForEmail, GoogleAuthProvider, signInWithPopup, updateProfile, sendEmailVerification, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+    import { getFirestore, collection, collectionGroup, doc, getDoc, getDocs, query, where, limit, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+    import {
+      ensureTrialSubscription,
+      ensureUserRecord,
+      getUserAccessContext,
+      isBusinessSetupComplete,
+      linkUserToBusiness,
+      syncBusinessPlanStatus,
+      syncSubscriptionStatus
+    } from "./js/subscription.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA5vhi43CcL_ff_NZLIN3BUxa0CAYOvwh8",
+      authDomain: "metrox-taxinvo.firebaseapp.com",
+      projectId: "metrox-taxinvo",
+      storageBucket: "metrox-taxinvo.firebasestorage.app",
+      messagingSenderId: "1089587049670",
+      appId: "1:1089587049670:web:4f3b663c767762749853c7",
+      measurementId: "G-8JVQCSZX0P"
+    };
+
+    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
+
+    const tabLogin = document.getElementById('tab-login');
+    const tabSignup = document.getElementById('tab-signup');
+    const loginForm = document.getElementById('auth-login');
+    const signupForm = document.getElementById('auth-signup');
+    const loginSubmitBtn = loginForm.querySelector('button[type="submit"]');
+    const signupSubmitBtn = signupForm.querySelector('button[type="submit"]');
+    const loginEmailInput = document.getElementById('login-email');
+    const loginPasswordInput = document.getElementById('login-password');
+    const signupNameInput = document.getElementById('signup-name');
+    const signupEmailInput = document.getElementById('signup-email');
+    const signupPasswordInput = document.getElementById('signup-password');
+    const loginEmailFeedback = document.getElementById('login-email-feedback');
+    const loginPasswordFeedback = document.getElementById('login-password-feedback');
+    const signupEmailFeedback = document.getElementById('signup-email-feedback');
+    const signupPasswordFeedback = document.getElementById('signup-password-feedback');
+    const authTitle = document.getElementById('auth-title');
+    const forgotPasswordLink = document.getElementById('forgot-password-link');
+    const switchToSignup = document.getElementById('switch-to-signup');
+    const switchToLogin = document.getElementById('switch-to-login');
+    const resendVerifyBtn = document.getElementById('resend-verify');
+    const checkVerifiedBtn = document.getElementById('check-verified');
+    const resendSignupVerifyBtn = document.getElementById('resend-signup-verify');
+    const loginHint = document.getElementById('login-hint');
+    const signupHint = document.getElementById('signup-hint');
+    const domainWarning = document.getElementById('domain-warning');
+    let verifyPollTimer = null;
+    const DOMAIN_BLOCK_MESSAGE = "This domain is not authorized for login. Please use the official TaxInvoo website.";
+    const SIGNUP_SPAM_ERROR = "Too many signup attempts. Please try again later.";
+    const SIGNUP_GUARD_STORAGE_KEY = 'metrox_signup_guard_v1';
+    const SIGNUP_MIN_INTERVAL_MS = 6000;
+    const SIGNUP_FAIL_WINDOW_MS = 10 * 60 * 1000;
+    const SIGNUP_MAX_FAILED_ATTEMPTS = 5;
+    const SIGNUP_LOCK_MS = 15 * 60 * 1000;
+    const AUTHORIZED_HOSTS = new Set([
+      'taxinvoo.com',
+      'metrox-taxinvo.firebaseapp.com',
+      'metrox-taxinvo.web.app',
+      'localhost',
+      '127.0.0.1',
+      '::1'
+    ]);
+    const AUTHORIZED_HOST_SUFFIXES = ['.taxinvoo.com'];
+
+    const params = new URLSearchParams(window.location.search);
+    const urlPlan = params.get('plan');
+    const authView = (params.get('view') || '').toLowerCase();
+    if (urlPlan) {
+      localStorage.setItem('metrox_plan', urlPlan);
+    }
+
+    function clearDemoState() {
+      localStorage.removeItem('metrox_taxdesk_demo_state');
+      localStorage.removeItem('metrox_taxdesk_demo_state_backup');
+      localStorage.removeItem('metrox_taxinvoo_demo_state');
+      localStorage.removeItem('metrox_taxinvoo_demo_state_backup');
+      localStorage.setItem('metrox_fresh_start', '1');
+    }
+
+    function getSignupGuardState() {
+      try {
+        const raw = localStorage.getItem(SIGNUP_GUARD_STORAGE_KEY);
+        if (!raw) return { last_attempt_at: 0, lock_until: 0, failed_attempts: [], logs: [] };
+        const parsed = JSON.parse(raw);
+        return {
+          last_attempt_at: Number(parsed?.last_attempt_at || 0),
+          lock_until: Number(parsed?.lock_until || 0),
+          failed_attempts: Array.isArray(parsed?.failed_attempts) ? parsed.failed_attempts.map(Number).filter(Boolean) : [],
+          logs: Array.isArray(parsed?.logs) ? parsed.logs.slice(-30) : []
+        };
+      } catch (_) {
+        return { last_attempt_at: 0, lock_until: 0, failed_attempts: [], logs: [] };
+      }
+    }
+
+    function saveSignupGuardState(state) {
+      try {
+        localStorage.setItem(SIGNUP_GUARD_STORAGE_KEY, JSON.stringify(state));
+      } catch (_) {}
+    }
+
+    function pruneFailedAttempts(state, now = Date.now()) {
+      state.failed_attempts = state.failed_attempts.filter((ts) => now - Number(ts || 0) <= SIGNUP_FAIL_WINDOW_MS);
+      state.logs = (state.logs || []).slice(-30);
+      return state;
+    }
+
+    function getSignupAttemptGuardMessage(state, now = Date.now()) {
+      if (state.lock_until && now < state.lock_until) {
+        return SIGNUP_SPAM_ERROR;
+      }
+      if (state.last_attempt_at && now - state.last_attempt_at < SIGNUP_MIN_INTERVAL_MS) {
+        const remainingSec = Math.max(1, Math.ceil((SIGNUP_MIN_INTERVAL_MS - (now - state.last_attempt_at)) / 1000));
+        return `Please wait ${remainingSec}s before trying signup again.`;
+      }
+      if ((state.failed_attempts || []).length >= SIGNUP_MAX_FAILED_ATTEMPTS) {
+        state.lock_until = now + SIGNUP_LOCK_MS;
+        saveSignupGuardState(state);
+        return SIGNUP_SPAM_ERROR;
+      }
+      return '';
+    }
+
+    function beginSignupAttempt() {
+      const now = Date.now();
+      const state = pruneFailedAttempts(getSignupGuardState(), now);
+      const blockedMessage = getSignupAttemptGuardMessage(state, now);
+      if (blockedMessage) return { ok: false, message: blockedMessage };
+      state.last_attempt_at = now;
+      saveSignupGuardState(state);
+      return { ok: true, message: '' };
+    }
+
+    function recordSignupAttemptLog(kind, reason = '', inputState = null) {
+      const now = Date.now();
+      const state = pruneFailedAttempts(inputState || getSignupGuardState(), now);
+      state.logs.push({
+        ts: now,
+        kind: String(kind || ''),
+        reason: String(reason || '').slice(0, 180)
+      });
+      saveSignupGuardState(state);
+      if (kind === 'failed') {
+        console.warn('Signup failed attempt logged:', reason || 'unknown');
+      }
+      return state;
+    }
+
+    function recordFailedSignupAttempt(reason = '') {
+      const now = Date.now();
+      const state = pruneFailedAttempts(getSignupGuardState(), now);
+      state.failed_attempts.push(now);
+      recordSignupAttemptLog('failed', reason, state);
+      if (state.failed_attempts.length >= SIGNUP_MAX_FAILED_ATTEMPTS) {
+        state.lock_until = now + SIGNUP_LOCK_MS;
+      }
+      saveSignupGuardState(state);
+    }
+
+    function recordSuccessfulSignupAttempt() {
+      const state = getSignupGuardState();
+      state.failed_attempts = [];
+      state.lock_until = 0;
+      state.last_attempt_at = Date.now();
+      state.logs = (state.logs || []).concat([{ ts: Date.now(), kind: 'success', reason: 'account_created' }]).slice(-30);
+      saveSignupGuardState(state);
+    }
+
+    function isPermissionError(err) {
+      const code = String(err?.code || '').toLowerCase();
+      const msg = String(err?.message || '').toLowerCase();
+      return code.includes('permission-denied') || msg.includes('insufficient permissions');
+    }
+
+    function isAuthorizedHost() {
+      const host = String(window.location.hostname || '').trim().toLowerCase();
+      if (!host) return false;
+      if (AUTHORIZED_HOSTS.has(host)) return true;
+      return AUTHORIZED_HOST_SUFFIXES.some((suffix) => host.endsWith(suffix));
+    }
+
+    function setDomainBlockedUi(blocked) {
+      if (domainWarning) {
+        domainWarning.textContent = blocked ? DOMAIN_BLOCK_MESSAGE : '';
+        domainWarning.style.display = blocked ? 'block' : 'none';
+      }
+      const controls = document.querySelectorAll('button, input, select, textarea');
+      controls.forEach((el) => {
+        if (!el) return;
+        if (blocked) el.setAttribute('disabled', 'disabled');
+        else el.removeAttribute('disabled');
+      });
+    }
+
+    function assertAuthorizedDomain() {
+      if (isAuthorizedHost()) return true;
+      try { signOut(auth); } catch (_) {}
+      setError(document.getElementById('login-error'), DOMAIN_BLOCK_MESSAGE);
+      setError(document.getElementById('signup-error'), DOMAIN_BLOCK_MESSAGE);
+      setDomainBlockedUi(true);
+      return false;
+    }
+
+    function formatAuthError(err, fallback) {
+      const code = String(err?.code || '').trim();
+      if (code === 'auth/unauthorized-domain' || code === 'unauthorized-domain') {
+        return DOMAIN_BLOCK_MESSAGE;
+      }
+      return err?.message || fallback;
+    }
+
+    async function resolveLoginErrorMessage(email, err) {
+      const code = String(err?.code || '').trim().toLowerCase();
+      if (!code) return formatAuthError(err, 'Login failed.');
+
+      if (code === 'auth/too-many-requests') {
+        return 'Too many login attempts. Please wait a few minutes and try again.';
+      }
+      if (code === 'auth/user-disabled') {
+        return 'This account has been disabled. Please contact support.';
+      }
+
+      const credentialErrorCodes = new Set([
+        'auth/invalid-credential',
+        'auth/invalid-login-credentials',
+        'auth/wrong-password',
+        'auth/user-not-found'
+      ]);
+
+      if (credentialErrorCodes.has(code)) {
+        try {
+          const methods = await fetchSignInMethodsForEmail(auth, String(email || '').trim());
+          if (Array.isArray(methods) && methods.length > 0) {
+            if (methods.includes('google.com') && !methods.includes('password')) {
+              return 'This account is linked with Google. Please use "Continue with Google (1-click signup)".';
+            }
+            if (methods.includes('password')) {
+              return 'Incorrect email or password. Please try again.';
+            }
+          }
+          return 'No account found for this email. Create a new account or use Google sign-in.';
+        } catch (_) {
+          return 'Invalid email or password. Please try again.';
+        }
+      }
+
+      return formatAuthError(err, 'Login failed.');
+    }
+
+    async function claimAccountantInvite(user) {
+      const email = (user?.email || '').trim().toLowerCase();
+      if (!email) return null;
+      try {
+        const inviteQ = query(
+          collectionGroup(db, 'accountant_invites'),
+          where('email_lower', '==', email),
+          where('status', '==', 'pending'),
+          limit(1)
+        );
+        const inviteSnap = await getDocs(inviteQ);
+        if (inviteSnap.empty) return null;
+        const inviteDoc = inviteSnap.docs[0];
+        const inviteData = inviteDoc.data() || {};
+        const businessId = inviteData.business_id || inviteDoc.ref.parent.parent?.id || '';
+        const businessOwnerUid = inviteData.business_owner_uid || inviteDoc.ref.parent.parent?.parent?.parent?.id || '';
+        if (!businessId) return null;
+        await setDoc(doc(db, 'users', user.uid), {
+          email: user.email || '',
+          business_id: businessId,
+          business_owner_uid: businessOwnerUid || user.uid,
+          role: 'accountant',
+          permissions: inviteData.permissions || {},
+          updated_at: serverTimestamp()
+        }, { merge: true });
+        await updateDoc(inviteDoc.ref, {
+          status: 'accepted',
+          accepted_by_uid: user.uid,
+          accepted_at: serverTimestamp()
+        });
+        return { business_id: businessId, business_owner_uid: businessOwnerUid || user.uid };
+      } catch (err) {
+        console.error('Invite claim failed:', err);
+      }
+      return null;
+    }
+
+    async function routeAfterAuth(user) {
+      if (!user) return;
+      if (!user.emailVerified) {
+        window.location.href = 'verify-email.html';
+        return;
+      }
+      const userRef = doc(db, 'users', user.uid);
+
+      try { await ensureUserRecord(user); } catch (err) { if (!isPermissionError(err)) throw err; }
+      try { await ensureTrialSubscription(user.uid); } catch (err) { if (!isPermissionError(err)) throw err; }
+      try { await syncSubscriptionStatus(user.uid); } catch (err) { if (!isPermissionError(err)) throw err; }
+      try { await syncBusinessPlanStatus(user.uid); } catch (err) { if (!isPermissionError(err)) throw err; }
+
+      let userSnap;
+      try {
+        userSnap = await getDoc(userRef);
+      } catch (err) {
+        console.error('User fetch failed:', err);
+        window.location.href = 'login.html';
+        return;
+      }
+
+      if (!userSnap.exists()) {
+        const claimed = await claimAccountantInvite(user);
+        if (claimed?.business_id) {
+          await linkUserToBusiness(user.uid, claimed.business_id, claimed.business_owner_uid || user.uid);
+          window.location.href = 'index.html';
+          return;
+        }
+        clearDemoState();
+        await setDoc(userRef, { role: 'owner', created_at: serverTimestamp() }, { merge: true });
+        window.location.href = 'business-setup.html';
+        return;
+      }
+
+      let context = null;
+      try {
+        context = await getUserAccessContext(user.uid);
+      } catch (err) {
+        if (!isPermissionError(err)) throw err;
+        context = null;
+      }
+      const userData = context?.user || userSnap.data() || {};
+      const businessData = context?.business || null;
+
+      if (!userData.business_id) {
+        const claimed = await claimAccountantInvite(user);
+        if (claimed?.business_id) {
+          await linkUserToBusiness(user.uid, claimed.business_id, claimed.business_owner_uid || user.uid);
+          window.location.href = 'index.html';
+          return;
+        }
+        window.location.href = 'business-setup.html';
+        return;
+      }
+
+      if (businessData && !isBusinessSetupComplete(businessData)) {
+        window.location.href = 'business-setup.html';
+        return;
+      }
+      window.location.href = 'index.html';
+    }
+
+    function showLogin() {
+      tabLogin.classList.add('active');
+      tabSignup.classList.remove('active');
+      loginForm.style.display = 'grid';
+      signupForm.style.display = 'none';
+      if (authTitle) authTitle.textContent = 'Login';
+      checkVerifiedBtn.style.display = 'none';
+      resendSignupVerifyBtn.style.display = 'none';
+    }
+
+    function showSignup() {
+      tabSignup.classList.add('active');
+      tabLogin.classList.remove('active');
+      signupForm.style.display = 'grid';
+      loginForm.style.display = 'none';
+      if (authTitle) authTitle.textContent = 'Create account';
+    }
+
+    if (authView === 'login' || window.location.hash === '#login') {
+      showLogin();
+    } else {
+      showSignup();
+    }
+    if (!isAuthorizedHost()) {
+      setDomainBlockedUi(true);
+    }
+
+    function stopVerifyPolling() {
+      if (!verifyPollTimer) return;
+      clearInterval(verifyPollTimer);
+      verifyPollTimer = null;
+    }
+
+    function beginVerifyPolling(user) {
+      stopVerifyPolling();
+      if (!user) return;
+      const checkNow = async () => {
+        try {
+          await user.reload();
+          if (user.emailVerified) {
+            stopVerifyPolling();
+            setHint(signupHint, 'Email verified. Redirecting...');
+            await routeAfterAuth(user);
+          }
+        } catch (_) {}
+      };
+      verifyPollTimer = setInterval(checkNow, 5000);
+      checkNow();
+    }
+
+    tabLogin.addEventListener('click', showLogin);
+    tabSignup.addEventListener('click', showSignup);
+    if (switchToSignup) switchToSignup.addEventListener('click', showSignup);
+    if (switchToLogin) switchToLogin.addEventListener('click', showLogin);
+
+    if (forgotPasswordLink) {
+      forgotPasswordLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        const email = document.getElementById('login-email').value.trim();
+        setHint(loginHint, email ? `Use support to reset password for: ${email}` : 'Enter your email, then contact support for reset help.');
+      });
+    }
+
+    function setError(el, msg) {
+      if (!el) return;
+      el.textContent = msg;
+      el.style.display = msg ? 'block' : 'none';
+    }
+
+    function setHint(el, msg) {
+      if (!el) return;
+      el.textContent = msg || '';
+      el.style.display = msg ? 'block' : 'none';
+    }
+
+    function setValidationState(input, messageEl, state, message) {
+      if (!input || !messageEl) return;
+      input.classList.remove('input-error', 'input-ok');
+      messageEl.classList.remove('error', 'ok');
+      messageEl.textContent = '';
+      messageEl.style.display = 'none';
+
+      if (state === 'error') {
+        input.classList.add('input-error');
+        messageEl.classList.add('error');
+        messageEl.textContent = message || '';
+        messageEl.style.display = message ? 'block' : 'none';
+        return;
+      }
+      if (state === 'ok') {
+        input.classList.add('input-ok');
+        messageEl.classList.add('ok');
+        messageEl.textContent = message || '';
+        messageEl.style.display = message ? 'block' : 'none';
+      }
+    }
+
+    function isValidEmail(value) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(value || '').trim());
+    }
+
+    function validateEmail(input, feedback, { required = true } = {}) {
+      const value = String(input?.value || '').trim();
+      if (!value) {
+        if (required) {
+          setValidationState(input, feedback, 'error', 'Email is required.');
+          return false;
+        }
+        setValidationState(input, feedback, '', '');
+        return true;
+      }
+      if (!isValidEmail(value)) {
+        setValidationState(input, feedback, 'error', 'Enter a valid email address.');
+        return false;
+      }
+      setValidationState(input, feedback, 'ok', 'Looks good.');
+      return true;
+    }
+
+    function validatePassword(input, feedback, { required = true, min = 8 } = {}) {
+      const value = String(input?.value || '');
+      if (!value) {
+        if (required) {
+          setValidationState(input, feedback, 'error', 'Password is required.');
+          return false;
+        }
+        setValidationState(input, feedback, '', '');
+        return true;
+      }
+      if (value.length < min) {
+        setValidationState(input, feedback, 'error', `Use at least ${min} characters.`);
+        return false;
+      }
+      setValidationState(input, feedback, 'ok', 'Strong enough.');
+      return true;
+    }
+
+    function getStrongPasswordIssues(value) {
+      const password = String(value || '');
+      const issues = [];
+      if (password.length < 8) issues.push('Use at least 8 characters');
+      if (!/[A-Z]/.test(password)) issues.push('Add at least 1 uppercase letter');
+      if (!/[a-z]/.test(password)) issues.push('Add at least 1 lowercase letter');
+      if (!/[0-9]/.test(password)) issues.push('Add at least 1 number');
+      if (!/[^A-Za-z0-9]/.test(password)) issues.push('Add at least 1 special character');
+      return issues;
+    }
+
+    function validateStrongSignupPassword() {
+      const value = String(signupPasswordInput?.value || '');
+      if (!value) {
+        setValidationState(signupPasswordInput, signupPasswordFeedback, 'error', 'Password is required.');
+        return false;
+      }
+      const issues = getStrongPasswordIssues(value);
+      if (issues.length) {
+        setValidationState(signupPasswordInput, signupPasswordFeedback, 'error', issues.join(' • '));
+        return false;
+      }
+      setValidationState(signupPasswordInput, signupPasswordFeedback, 'ok', 'Great password. You are all set.');
+      return true;
+    }
+
+    function updateSignupSubmitState() {
+      const nameOk = !!String(signupNameInput?.value || '').trim();
+      const emailOk = isValidEmail(String(signupEmailInput?.value || '').trim());
+      const passwordOk = getStrongPasswordIssues(signupPasswordInput?.value || '').length === 0;
+      const canSubmit = nameOk && emailOk && passwordOk;
+      signupSubmitBtn.disabled = !canSubmit;
+      signupSubmitBtn.style.opacity = canSubmit ? '1' : '0.6';
+      signupSubmitBtn.style.cursor = canSubmit ? 'pointer' : 'not-allowed';
+    }
+
+    [
+      [loginEmailInput, loginEmailFeedback, () => validateEmail(loginEmailInput, loginEmailFeedback)],
+      [signupEmailInput, signupEmailFeedback, () => validateEmail(signupEmailInput, signupEmailFeedback)],
+      [loginPasswordInput, loginPasswordFeedback, () => validatePassword(loginPasswordInput, loginPasswordFeedback)],
+      [signupPasswordInput, signupPasswordFeedback, () => validateStrongSignupPassword()]
+    ].forEach(([input, _msg, fn]) => {
+      if (!input) return;
+      input.addEventListener('input', () => { fn(); updateSignupSubmitState(); });
+      input.addEventListener('blur', () => { fn(); updateSignupSubmitState(); });
+    });
+    if (signupNameInput) {
+      signupNameInput.addEventListener('input', updateSignupSubmitState);
+      signupNameInput.addEventListener('blur', updateSignupSubmitState);
+    }
+    updateSignupSubmitState();
+
+    document.querySelectorAll('[data-toggle-password]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const inputId = btn.getAttribute('data-toggle-password');
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        const show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        btn.textContent = show ? 'Hide' : 'Show';
+        btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+      });
+    });
+
+    function setBusy(btn, busy, busyText, idleText) {
+      if (!btn) return;
+      btn.disabled = !!busy;
+      btn.textContent = busy ? busyText : idleText;
+      btn.style.opacity = busy ? '0.75' : '1';
+      btn.style.cursor = busy ? 'not-allowed' : 'pointer';
+    }
+
+    async function withTimeout(promise, ms, label) {
+      let timer;
+      const timeout = new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${label} timeout`)), ms);
+      });
+      try {
+        return await Promise.race([promise, timeout]);
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!assertAuthorizedDomain()) return;
+      setError(document.getElementById('login-error'), '');
+      const emailOk = validateEmail(loginEmailInput, loginEmailFeedback);
+      const passwordOk = validatePassword(loginPasswordInput, loginPasswordFeedback);
+      if (!emailOk || !passwordOk) return;
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      try {
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+        if (!cred.user.emailVerified) {
+          setHint(loginHint, 'Please verify your email before continuing.');
+          window.location.href = 'verify-email.html';
+          return;
+        }
+        console.log('AUTH OK:', cred.user.uid);
+        await routeAfterAuth(cred.user);
+      } catch (err) {
+        const message = await resolveLoginErrorMessage(email, err);
+        setError(document.getElementById('login-error'), message);
+        if (message.toLowerCase().includes('google')) {
+          setHint(loginHint, 'Tip: Use the Google button below to continue.');
+        }
+      }
+    });
+
+    signupForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!assertAuthorizedDomain()) return;
+      const signupAttempt = beginSignupAttempt();
+      if (!signupAttempt.ok) {
+        setError(document.getElementById('signup-error'), signupAttempt.message || SIGNUP_SPAM_ERROR);
+        return;
+      }
+      setError(document.getElementById('signup-error'), '');
+      setHint(signupHint, '');
+      const emailOk = validateEmail(signupEmailInput, signupEmailFeedback);
+      const passwordOk = validateStrongSignupPassword();
+      if (!emailOk || !passwordOk) return;
+      const name = document.getElementById('signup-name').value.trim();
+      const email = document.getElementById('signup-email').value.trim();
+      const password = document.getElementById('signup-password').value;
+      if (!name) {
+        setError(document.getElementById('signup-error'), 'Full name is required.');
+        updateSignupSubmitState();
+        return;
+      }
+      try {
+        setBusy(signupSubmitBtn, true, 'Creating account...', 'Create your free account');
+        console.log('SIGNUP: start', email);
+        const cred = await withTimeout(
+          createUserWithEmailAndPassword(auth, email, password),
+          15000,
+          'Create account'
+        );
+        console.log('SIGNUP: auth user created', cred.user.uid);
+        if (name) await updateProfile(cred.user, { displayName: name });
+        await withTimeout(ensureUserRecord(cred.user, { role: 'owner' }), 15000, 'Create user profile');
+        await withTimeout(ensureTrialSubscription(cred.user.uid), 15000, 'Activate trial');
+        await withTimeout(sendEmailVerification(cred.user), 15000, 'Send verification email');
+        recordSuccessfulSignupAttempt();
+        window.location.href = 'verify-email.html';
+      } catch (err) {
+        const code = err?.code || '';
+        if (code === 'auth/email-already-in-use') {
+          recordFailedSignupAttempt(code);
+          setError(document.getElementById('signup-error'), 'Email already exists. Please login instead.');
+          showLogin();
+          document.getElementById('login-email').value = email;
+          setHint(loginHint, 'Account already exists. Please login.');
+        } else if ((err?.message || '').includes('timeout')) {
+          recordFailedSignupAttempt('timeout');
+          setError(document.getElementById('signup-error'), 'Request timed out. Check internet and Firebase rules, then try again.');
+        } else {
+          recordFailedSignupAttempt(code || err?.message || 'unknown');
+          setError(document.getElementById('signup-error'), formatAuthError(err, 'Signup failed.'));
+        }
+      } finally {
+        setBusy(signupSubmitBtn, false, 'Creating account...', 'Create your free account');
+        updateSignupSubmitState();
+      }
+    });
+
+    checkVerifiedBtn.addEventListener('click', async () => {
+      const user = auth.currentUser;
+      if (!user) {
+        setError(document.getElementById('signup-error'), 'Session expired. Please login and try again.');
+        return;
+      }
+      try {
+        await user.reload();
+        if (!user.emailVerified) {
+          setError(document.getElementById('signup-error'), 'Email not verified yet. Please verify first.');
+          return;
+        }
+        await routeAfterAuth(user);
+      } catch (err) {
+        setError(document.getElementById('signup-error'), err.message || 'Verification check failed.');
+      }
+    });
+
+    resendSignupVerifyBtn.addEventListener('click', async () => {
+      if (!assertAuthorizedDomain()) return;
+      const user = auth.currentUser;
+      if (!user) {
+        setError(document.getElementById('signup-error'), 'Session expired. Please create account again.');
+        return;
+      }
+      try {
+        await sendEmailVerification(user);
+        setHint(signupHint, 'Verification email resent. Check inbox/spam.');
+      } catch (err) {
+        setError(document.getElementById('signup-error'), formatAuthError(err, 'Failed to resend verification.'));
+      }
+    });
+
+    resendVerifyBtn.addEventListener('click', async () => {
+      if (!assertAuthorizedDomain()) return;
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      if (!email || !password) {
+        setError(document.getElementById('login-error'), 'Enter email and password to resend verification.');
+        return;
+      }
+      try {
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+        if (!cred.user.emailVerified) {
+          await sendEmailVerification(cred.user);
+          setHint(loginHint, 'Verification link resent. Check your inbox.');
+        }
+        await signOut(auth);
+      } catch (err) {
+        setError(document.getElementById('login-error'), formatAuthError(err, 'Failed to resend verification.'));
+      }
+    });
+
+    document.getElementById('google-login').addEventListener('click', async () => {
+      if (!assertAuthorizedDomain()) return;
+      setError(document.getElementById('login-error'), '');
+      try {
+        const cred = await signInWithPopup(auth, provider);
+        if (cred?.user?.uid) {
+          console.log('AUTH OK:', cred.user.uid);
+          await routeAfterAuth(cred.user);
+        }
+      } catch (err) {
+        setError(document.getElementById('login-error'), formatAuthError(err, 'Google login failed.'));
+      }
+    });
+
+    document.getElementById('google-signup').addEventListener('click', async () => {
+      if (!assertAuthorizedDomain()) return;
+      setError(document.getElementById('signup-error'), '');
+      try {
+        const cred = await signInWithPopup(auth, provider);
+        if (cred?.user?.uid) {
+          console.log('AUTH OK:', cred.user.uid);
+          await routeAfterAuth(cred.user);
+        }
+      } catch (err) {
+        setError(document.getElementById('signup-error'), formatAuthError(err, 'Google signup failed.'));
+      }
+    });
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!isAuthorizedHost()) {
+        if (user) {
+          try { await signOut(auth); } catch (_) {}
+        }
+        return;
+      }
+      if (!user) {
+        stopVerifyPolling();
+        return;
+      }
+      if (user.emailVerified) {
+        await routeAfterAuth(user);
+        return;
+      }
+      window.location.href = 'verify-email.html';
+    });
+  </script>
+  <script>
+    (function () {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      const cards = document.querySelectorAll('.card');
+      cards.forEach((card) => {
+        card.addEventListener('mousemove', (event) => {
+          if (window.innerWidth <= 980) return;
+          const rect = card.getBoundingClientRect();
+          const x = (event.clientX - rect.left) / rect.width;
+          const y = (event.clientY - rect.top) / rect.height;
+          const rotateY = (x - 0.5) * 3.5;
+          const rotateX = (0.5 - y) * 3.5;
+          card.style.transform = `perspective(900px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg)`;
+        });
+        card.addEventListener('mouseleave', () => {
+          card.style.transform = '';
+        });
+      });
+
+      const brand = document.querySelector('.brand');
+      if (!brand) return;
+      brand.addEventListener('mousemove', (event) => {
+        if (window.innerWidth <= 980) return;
+        const rect = brand.getBoundingClientRect();
+        const x = (event.clientX - rect.left) / rect.width;
+        const y = (event.clientY - rect.top) / rect.height;
+        const rotateY = (x - 0.5) * 8;
+        const rotateX = (0.5 - y) * 8;
+        brand.style.transform = `perspective(700px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg)`;
+      });
+      brand.addEventListener('mouseleave', () => {
+        brand.style.transform = '';
+      });
+    })();
+  </script>
+</body>
+</html>

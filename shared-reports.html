@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Metrox TaxInvoo - Shared Reports</title>
+  <style>
+    :root {
+      --bg: #f3f6ff;
+      --panel: #ffffff;
+      --line: #d9e2f4;
+      --text: #10203f;
+      --muted: #5f6f8b;
+      --brand: #4f61ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Poppins", system-ui, -apple-system, sans-serif;
+      background: radial-gradient(1200px 700px at 100% 0%, #e3eaff, transparent 60%), var(--bg);
+      color: var(--text);
+    }
+    .wrap {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 18px;
+      display: grid;
+      gap: 12px;
+    }
+    .head {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--panel);
+      padding: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    h1 { margin: 0; font-size: 26px; line-height: 1.15; }
+    .sub { margin-top: 4px; color: var(--muted); font-size: 13px; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 999px;
+      padding: 9px 14px;
+      cursor: pointer;
+      color: var(--text);
+      font-weight: 600;
+    }
+    .btn.primary {
+      border-color: rgba(79,97,255,0.45);
+      background: linear-gradient(140deg, #5b6dff, #3f56e6);
+      color: #fff;
+    }
+    .badge {
+      border: 1px solid rgba(16,185,129,0.35);
+      background: rgba(16,185,129,0.14);
+      color: #0f766e;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 10px;
+      white-space: nowrap;
+    }
+    .badge.invalid {
+      border-color: rgba(220,38,38,0.35);
+      background: rgba(220,38,38,0.1);
+      color: #b91c1c;
+    }
+    .warn {
+      border: 1px solid rgba(220,38,38,0.35);
+      border-radius: 12px;
+      background: rgba(220,38,38,0.1);
+      color: #991b1b;
+      padding: 10px 12px;
+      font-size: 13px;
+      line-height: 1.45;
+      display: none;
+    }
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 10px;
+    }
+    .meta-item {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 9px 10px;
+      background: #f8faff;
+      display: grid;
+      gap: 2px;
+    }
+    .meta-item span { font-size: 11px; color: var(--muted); }
+    .meta-item strong { font-size: 14px; }
+    .scope { display: flex; flex-wrap: wrap; gap: 8px; }
+    .pill {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      font-size: 12px;
+      padding: 5px 9px;
+      color: var(--muted);
+      background: #f8faff;
+    }
+    .kpis { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; }
+    .kpi {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      gap: 3px;
+    }
+    .kpi span { font-size: 11px; color: var(--muted); }
+    .kpi strong { font-size: 22px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .card { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #fff; }
+    .card h3 { margin: 0; font-size: 15px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+    .card-body { padding: 12px; }
+    .list { display: grid; gap: 8px; }
+    .row {
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      padding: 8px 10px;
+      background: #fbfcff;
+      display: grid;
+      gap: 2px;
+    }
+    .row-top { display: flex; justify-content: space-between; gap: 6px; font-size: 13px; font-weight: 600; }
+    .row-sub { font-size: 12px; color: var(--muted); }
+    .empty { border: 1px dashed var(--line); border-radius: 10px; padding: 10px; color: var(--muted); font-size: 13px; }
+    @media (max-width: 920px) {
+      .meta, .kpis, .grid { grid-template-columns: 1fr; }
+    }
+    @media print {
+      .actions { display: none !important; }
+      body { background: #fff !important; }
+      .panel, .card, .head, .kpi, .meta-item, .row { box-shadow: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap" id="shared-root">
+    <div class="head">
+      <div>
+        <h1>Shared Reports Access</h1>
+        <div class="sub" id="subtitle">Read-only summary shared by business owner.</div>
+      </div>
+      <div class="actions">
+        <span class="badge" id="status-badge">Valid link</span>
+        <button class="btn" id="print-btn" type="button">Print Summary</button>
+        <button class="btn primary" id="pdf-btn" type="button">Download PDF</button>
+      </div>
+    </div>
+
+    <div class="warn" id="warning"></div>
+
+    <div class="panel">
+      <div class="meta">
+        <div class="meta-item"><span>Business</span><strong id="meta-business">-</strong></div>
+        <div class="meta-item"><span>CA Contact</span><strong id="meta-ca">-</strong></div>
+        <div class="meta-item"><span>Access Expires</span><strong id="meta-expiry">-</strong></div>
+      </div>
+      <div class="scope" id="scope"></div>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi"><span>Total Invoices</span><strong id="kpi-invoices">0</strong></div>
+      <div class="kpi"><span>Total Sales</span><strong id="kpi-sales">₹0</strong></div>
+      <div class="kpi"><span>Total Payments</span><strong id="kpi-payments">₹0</strong></div>
+      <div class="kpi"><span>Net Due</span><strong id="kpi-due">₹0</strong></div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h3>Recent Invoices</h3>
+        <div class="card-body">
+          <div class="list" id="invoices-list"></div>
+          <div class="empty" id="invoices-empty">No invoices available in this shared view.</div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Recent Payments</h3>
+        <div class="card-body">
+          <div class="list" id="payments-list"></div>
+          <div class="empty" id="payments-empty">No payments available in this shared view.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const fmt = new Intl.NumberFormat('en-IN');
+    const byId = (id) => document.getElementById(id);
+
+    function parseDate(value) {
+      const d = new Date(value || '');
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+    function formatDate(value) {
+      const d = parseDate(value);
+      return d ? d.toLocaleString('en-IN') : '-';
+    }
+    function getToken() {
+      const params = new URLSearchParams(window.location.search);
+      return String(params.get('token') || '').trim();
+    }
+
+    function readPayload() {
+      const active = String(localStorage.getItem('metrox_active_business_profile_v1') || '').trim();
+      const keys = [
+        active ? `metrox_taxinvoo_demo_state__${active}` : '',
+        active ? `metrox_taxinvoo_demo_state_backup__${active}` : '',
+        active ? `metrox_taxinvoo_last_good_state__${active}` : '',
+        'metrox_taxinvoo_demo_state',
+        'metrox_taxinvoo_demo_state_backup',
+        'metrox_taxinvoo_last_good_state'
+      ].filter(Boolean);
+      for (const key of keys) {
+        try {
+          const raw = localStorage.getItem(key);
+          if (!raw) continue;
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === 'object') return parsed;
+        } catch (_) {}
+      }
+      return {};
+    }
+
+    function writePayload(payload) {
+      const active = String(localStorage.getItem('metrox_active_business_profile_v1') || '').trim();
+      const txt = JSON.stringify(payload || {});
+      const keys = [
+        'metrox_taxinvoo_demo_state',
+        'metrox_taxinvoo_demo_state_backup',
+        'metrox_taxinvoo_last_good_state'
+      ];
+      if (active) {
+        keys.push(`metrox_taxinvoo_demo_state__${active}`);
+        keys.push(`metrox_taxinvoo_demo_state_backup__${active}`);
+        keys.push(`metrox_taxinvoo_last_good_state__${active}`);
+      }
+      keys.forEach((k) => {
+        try { localStorage.setItem(k, txt); } catch (_) {}
+      });
+    }
+
+    function render() {
+      const token = getToken();
+      const payload = readPayload();
+      const company = payload.company || {};
+      const sharing = company.caSharing && typeof company.caSharing === 'object' ? company.caSharing : {};
+      const share = sharing.share && typeof sharing.share === 'object' ? sharing.share : {};
+      const scopes = sharing.scopes && typeof sharing.scopes === 'object' ? sharing.scopes : {};
+
+      const expiry = parseDate(share.expiresAt);
+      const valid = !!token
+        && token === String(share.token || '')
+        && String(share.status || '').toLowerCase() === 'active'
+        && !(expiry && expiry < new Date());
+
+      byId('status-badge').textContent = valid ? 'Valid link' : 'Invalid or expired link';
+      byId('status-badge').classList.toggle('invalid', !valid);
+      byId('print-btn').disabled = !valid;
+      byId('pdf-btn').disabled = !valid;
+
+      if (!valid) {
+        const warning = byId('warning');
+        warning.style.display = 'block';
+        warning.textContent = token
+          ? 'This access link is invalid, revoked, or expired. Please request a new link from the business owner.'
+          : 'Access token is missing from URL.';
+        byId('subtitle').textContent = 'Access could not be verified.';
+      }
+
+      byId('meta-business').textContent = String(company.name || 'Unknown Business');
+      byId('meta-ca').textContent = String(sharing.caName || sharing.caEmail || 'Not configured');
+      byId('meta-expiry').textContent = formatDate(share.expiresAt);
+
+      const scopeMap = [
+        ['gst', 'GST'],
+        ['financial', 'Financial'],
+        ['party', 'Party'],
+        ['tax', 'TDS/TCS'],
+        ['cashbank', 'Cash & Bank'],
+        ['export', 'Export']
+      ];
+      const enabledScopes = scopeMap.filter(([k]) => !!scopes[k]).map(([, v]) => v);
+      byId('scope').innerHTML = enabledScopes.length
+        ? enabledScopes.map((s) => `<span class="pill">${s}</span>`).join('')
+        : '<span class="pill">No scope selected</span>';
+
+      const invoices = Array.isArray(payload.invoices) ? payload.invoices : [];
+      const payments = Array.isArray(payload.payments) ? payload.payments : [];
+      const sales = invoices.reduce((sum, r) => sum + (Number(r.total) || 0), 0);
+      const paid = payments.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+      const due = Math.max(0, sales - paid);
+
+      byId('kpi-invoices').textContent = valid ? String(invoices.length) : '0';
+      byId('kpi-sales').textContent = valid ? `₹${fmt.format(sales)}` : '₹0';
+      byId('kpi-payments').textContent = valid ? `₹${fmt.format(paid)}` : '₹0';
+      byId('kpi-due').textContent = valid ? `₹${fmt.format(due)}` : '₹0';
+
+      const sortByDateDesc = (arr, picker) => arr.slice().sort((a, b) => {
+        const aMs = parseDate(picker(a))?.getTime?.() || 0;
+        const bMs = parseDate(picker(b))?.getTime?.() || 0;
+        return bMs - aMs;
+      });
+
+      const recentInvoices = sortByDateDesc(invoices, (x) => x.createdAt || x.date).slice(0, 8);
+      const recentPayments = sortByDateDesc(payments, (x) => x.date || x.createdAt).slice(0, 8);
+
+      byId('invoices-list').innerHTML = valid ? recentInvoices.map((r) => `
+        <div class="row">
+          <div class="row-top"><span>${r.id || 'Invoice'}</span><span>₹${fmt.format(Number(r.total) || 0)}</span></div>
+          <div class="row-sub">${r.customer || '-'} • ${formatDate(r.createdAt || r.date)}</div>
+        </div>
+      `).join('') : '';
+      byId('payments-list').innerHTML = valid ? recentPayments.map((r) => `
+        <div class="row">
+          <div class="row-top"><span>${r.customer || r.party || 'Payment'}</span><span>₹${fmt.format(Number(r.amount) || 0)}</span></div>
+          <div class="row-sub">${r.mode || 'Mode not set'} • ${formatDate(r.date || r.createdAt)}</div>
+        </div>
+      `).join('') : '';
+
+      byId('invoices-empty').style.display = (!valid || !recentInvoices.length) ? 'block' : 'none';
+      byId('payments-empty').style.display = (!valid || !recentPayments.length) ? 'block' : 'none';
+
+      if (valid) {
+        const seenKey = `metrox_ca_visit_seen_${token}`;
+        try {
+          if (sessionStorage.getItem(seenKey) !== '1') {
+            sessionStorage.setItem(seenKey, '1');
+            const next = { ...payload };
+            const caSharing = next.company?.caSharing || {};
+            const logs = Array.isArray(caSharing.auditLogs) ? caSharing.auditLogs.slice() : [];
+            const nowIso = new Date().toISOString();
+            if (!next.company) next.company = {};
+            if (!next.company.caSharing) next.company.caSharing = {};
+            if (!next.company.caSharing.share) next.company.caSharing.share = {};
+            next.company.caSharing.share.lastOpenedAt = nowIso;
+            logs.push({
+              ts: nowIso,
+              action: 'link_opened_external',
+              actor: 'CA Shared Link',
+              details: 'Shared reports page opened.'
+            });
+            next.company.caSharing.auditLogs = logs.slice(-120);
+            writePayload(next);
+          }
+        } catch (_) {}
+      }
+    }
+
+    function triggerPrint(downloadHint) {
+      const token = getToken();
+      if (!token) return;
+      const original = document.title;
+      document.title = `shared-reports-${new Date().toISOString().slice(0,10)}`;
+      setTimeout(() => {
+        window.print();
+        setTimeout(() => {
+          document.title = original;
+          if (downloadHint) alert('In print dialog, choose "Save as PDF" to download.');
+        }, 120);
+      }, 50);
+    }
+
+    byId('print-btn').addEventListener('click', () => triggerPrint(false));
+    byId('pdf-btn').addEventListener('click', () => triggerPrint(true));
+
+    render();
+  </script>
+</body>
+</html>

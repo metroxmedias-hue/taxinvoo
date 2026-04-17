@@ -1,0 +1,1099 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="assets/poppins.css" />
+  <link rel="stylesheet" href="assets/light-theme-generation-overrides.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Metrox TaxInvoo - Create Purchase Order</title>
+  <meta name="description" content="Dedicated Purchase Order creation form." />
+  <style>
+    :root {
+      --bg: #10163b;
+      --panel: rgba(22, 29, 74, 0.72);
+      --line: rgba(214,222,255,0.16);
+      --ink: #eef2ff;
+      --muted: #b2badf;
+      --accent: #5b52f3;
+      --danger: #ff8f8f;
+      --input: #151c45;
+    }
+    body.light {
+      --bg: #f4f7ff;
+      --panel: #ffffff;
+      --line: rgba(15,23,42,0.15);
+      --ink: #0f172a;
+      --muted: rgba(15,23,42,0.66);
+      --accent: #4f46e5;
+      --danger: #dc2626;
+      --input: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 24px;
+      font-family: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(920px 520px at 18% -10%, rgba(106,77,245,0.16), transparent),
+        radial-gradient(900px 520px at 112% 3%, rgba(105,215,216,0.14), transparent),
+        linear-gradient(180deg, #0a0d16, var(--bg));
+      display: grid;
+      place-items: center;
+    }
+    .shell {
+      width: min(1120px, 100%);
+      background: color-mix(in oklab, var(--panel) 90%, transparent);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 22px;
+      display: grid;
+      gap: 16px;
+      backdrop-filter: blur(6px);
+    }
+    .head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .head-actions {
+      display: inline-flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    h1 { margin: 0; font-size: 26px; letter-spacing: -0.01em; }
+    .muted { color: var(--muted); font-size: 13px; }
+    form { display: grid; gap: 12px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    label { display: grid; gap: 7px; font-size: 13px; color: var(--muted); }
+    input, select, textarea {
+      width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px;
+      background: var(--input); color: var(--ink); font: inherit; outline: none;
+    }
+    textarea { min-height: 88px; resize: vertical; }
+    .section-card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+      background: rgba(255,255,255,0.02);
+    }
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .section-head h3 {
+      margin: 0;
+      font-size: 15px;
+      letter-spacing: 0.01em;
+    }
+    .summary {
+      display: grid;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: rgba(255,255,255,0.02);
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .row strong { color: var(--ink); }
+    .grand-row {
+      border-top: 1px dashed var(--line);
+      padding-top: 8px;
+      margin-top: 2px;
+      font-size: 16px;
+    }
+    .grand-row strong {
+      font-size: 21px;
+      letter-spacing: 0.01em;
+    }
+    .item-table-wrap {
+      width: 100%;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(8, 12, 30, 0.25);
+    }
+    .item-table {
+      width: 100%;
+      min-width: 980px;
+      border-collapse: collapse;
+    }
+    .item-table th,
+    .item-table td {
+      border-bottom: 1px solid var(--line);
+      padding: 8px;
+      text-align: left;
+      font-size: 12px;
+      vertical-align: middle;
+    }
+    .item-table th {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      position: sticky;
+      top: 0;
+      background: color-mix(in oklab, var(--panel) 96%, transparent);
+      z-index: 1;
+    }
+    .item-table td input {
+      min-width: 88px;
+      padding: 8px 9px;
+      border-radius: 9px;
+      font-size: 12px;
+    }
+    .item-table td.number,
+    .item-table th.number {
+      text-align: right;
+    }
+    .cell-value {
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      color: var(--ink);
+    }
+    .pending-good {
+      color: #86efac;
+    }
+    .pending-due {
+      color: #fca5a5;
+    }
+    .error { color: var(--danger); font-size: 12px; min-height: 16px; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .inline-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .delivery-hint {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .delivery-hint.overdue {
+      color: #fca5a5;
+    }
+    button {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 14px;
+      background: #151c45;
+      color: var(--ink);
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button.primary {
+      border-color: transparent;
+      background: linear-gradient(120deg, #69d7d8, #3d8bde, #6a4df5);
+      color: #ffffff;
+    }
+    button.ghost { background: transparent; }
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(4,6,12,0.68); display: none;
+      align-items: center; justify-content: center; padding: 16px; z-index: 90;
+    }
+    .modal-backdrop.active { display: flex; }
+    .modal { width: min(620px, 100%); background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 10px; }
+    .modal-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .picker-tabs { display: inline-flex; gap: 6px; }
+    .picker-tab.active { background: linear-gradient(120deg, #69d7d8, #3d8bde, #6a4df5); color: #fff; border-color: transparent; }
+    .picker-pane { display: none; gap: 10px; }
+    .picker-pane.active { display: grid; }
+    .picker-list { display: flex; flex-wrap: wrap; gap: 8px; max-height: 120px; overflow: auto; }
+    .picker-chip { padding: 7px 10px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255,255,255,0.04); color: var(--ink); cursor: pointer; }
+
+    body.light .section-card,
+    body.light .summary {
+      background: #ffffff;
+      border-color: rgba(15,23,42,0.12);
+    }
+    body.light .item-table-wrap {
+      background: #ffffff;
+      border-color: rgba(15,23,42,0.14);
+    }
+    body.light .item-table th {
+      background: #f3f6fb;
+      color: #4b5563;
+      border-bottom-color: rgba(15,23,42,0.16);
+    }
+    body.light .item-table td {
+      background: #ffffff;
+      border-bottom-color: rgba(15,23,42,0.1);
+    }
+    body.light .item-table td input {
+      background: #ffffff;
+      border-color: rgba(15,23,42,0.16);
+      color: #0f172a;
+    }
+    body.light .cell-value { color: #1e293b; }
+    body.light .pending-good { color: #047857; }
+    body.light .pending-due { color: #b91c1c; }
+    body.light .delivery-hint.overdue { color: #b91c1c; }
+
+    @media (max-width: 980px) {
+      .grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 760px) {
+      body { padding: 12px; }
+      .shell { padding: 14px; }
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .section-card { padding: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="head">
+      <div>
+        <h1 id="form-title">Create Purchase Order</h1>
+        <div class="muted">Build supplier PO with delivery tracking and convert to purchase invoice when received.</div>
+      </div>
+      <div class="head-actions">
+        <button type="button" id="download-po-btn">Download PDF</button>
+        <button type="button" id="share-po-btn">Share on WhatsApp</button>
+        <button type="button" id="print-po-btn">Print PO</button>
+        <button type="button" id="back-btn">Back to Purchase Orders</button>
+      </div>
+    </div>
+
+    <form id="purchase-order-form">
+      <section class="section-card">
+        <div class="section-head"><h3>Supplier Info</h3></div>
+        <div class="grid-2">
+          <label>Supplier
+            <input type="text" id="supplier" list="supplier-list" placeholder="Ram Traders" required />
+            <datalist id="supplier-list"></datalist>
+          </label>
+          <label>Purchase type
+            <select id="purchase-type">
+              <option value="goods">Goods</option>
+              <option value="services">Services</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section class="section-card">
+        <div class="section-head"><h3>Order Details</h3></div>
+        <div class="grid-3">
+          <label>PO Number
+            <input type="text" id="po-number" placeholder="PO-001" />
+          </label>
+          <label>Status
+            <select id="status">
+              <option value="draft">Draft</option>
+              <option value="sent">Sent</option>
+              <option value="partially_received">Partially Received</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </label>
+          <label>Place of supply
+            <select id="supply">
+              <option value="intra">Intra-state (CGST/SGST)</option>
+              <option value="inter">Inter-state (IGST)</option>
+            </select>
+          </label>
+        </div>
+        <div class="grid-3">
+          <label>Order date
+            <input type="date" id="date" required />
+          </label>
+          <label>Expected Delivery Date
+            <input type="date" id="expected-date" />
+          </label>
+          <label>Due in (days)
+            <input type="number" id="due-days" min="0" step="1" value="30" />
+          </label>
+        </div>
+        <div class="grid-2">
+          <label>Reference bill no (optional)
+            <input type="text" id="bill-no" placeholder="INV-REF-001" />
+          </label>
+          <div class="delivery-hint" id="delivery-hint">Set expected delivery date to track overdue purchase orders.</div>
+        </div>
+      </section>
+
+      <section class="section-card">
+        <div class="section-head">
+          <h3>Items</h3>
+          <div class="inline-actions">
+            <button type="button" id="pick-item" class="ghost">Pick Product/Service</button>
+            <button type="button" id="add-item-btn">Add Item</button>
+          </div>
+        </div>
+        <div class="item-table-wrap">
+          <table class="item-table" aria-label="Purchase order item grid">
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th class="number">Ordered Qty</th>
+                <th class="number">Received Qty</th>
+                <th class="number">Pending Qty</th>
+                <th class="number">Rate</th>
+                <th class="number">Tax %</th>
+                <th class="number">Amount</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="items-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section-card">
+        <div class="section-head"><h3>Summary</h3></div>
+        <div class="summary">
+          <div class="row"><span>Total Amount</span><strong id="summary-amount">INR 0</strong></div>
+          <div class="row"><span>Tax</span><strong id="summary-tax">INR 0</strong></div>
+          <div class="row grand-row"><span>Grand Total</span><strong id="summary-total">INR 0</strong></div>
+          <div class="row"><span>Received Progress</span><strong id="summary-progress">0/0 items</strong></div>
+        </div>
+      </section>
+
+      <section class="section-card">
+        <div class="section-head"><h3>Notes</h3></div>
+        <label>Notes
+          <textarea id="notes" placeholder="Terms, delivery notes, approvals, etc."></textarea>
+        </label>
+      </section>
+
+      <div class="error" id="error"></div>
+      <div class="actions">
+        <button type="submit" class="primary" id="save-btn">Save Purchase Order</button>
+        <button type="button" id="cancel-btn">Cancel</button>
+      </div>
+    </form>
+  </main>
+
+  <div class="modal-backdrop" id="item-picker-modal">
+    <div class="modal">
+      <div class="modal-head">
+        <strong>Pick Product/Service</strong>
+        <button type="button" id="item-picker-close">Close</button>
+      </div>
+      <div class="picker-tabs">
+        <button type="button" id="picker-tab-existing" class="picker-tab active">Select existing</button>
+        <button type="button" id="picker-tab-create" class="picker-tab">Create new</button>
+      </div>
+      <div id="picker-pane-existing" class="picker-pane active">
+        <label>Type
+          <select id="picker-type">
+            <option value="service">Service</option>
+            <option value="product">Product</option>
+          </select>
+        </label>
+        <label>Saved items
+          <select id="picker-existing">
+            <option value="">Choose item</option>
+          </select>
+        </label>
+        <div class="muted" id="picker-meta">No saved items yet.</div>
+        <div class="picker-list" id="picker-list"></div>
+        <button type="button" class="primary" id="picker-add-selected">Use Selected</button>
+      </div>
+      <div id="picker-pane-create" class="picker-pane">
+        <div class="grid-2">
+          <label>Name
+            <input type="text" id="picker-name" placeholder="Item/service name" />
+          </label>
+          <label>Default Price
+            <input type="number" min="0" step="0.01" id="picker-price" placeholder="0" />
+          </label>
+        </div>
+        <button type="button" class="primary" id="picker-create-add">Create &amp; Use</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const STORAGE_KEY = 'metrox_taxinvoo_demo_state';
+      const BACKUP_KEY = 'metrox_taxinvoo_demo_state_backup';
+      const LAST_GOOD_KEY = 'metrox_taxinvoo_last_good_state';
+      const ACTIVE_BUSINESS_PROFILE_KEY = 'metrox_active_business_profile_v1';
+      const SCOPED_STATE_KEY_SEPARATOR = '__';
+      const FOCUS_KEY = 'metrox_open_purchase_order_form';
+      const EDIT_KEY = 'metrox_edit_purchase_order_id';
+      const target = 'index.html#/purchase-orders';
+      const fmt = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 });
+      const ITEM_CATALOG_KEY_PREFIX = 'metrox_item_catalog_v1__';
+
+      const theme = localStorage.getItem('Metrox TaxInvoo_theme');
+      if (theme === 'light') document.body.classList.add('light');
+
+      const form = document.getElementById('purchase-order-form');
+      const formTitle = document.getElementById('form-title');
+      const supplierEl = document.getElementById('supplier');
+      const supplierListEl = document.getElementById('supplier-list');
+      const purchaseTypeEl = document.getElementById('purchase-type');
+      const poNumberEl = document.getElementById('po-number');
+      const statusEl = document.getElementById('status');
+      const supplyEl = document.getElementById('supply');
+      const dateEl = document.getElementById('date');
+      const expectedDateEl = document.getElementById('expected-date');
+      const dueDaysEl = document.getElementById('due-days');
+      const billNoEl = document.getElementById('bill-no');
+      const notesEl = document.getElementById('notes');
+      const itemsBody = document.getElementById('items-body');
+      const addItemBtn = document.getElementById('add-item-btn');
+      const summaryAmountEl = document.getElementById('summary-amount');
+      const summaryTaxEl = document.getElementById('summary-tax');
+      const summaryTotalEl = document.getElementById('summary-total');
+      const summaryProgressEl = document.getElementById('summary-progress');
+      const deliveryHintEl = document.getElementById('delivery-hint');
+      const errorEl = document.getElementById('error');
+      const saveBtn = document.getElementById('save-btn');
+      const pickItemBtn = document.getElementById('pick-item');
+      const downloadPoBtn = document.getElementById('download-po-btn');
+      const sharePoBtn = document.getElementById('share-po-btn');
+      const printPoBtn = document.getElementById('print-po-btn');
+      const pickerModal = document.getElementById('item-picker-modal');
+      const pickerCloseBtn = document.getElementById('item-picker-close');
+      const pickerTabExisting = document.getElementById('picker-tab-existing');
+      const pickerTabCreate = document.getElementById('picker-tab-create');
+      const pickerPaneExisting = document.getElementById('picker-pane-existing');
+      const pickerPaneCreate = document.getElementById('picker-pane-create');
+      const pickerType = document.getElementById('picker-type');
+      const pickerExisting = document.getElementById('picker-existing');
+      const pickerMeta = document.getElementById('picker-meta');
+      const pickerList = document.getElementById('picker-list');
+      const pickerAddSelectedBtn = document.getElementById('picker-add-selected');
+      const pickerName = document.getElementById('picker-name');
+      const pickerPrice = document.getElementById('picker-price');
+      const pickerCreateAddBtn = document.getElementById('picker-create-add');
+
+      let activeItemRow = null;
+
+      dateEl.value = new Date().toISOString().slice(0, 10);
+
+      function esc(value) {
+        return String(value || '').replace(/[&<>'"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[ch] || ch));
+      }
+
+      function currency(value) {
+        return Number((Number(value) || 0).toFixed(2));
+      }
+
+      function normalizeCatalogType(type) {
+        return String(type || '').toLowerCase() === 'product' ? 'product' : 'service';
+      }
+
+      function normalizeStatus(status) {
+        const safe = String(status || '').toLowerCase();
+        if (safe === 'open') return 'draft';
+        if (safe === 'partial') return 'partially_received';
+        if (safe === 'closed') return 'completed';
+        if (safe === 'draft' || safe === 'sent' || safe === 'partially_received' || safe === 'completed' || safe === 'cancelled') return safe;
+        return 'draft';
+      }
+
+      function goBack() {
+        try { localStorage.setItem(FOCUS_KEY, '1'); } catch (_) {}
+        window.location.href = target;
+      }
+
+      document.getElementById('back-btn').addEventListener('click', goBack);
+      document.getElementById('cancel-btn').addEventListener('click', goBack);
+
+      function getScopedLocalStateKeys() {
+        const profileId = String(localStorage.getItem(ACTIVE_BUSINESS_PROFILE_KEY) || '').trim().replace(/[^a-zA-Z0-9_-]/g, '');
+        if (!profileId) {
+          return { primary: STORAGE_KEY, backup: BACKUP_KEY, lastGood: LAST_GOOD_KEY };
+        }
+        return {
+          primary: STORAGE_KEY + SCOPED_STATE_KEY_SEPARATOR + profileId,
+          backup: BACKUP_KEY + SCOPED_STATE_KEY_SEPARATOR + profileId,
+          lastGood: LAST_GOOD_KEY + SCOPED_STATE_KEY_SEPARATOR + profileId
+        };
+      }
+
+      function parseState() {
+        try {
+          const scoped = getScopedLocalStateKeys();
+          const raw = localStorage.getItem(scoped.primary)
+            || localStorage.getItem(scoped.backup)
+            || localStorage.getItem(scoped.lastGood)
+            || localStorage.getItem(STORAGE_KEY)
+            || localStorage.getItem(BACKUP_KEY)
+            || localStorage.getItem(LAST_GOOD_KEY);
+          const parsed = raw ? JSON.parse(raw) : {};
+          return parsed && typeof parsed === 'object' ? parsed : {};
+        } catch (_) {
+          return {};
+        }
+      }
+
+      function saveState(next) {
+        const payload = next && typeof next === 'object' ? next : {};
+        payload._meta = { ...(payload._meta || {}), updated_at: new Date().toISOString() };
+        const serialized = JSON.stringify(payload);
+        const scoped = getScopedLocalStateKeys();
+        localStorage.setItem(scoped.primary, serialized);
+        localStorage.setItem(scoped.backup, serialized);
+        localStorage.setItem(scoped.lastGood, serialized);
+      }
+
+      function getItemCatalogStorageKey() {
+        const profileId = String(localStorage.getItem(ACTIVE_BUSINESS_PROFILE_KEY) || '').trim().replace(/[^a-zA-Z0-9_-]/g, '');
+        return `${ITEM_CATALOG_KEY_PREFIX}${profileId || 'default'}`;
+      }
+
+      function toCatalogEntry(raw = {}) {
+        const name = String(raw.name || raw.description || raw.item || '').trim();
+        if (!name) return null;
+        return {
+          id: String(raw.id || `${normalizeCatalogType(raw.type)}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`),
+          type: normalizeCatalogType(raw.type),
+          name,
+          price: Math.max(0, Number(raw.price) || 0)
+        };
+      }
+
+      function loadSavedItemCatalog() {
+        try {
+          const parsed = JSON.parse(localStorage.getItem(getItemCatalogStorageKey()) || '[]');
+          return Array.isArray(parsed) ? parsed.map(toCatalogEntry).filter(Boolean) : [];
+        } catch (_) {
+          return [];
+        }
+      }
+
+      function saveItemCatalog(entries = []) {
+        const safe = Array.isArray(entries) ? entries.map(toCatalogEntry).filter(Boolean) : [];
+        localStorage.setItem(getItemCatalogStorageKey(), JSON.stringify(safe));
+      }
+
+      const state = parseState();
+      state.purchases = Array.isArray(state.purchases) ? state.purchases : [];
+      state.purchaseOrders = Array.isArray(state.purchaseOrders) ? state.purchaseOrders : [];
+      state.invoices = Array.isArray(state.invoices) ? state.invoices : [];
+      state.serviceCatalog = Array.isArray(state.serviceCatalog) ? state.serviceCatalog : [];
+      const editingId = localStorage.getItem(EDIT_KEY) || '';
+      if (editingId) localStorage.removeItem(EDIT_KEY);
+      const editingOrder = editingId ? state.purchaseOrders.find((x) => x.id === editingId) : null;
+
+      if (editingOrder) {
+        formTitle.textContent = 'Edit Purchase Order';
+        saveBtn.textContent = 'Update Purchase Order';
+      }
+
+      const supplierNames = Array.from(new Set(state.purchases.map((p) => String(p.supplier || '').trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b));
+      supplierListEl.innerHTML = supplierNames.map((name) => `<option value="${esc(name)}"></option>`).join('');
+
+      function collectCatalogFromState() {
+        const out = [];
+        (state.purchases || []).forEach((purchase) => {
+          const purchaseItems = Array.isArray(purchase.items) && purchase.items.length
+            ? purchase.items
+            : [{ description: purchase.item || '', price: Number(purchase.amount) || Number(purchase.total) || 0 }];
+          purchaseItems.forEach((row) => {
+            const entry = toCatalogEntry({
+              type: String(purchase.purchaseType || '').toLowerCase() === 'goods' ? 'product' : 'service',
+              name: row.description || row.item || purchase.item || '',
+              price: Number(row.rate ?? row.price ?? row.unit_price ?? purchase.amount ?? purchase.total) || 0
+            });
+            if (entry) out.push(entry);
+          });
+        });
+        (state.invoices || []).forEach((invoice) => {
+          (Array.isArray(invoice.items) ? invoice.items : []).forEach((row) => {
+            const entry = toCatalogEntry({
+              type: row.sac ? 'service' : 'product',
+              name: row.description || row.item || '',
+              price: Number(row.price) || Number(row.unit_price) || 0
+            });
+            if (entry) out.push(entry);
+          });
+        });
+        (state.serviceCatalog || []).forEach((service) => {
+          const entry = toCatalogEntry({
+            type: service.type || (service.sac ? 'service' : 'product'),
+            name: service.name || service.description || '',
+            price: Number(service.price) || 0
+          });
+          if (entry) out.push(entry);
+        });
+        return out;
+      }
+
+      function getUnifiedCatalog() {
+        const merged = [...collectCatalogFromState(), ...loadSavedItemCatalog()];
+        const seen = new Set();
+        return merged.filter((entry) => {
+          const key = `${entry.type}::${entry.name.toLowerCase()}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+      }
+
+      function renderPickerOptions() {
+        const selectedType = normalizeCatalogType(pickerType?.value || 'service');
+        const options = getUnifiedCatalog().filter((entry) => normalizeCatalogType(entry.type) === selectedType);
+        pickerExisting.innerHTML = ['<option value="">Choose item</option>']
+          .concat(options.map((entry, idx) => `<option value="${idx}">${entry.name}${entry.price ? ` • INR ${fmt.format(entry.price)}` : ''}</option>`))
+          .join('');
+        pickerExisting.dataset.options = JSON.stringify(options);
+        pickerMeta.textContent = options.length ? `${options.length} saved items found` : 'No saved items yet.';
+        pickerList.innerHTML = options.slice(0, 8)
+          .map((entry, idx) => `<button type="button" class="picker-chip" data-item-index="${idx}">${entry.name}${entry.price ? ` • INR ${fmt.format(entry.price)}` : ''}</button>`)
+          .join('');
+      }
+
+      function openPicker() {
+        pickerTabExisting.classList.add('active');
+        pickerTabCreate.classList.remove('active');
+        pickerPaneExisting.classList.add('active');
+        pickerPaneCreate.classList.remove('active');
+        pickerName.value = '';
+        pickerPrice.value = '';
+        renderPickerOptions();
+        pickerModal.classList.add('active');
+      }
+
+      function closePicker() {
+        pickerModal.classList.remove('active');
+      }
+
+      function createItemRow(data = {}) {
+        const row = document.createElement('tr');
+        const description = String(data.description || data.item || '').trim();
+        const orderedQty = Math.max(0, Number(data.orderedQty ?? data.qty ?? data.quantity ?? 1) || 1);
+        const receivedQty = Math.max(0, Number(data.receivedQty ?? 0) || 0);
+        const rate = Math.max(0, Number(data.rate ?? data.price ?? data.unit_price ?? 0) || 0);
+        const taxRate = Math.max(0, Number(data.taxRate ?? data.ratePercent ?? 18) || 0);
+
+        row.innerHTML = `
+          <td><input type="text" class="item-desc" placeholder="Description" value="${esc(description)}" /></td>
+          <td class="number"><input type="number" class="item-ordered" min="0" step="0.01" value="${orderedQty}" /></td>
+          <td class="number"><input type="number" class="item-received" min="0" step="0.01" value="${receivedQty}" /></td>
+          <td class="number"><span class="cell-value item-pending">0</span></td>
+          <td class="number"><input type="number" class="item-rate" min="0" step="0.01" value="${rate}" /></td>
+          <td class="number"><input type="number" class="item-tax" min="0" step="0.01" value="${taxRate}" /></td>
+          <td class="number"><span class="cell-value item-amount">INR 0</span></td>
+          <td><button type="button" class="ghost remove-item-btn">Remove</button></td>
+        `;
+
+        row.querySelectorAll('input').forEach((input) => {
+          ['input', 'change'].forEach((evt) => input.addEventListener(evt, calculate));
+          input.addEventListener('focus', () => {
+            activeItemRow = row;
+          });
+        });
+
+        const removeBtn = row.querySelector('.remove-item-btn');
+        if (removeBtn) {
+          removeBtn.addEventListener('click', () => {
+            const currentRows = itemsBody.querySelectorAll('tr');
+            if (currentRows.length <= 1) {
+              alert('At least one item row is required.');
+              return;
+            }
+            if (activeItemRow === row) activeItemRow = null;
+            row.remove();
+            calculate();
+          });
+        }
+
+        return row;
+      }
+
+      function ensureAtLeastOneRow() {
+        if (!itemsBody.children.length) {
+          itemsBody.appendChild(createItemRow({ orderedQty: 1, receivedQty: 0, rate: 0, taxRate: 18 }));
+        }
+      }
+
+      function collectItems() {
+        return Array.from(itemsBody.querySelectorAll('tr')).map((row) => {
+          const description = String(row.querySelector('.item-desc')?.value || '').trim();
+          const orderedQty = Math.max(0, Number(row.querySelector('.item-ordered')?.value || 0) || 0);
+          const receivedQtyRaw = Math.max(0, Number(row.querySelector('.item-received')?.value || 0) || 0);
+          const receivedQty = Math.min(orderedQty, receivedQtyRaw);
+          const pendingQty = Math.max(0, orderedQty - receivedQty);
+          const rate = Math.max(0, Number(row.querySelector('.item-rate')?.value || 0) || 0);
+          const taxRate = Math.max(0, Number(row.querySelector('.item-tax')?.value || 0) || 0);
+          const amount = currency(orderedQty * rate);
+          const taxAmount = currency(amount * (taxRate / 100));
+          return {
+            description: description || 'Item',
+            qty: orderedQty,
+            orderedQty,
+            receivedQty,
+            pendingQty,
+            rate,
+            taxRate,
+            taxAmount,
+            amount,
+            total: amount
+          };
+        }).filter((item) => item.orderedQty > 0 || item.rate > 0 || String(item.description || '').trim());
+      }
+
+      function calculate() {
+        ensureAtLeastOneRow();
+        let taxable = 0;
+        let tax = 0;
+        let orderedTotal = 0;
+        let receivedTotal = 0;
+
+        Array.from(itemsBody.querySelectorAll('tr')).forEach((row) => {
+          const orderedInput = row.querySelector('.item-ordered');
+          const receivedInput = row.querySelector('.item-received');
+          const pendingEl = row.querySelector('.item-pending');
+          const amountEl = row.querySelector('.item-amount');
+
+          const ordered = Math.max(0, Number(orderedInput?.value || 0) || 0);
+          let received = Math.max(0, Number(receivedInput?.value || 0) || 0);
+          if (received > ordered) {
+            received = ordered;
+            if (receivedInput) receivedInput.value = String(received);
+          }
+          const pending = Math.max(0, ordered - received);
+          const rate = Math.max(0, Number(row.querySelector('.item-rate')?.value || 0) || 0);
+          const taxRate = Math.max(0, Number(row.querySelector('.item-tax')?.value || 0) || 0);
+
+          const lineAmount = currency(ordered * rate);
+          const lineTax = currency(lineAmount * (taxRate / 100));
+
+          orderedTotal += ordered;
+          receivedTotal += received;
+          taxable += lineAmount;
+          tax += lineTax;
+
+          if (pendingEl) {
+            pendingEl.textContent = String(Number(pending.toFixed(2)));
+            pendingEl.classList.toggle('pending-good', pending <= 0);
+            pendingEl.classList.toggle('pending-due', pending > 0);
+          }
+          if (amountEl) amountEl.textContent = `INR ${fmt.format(lineAmount)}`;
+        });
+
+        taxable = currency(taxable);
+        tax = currency(tax);
+        const total = currency(taxable + tax);
+
+        if (summaryAmountEl) summaryAmountEl.textContent = `INR ${fmt.format(taxable)}`;
+        if (summaryTaxEl) summaryTaxEl.textContent = `INR ${fmt.format(tax)}`;
+        if (summaryTotalEl) summaryTotalEl.textContent = `INR ${fmt.format(total)}`;
+        if (summaryProgressEl) summaryProgressEl.textContent = `${fmt.format(receivedTotal)}/${fmt.format(orderedTotal)} items`;
+
+        return { taxable, tax, total, orderedTotal, receivedTotal, pendingTotal: Math.max(0, orderedTotal - receivedTotal) };
+      }
+
+      function updateDeliveryHint() {
+        const expectedDate = expectedDateEl.value ? new Date(`${expectedDateEl.value}T00:00:00`) : null;
+        if (!expectedDate || Number.isNaN(expectedDate.getTime())) {
+          deliveryHintEl.textContent = 'Set expected delivery date to track overdue purchase orders.';
+          deliveryHintEl.classList.remove('overdue');
+          return;
+        }
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (expectedDate < today) {
+          deliveryHintEl.textContent = `Expected delivery was ${expectedDateEl.value} (overdue).`;
+          deliveryHintEl.classList.add('overdue');
+        } else {
+          deliveryHintEl.textContent = `Expected delivery on ${expectedDateEl.value}.`;
+          deliveryHintEl.classList.remove('overdue');
+        }
+      }
+
+      function deriveStatusFromReceiving(currentStatus, stats) {
+        if (currentStatus === 'cancelled') return 'cancelled';
+        if (stats.orderedTotal <= 0) return currentStatus || 'draft';
+        if (stats.receivedTotal >= stats.orderedTotal) return 'completed';
+        if (stats.receivedTotal > 0) return 'partially_received';
+        if (currentStatus === 'completed' || currentStatus === 'partially_received') return 'sent';
+        return currentStatus || 'draft';
+      }
+
+      function buildExportPayloadSnapshot() {
+        const supplier = String(supplierEl.value || '').trim() || 'Supplier';
+        const items = collectItems();
+        const calc = calculate();
+        const status = normalizeStatus(statusEl.value || 'draft');
+        const tax = calc.tax;
+        const cgst = supplyEl.value === 'inter' ? 0 : currency(tax / 2);
+        const sgst = supplyEl.value === 'inter' ? 0 : currency(tax / 2);
+        const igst = supplyEl.value === 'inter' ? tax : 0;
+        return {
+          id: String(poNumberEl.value || editingId || `PO-${Date.now()}`).trim(),
+          date: dateEl.value || new Date().toISOString().slice(0, 10),
+          taxable: calc.taxable,
+          cgst,
+          sgst,
+          igst,
+          total: calc.total,
+          roundOff: 0,
+          notes: notesEl.value.trim(),
+          items: items.length ? items.map((row) => ({
+            description: row.description || 'Purchase Item',
+            hsn: '',
+            sac: '',
+            qty: Number(row.orderedQty) || 0,
+            price: Number(row.rate) || 0,
+            total: Number(row.amount) || 0
+          })) : [{ description: 'Purchase Item', qty: 1, price: 0, total: 0 }],
+          customer: {
+            name: supplier,
+            gstin: '',
+            phone: '',
+            email: '',
+            address: '',
+            state: '',
+            stateCode: ''
+          },
+          status,
+          validUntil: expectedDateEl.value || '',
+          placeOfSupply: supplyEl.value === 'inter' ? 'Inter-state' : 'Intra-state',
+          invoiceType: 'Purchase Order'
+        };
+      }
+
+      function exportPo(mode = 'pdf') {
+        const payload = buildExportPayloadSnapshot();
+        try {
+          localStorage.setItem('Metrox TaxInvoo_export_invoice', JSON.stringify(payload));
+        } catch (_) {
+          alert('Could not prepare export payload.');
+          return;
+        }
+        const suffix = mode === 'print' ? '?mode=print' : '?mode=pdf';
+        window.open(`invoice-template.html${suffix}`, '_blank');
+      }
+
+      function sharePo() {
+        const payload = buildExportPayloadSnapshot();
+        const text = [
+          `Purchase Order ${payload.id}`,
+          `Supplier: ${payload.customer.name}`,
+          `Date: ${payload.date}`,
+          `Total: INR ${fmt.format(payload.total || 0)}`,
+          payload.validUntil ? `Expected delivery: ${payload.validUntil}` : ''
+        ].filter(Boolean).join('\n');
+        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
+      }
+
+      function applyPickedItem(selected) {
+        if (!selected) return;
+        const targetRow = activeItemRow || itemsBody.querySelector('tr:last-child') || createItemRow();
+        if (!targetRow.parentElement) itemsBody.appendChild(targetRow);
+        const descEl = targetRow.querySelector('.item-desc');
+        const rateEl = targetRow.querySelector('.item-rate');
+        if (descEl) descEl.value = selected.name || '';
+        if (rateEl) rateEl.value = String(Number(selected.price) || 0);
+        purchaseTypeEl.value = normalizeCatalogType(selected.type) === 'product' ? 'goods' : 'services';
+        calculate();
+      }
+
+      if (editingOrder) {
+        supplierEl.value = editingOrder.supplier || '';
+        purchaseTypeEl.value = editingOrder.purchaseType || 'goods';
+        poNumberEl.value = editingOrder.id || '';
+        statusEl.value = normalizeStatus(editingOrder.status || 'draft');
+        supplyEl.value = editingOrder.supply || 'intra';
+        dateEl.value = editingOrder.date || new Date().toISOString().slice(0, 10);
+        expectedDateEl.value = editingOrder.expectedDate || '';
+        dueDaysEl.value = Number(editingOrder.dueDays) || 30;
+        billNoEl.value = editingOrder.billNo || '';
+        notesEl.value = editingOrder.notes || '';
+
+        const sourceItems = Array.isArray(editingOrder.items) && editingOrder.items.length
+          ? editingOrder.items
+          : [{
+            description: editingOrder.item || 'Item',
+            orderedQty: Number(editingOrder.qty ?? editingOrder.quantity ?? 1) || 1,
+            receivedQty: Number(editingOrder.receivedQty ?? 0) || 0,
+            rate: Number(editingOrder.amount || 0) || 0,
+            taxRate: Number(editingOrder.rate || 18) || 18
+          }];
+
+        itemsBody.innerHTML = '';
+        sourceItems.forEach((item) => {
+          itemsBody.appendChild(createItemRow({
+            description: item.description || item.item || '',
+            orderedQty: Number(item.orderedQty ?? item.qty ?? item.quantity ?? 1) || 1,
+            receivedQty: Number(item.receivedQty ?? 0) || 0,
+            rate: Number(item.rate ?? item.price ?? item.unit_price ?? item.amount ?? 0) || 0,
+            taxRate: Number(item.taxRate ?? item.rate ?? 18) || 18
+          }));
+        });
+      }
+
+      ensureAtLeastOneRow();
+      calculate();
+      updateDeliveryHint();
+
+      if (addItemBtn) {
+        addItemBtn.addEventListener('click', () => {
+          const row = createItemRow({ orderedQty: 1, receivedQty: 0, rate: 0, taxRate: 18 });
+          itemsBody.appendChild(row);
+          activeItemRow = row;
+          const descInput = row.querySelector('.item-desc');
+          if (descInput) descInput.focus();
+          calculate();
+        });
+      }
+
+      if (expectedDateEl) expectedDateEl.addEventListener('change', updateDeliveryHint);
+      if (pickItemBtn) pickItemBtn.addEventListener('click', openPicker);
+      if (pickerCloseBtn) pickerCloseBtn.addEventListener('click', closePicker);
+      if (pickerModal) pickerModal.addEventListener('click', (event) => {
+        if (event.target === pickerModal) closePicker();
+      });
+      if (pickerTabExisting) pickerTabExisting.addEventListener('click', () => {
+        pickerTabExisting.classList.add('active');
+        pickerTabCreate.classList.remove('active');
+        pickerPaneExisting.classList.add('active');
+        pickerPaneCreate.classList.remove('active');
+      });
+      if (pickerTabCreate) pickerTabCreate.addEventListener('click', () => {
+        pickerTabCreate.classList.add('active');
+        pickerTabExisting.classList.remove('active');
+        pickerPaneCreate.classList.add('active');
+        pickerPaneExisting.classList.remove('active');
+      });
+      if (pickerType) pickerType.addEventListener('change', renderPickerOptions);
+      if (pickerList) pickerList.addEventListener('click', (event) => {
+        const trigger = event.target.closest('[data-item-index]');
+        if (!trigger) return;
+        pickerExisting.value = String(trigger.dataset.itemIndex || '');
+        if (pickerAddSelectedBtn) pickerAddSelectedBtn.click();
+      });
+      if (pickerAddSelectedBtn) pickerAddSelectedBtn.addEventListener('click', () => {
+        const idx = Number(String(pickerExisting.value || ''));
+        if (!Number.isFinite(idx)) {
+          alert('Please select an item first.');
+          return;
+        }
+        let selected = null;
+        try {
+          selected = JSON.parse(pickerExisting.dataset.options || '[]')[idx] || null;
+        } catch (_) {}
+        if (!selected) return;
+        applyPickedItem(selected);
+        closePicker();
+      });
+      if (pickerCreateAddBtn) pickerCreateAddBtn.addEventListener('click', () => {
+        const type = normalizeCatalogType(pickerType?.value || 'service');
+        const name = String(pickerName.value || '').trim();
+        if (!name) {
+          alert('Please enter item/service name.');
+          return;
+        }
+        const created = toCatalogEntry({ type, name, price: Number(pickerPrice.value) || 0 });
+        if (!created) return;
+        const saved = loadSavedItemCatalog();
+        const deduped = saved.filter((entry) => !(entry.type === created.type && String(entry.name || '').toLowerCase() === created.name.toLowerCase()));
+        deduped.unshift(created);
+        saveItemCatalog(deduped);
+        const liveCatalog = Array.isArray(state.serviceCatalog) ? state.serviceCatalog : [];
+        state.serviceCatalog = [
+          { type: created.type, name: created.name, hsn: '', sac: '', price: created.price || 0 },
+          ...liveCatalog.filter((entry) => !(
+            normalizeCatalogType(entry?.type) === created.type
+            && String(entry?.name || '').trim().toLowerCase() === created.name.toLowerCase()
+          ))
+        ];
+        saveState(state);
+        applyPickedItem(created);
+        closePicker();
+      });
+
+      if (downloadPoBtn) downloadPoBtn.addEventListener('click', () => exportPo('pdf'));
+      if (printPoBtn) printPoBtn.addEventListener('click', () => exportPo('print'));
+      if (sharePoBtn) sharePoBtn.addEventListener('click', sharePo);
+
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        errorEl.textContent = '';
+
+        const supplier = supplierEl.value.trim();
+        if (!supplier) {
+          errorEl.textContent = 'Supplier is required.';
+          return;
+        }
+
+        const items = collectItems();
+        const meaningfulItems = items.filter((item) => (Number(item.orderedQty) > 0 && Number(item.rate) > 0) || String(item.description || '').trim());
+        if (!meaningfulItems.length) {
+          errorEl.textContent = 'Add at least one line item.';
+          return;
+        }
+
+        const invalidReceived = meaningfulItems.find((item) => Number(item.receivedQty) > Number(item.orderedQty));
+        if (invalidReceived) {
+          errorEl.textContent = `Received qty cannot exceed ordered qty for ${invalidReceived.description || 'item'}.`;
+          return;
+        }
+
+        const calc = calculate();
+        if (calc.taxable <= 0) {
+          errorEl.textContent = 'Total amount should be greater than zero.';
+          return;
+        }
+
+        const id = (poNumberEl.value || '').trim() || editingId || `PO-${Date.now()}`;
+        const existingStatus = normalizeStatus(statusEl.value || 'draft');
+        const derivedStatus = deriveStatusFromReceiving(existingStatus, calc);
+
+        const avgRate = calc.taxable > 0 ? Number(((calc.tax / calc.taxable) * 100).toFixed(4)) : 0;
+        const firstItem = meaningfulItems[0] || {};
+
+        const payload = {
+          id,
+          supplier,
+          purchaseType: purchaseTypeEl.value || 'goods',
+          supply: supplyEl.value || 'intra',
+          rate: avgRate,
+          item: firstItem.description || 'Item',
+          qty: calc.orderedTotal,
+          quantity: calc.orderedTotal,
+          receivedQty: calc.receivedTotal,
+          pendingQty: calc.pendingTotal,
+          amount: calc.taxable,
+          totalTax: calc.tax,
+          total: calc.total,
+          items: meaningfulItems,
+          status: derivedStatus,
+          date: dateEl.value || new Date().toISOString().slice(0, 10),
+          expectedDate: expectedDateEl.value || '',
+          dueDays: Math.max(0, Number(dueDaysEl.value) || 0),
+          billNo: billNoEl.value.trim(),
+          notes: notesEl.value.trim(),
+          convertedPurchaseId: editingOrder?.convertedPurchaseId || ''
+        };
+
+        if (editingId) {
+          const idx = state.purchaseOrders.findIndex((x) => x.id === editingId);
+          if (idx !== -1) state.purchaseOrders[idx] = { ...(state.purchaseOrders[idx] || {}), ...payload };
+          else state.purchaseOrders.push(payload);
+        } else {
+          const existing = state.purchaseOrders.find((x) => x.id === payload.id);
+          if (existing) {
+            errorEl.textContent = 'PO Number already exists. Use a different number.';
+            return;
+          }
+          state.purchaseOrders.push(payload);
+        }
+
+        saveState(state);
+        goBack();
+      });
+    })();
+  </script>
+</body>
+</html>

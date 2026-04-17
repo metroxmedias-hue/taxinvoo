@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="assets/poppins.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Metrox TaxInvoo Delivery Challan</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Poppins:wght@400;600;700&family=Roboto+Slab:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap');
+
+    :root {
+      --ink: #1a1a22;
+      --muted: rgba(26,26,34,0.64);
+      --accent: #6a2fd9;
+      --accent-dark: #3b1b78;
+      --line: rgba(0,0,0,0.08);
+      --bg: #f6f6fb;
+      --font: 'Poppins', Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--ink);
+      padding: 14px;
+      display: grid;
+      gap: 14px;
+      justify-content: center;
+    }
+
+    .sheet {
+      width: 210mm;
+      min-height: 297mm;
+      display: grid;
+      grid-template-columns: 110px 1fr;
+      background: #f6f6fb;
+      overflow: hidden;
+      position: relative;
+      border: none;
+      page-break-after: always;
+    }
+    .sheet:last-child { page-break-after: auto; }
+
+    .band {
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,0.12) 0 8%, transparent 9% 100%),
+        radial-gradient(circle at 70% 12%, rgba(255,255,255,0.08) 0 6%, transparent 7% 100%),
+        radial-gradient(circle at 30% 55%, rgba(255,255,255,0.06) 0 7%, transparent 8% 100%),
+        linear-gradient(180deg, var(--accent), var(--accent-dark) 70%, #250f52);
+      color: white;
+      padding: 22px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .logo {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.16);
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      letter-spacing: 1px;
+      border: 1px solid rgba(255,255,255,0.5);
+      box-shadow: 0 8px 18px rgba(10, 8, 28, 0.2);
+      overflow: hidden;
+      font-size: 22px;
+      color: #f2f6ff;
+    }
+
+    .logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      background: transparent;
+      padding: 0;
+    }
+
+    .band-copy {
+      margin-top: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.5);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #fff;
+      background: rgba(255,255,255,0.16);
+      text-align: center;
+    }
+
+    .band small {
+      font-size: 11px;
+      text-align: center;
+      opacity: 0.86;
+      line-height: 1.45;
+    }
+
+    .main {
+      padding: 24px 32px;
+      display: grid;
+      gap: 12px;
+      background: #f6f6fb;
+      min-height: 297mm;
+      align-content: start;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 28px;
+      color: #2b1a55;
+      letter-spacing: 0.4px;
+      line-height: 1.1;
+    }
+
+    .header .sub {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    .status-badge {
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(90,47,207,0.28);
+      background: rgba(90,47,207,0.08);
+      color: #4a2db5;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 10px;
+      font-size: 12px;
+    }
+
+    .meta .box {
+      border: 1px solid rgba(255,255,255,0.5);
+      padding: 9px 11px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.62);
+      box-shadow: 0 8px 18px rgba(46,46,78,0.06);
+      color: rgba(26,26,34,0.64);
+    }
+
+    .meta .box strong { color: #2b1a55; }
+
+    .party-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 12px;
+    }
+
+    .party {
+      background: rgba(255,255,255,0.62);
+      border: 1px solid rgba(255,255,255,0.5);
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 12px;
+      line-height: 1.45;
+      color: rgba(26,26,34,0.82);
+      box-shadow: 0 10px 24px rgba(40,40,70,0.06);
+      min-height: 116px;
+    }
+
+    .party .label {
+      color: #5a2fcf;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11.5px;
+      color: rgba(26,26,34,0.88);
+    }
+
+    th, td {
+      border-bottom: 1px solid rgba(0,0,0,0.07);
+      padding: 8px 6px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: #5a2fcf;
+      font-weight: 700;
+      background: rgba(90,47,207,0.06);
+    }
+
+    .totals {
+      margin-left: auto;
+      width: 300px;
+      background: rgba(255,255,255,0.62);
+      border: 1px solid rgba(255,255,255,0.5);
+      border-radius: 12px;
+      padding: 10px;
+      box-shadow: 0 10px 22px rgba(40,40,70,0.06);
+      font-size: 12px;
+    }
+
+    .totals .row {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+      border-bottom: 1px dashed rgba(0,0,0,0.08);
+    }
+
+    .totals .row:last-child { border-bottom: none; }
+    .totals .grand {
+      margin-top: 8px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: #5a2fcf;
+      color: #fff;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+    }
+
+    .footer {
+      margin-top: 4px;
+      border-top: 1px dashed rgba(0,0,0,0.12);
+      padding-top: 8px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    .sign {
+      margin-top: 18px;
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .sign .line {
+      width: 220px;
+      border-top: 1px solid rgba(0,0,0,0.22);
+      padding-top: 6px;
+      text-align: center;
+    }
+
+    .template-classic .main { background: #0b0b12; color: #f4f6ff; }
+    .template-classic .header h1 { color: #ffd27a; }
+    .template-classic .meta .box,
+    .template-classic .party,
+    .template-classic .totals { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); color: #e8ecff; box-shadow: none; }
+    .template-classic th { color: #ffd27a; background: rgba(255,210,122,0.12); }
+    .template-classic .status-badge { color: #ffd27a; border-color: rgba(255,210,122,0.36); background: rgba(255,210,122,0.14); }
+    .template-classic .totals .grand { background: rgba(255,210,122,0.25); color: #fff4d6; }
+    .template-classic .footer,
+    .template-classic .sign,
+    .template-classic .header .sub { color: rgba(235,238,255,0.76); }
+
+    .template-minimal .sheet { grid-template-columns: 86px 1fr; }
+    .template-minimal .band { background: linear-gradient(180deg, #2b3361, #151a31); }
+    .template-minimal .main { background: #ffffff; }
+    .template-minimal th { color: #2d4fb8; background: #f5f8ff; }
+
+    @media print {
+      body { padding: 0; background: #fff; }
+      .sheet { margin: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script>
+    (function () {
+      const stored = (sessionStorage.getItem('Metrox TaxInvoo_export_delivery_challan') || localStorage.getItem('Metrox TaxInvoo_export_delivery_challan'));
+      if (!stored) return;
+      let data;
+      try { data = JSON.parse(stored); } catch (_) { return; }
+
+      const theme = data.theme || {};
+      const fmt = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 });
+      const copies = Array.isArray(data.challanCopies) && data.challanCopies.length
+        ? data.challanCopies
+        : ['Original', 'Transport Copy', 'Receiver Copy'];
+      const items = Array.isArray(data.items) ? data.items : [];
+      const seller = data.seller || {};
+      const customer = data.customer || {};
+      const dateText = data.date ? new Date(data.date).toLocaleDateString('en-IN') : '—';
+      const deliveryDateText = data.deliveryDate ? new Date(data.deliveryDate).toLocaleDateString('en-IN') : '—';
+      const template = String(data.template || '').toLowerCase();
+
+      if (theme.accent) document.documentElement.style.setProperty('--accent', theme.accent);
+      if (theme.band) document.documentElement.style.setProperty('--accent-dark', theme.band);
+      if (theme.bg) document.documentElement.style.setProperty('--bg', theme.bg);
+      if (data.font) document.documentElement.style.setProperty('--font', `'${data.font}', Arial, sans-serif`);
+
+      const root = document.getElementById('root');
+      root.innerHTML = copies.map((copyLabel) => `
+        <section class="sheet template-${template}">
+          <aside class="band">
+            <div class="logo">${data.logo ? `<img src="${data.logo}" alt="logo" />` : (seller.name || 'M').trim().slice(0,2).toUpperCase()}</div>
+            <div class="band-copy">${copyLabel}</div>
+            <small>
+              Delivery Challan<br/>
+              ${seller.name || 'Metrox TaxInvoo'}<br/>
+              GSTIN: ${seller.gstin || '—'}
+            </small>
+          </aside>
+
+          <main class="main">
+            <div class="header">
+              <div>
+                <h1>Delivery Challan</h1>
+                <div class="sub">
+                  ${seller.name || 'Business Name'}<br/>
+                  ${seller.address || '—'}
+                </div>
+              </div>
+              <span class="status-badge">${String(data.status || 'open').toUpperCase()}</span>
+            </div>
+
+            <div class="meta">
+              <div class="box">Challan No<br/><strong>${data.id || '—'}</strong></div>
+              <div class="box">Challan Date<br/><strong>${dateText}</strong></div>
+              <div class="box">Delivery Date<br/><strong>${deliveryDateText}</strong></div>
+            </div>
+
+            <div class="party-grid">
+              <div class="party">
+                <div class="label">Consignee</div>
+                <strong>${customer.name || '—'}</strong><br/>
+                ${customer.address || '—'}<br/>
+                GSTIN: ${customer.gstin || '—'}<br/>
+                State: ${customer.state || '—'} ${customer.stateCode ? `(${customer.stateCode})` : ''}<br/>
+                Phone: ${customer.phone || '—'}
+              </div>
+              <div class="party">
+                <div class="label">Dispatch Details</div>
+                Invoice Ref: ${data.invoiceId || '—'}<br/>
+                Transport: ${data.transportMode || '—'}<br/>
+                Vehicle No: ${data.vehicleNo || '—'}<br/>
+                LR No: ${data.lrNo || '—'}<br/>
+                Place of Supply: ${(data.placeOfSupply || 'intra') === 'inter' ? 'Inter-state' : 'Intra-state'}<br/>
+                Status: ${String(data.status || 'open')}
+              </div>
+            </div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Description</th>
+                  <th>HSN/SAC</th>
+                  <th>Qty</th>
+                  <th>Rate</th>
+                  <th>Tax %</th>
+                  <th>Tax Amt</th>
+                  <th>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${items.length ? items.map((item, idx) => `
+                  <tr>
+                    <td>${idx + 1}</td>
+                    <td>${item.description || ''}</td>
+                    <td>${item.hsn || ''}</td>
+                    <td>${Number(item.qty) || 0}</td>
+                    <td>₹${fmt.format(Number(item.rate) || 0)}</td>
+                    <td>${fmt.format(Number(item.taxRate) || 0)}%</td>
+                    <td>₹${fmt.format(Number(item.taxAmount) || 0)}</td>
+                    <td>₹${fmt.format(Number(item.total) || 0)}</td>
+                  </tr>
+                `).join('') : '<tr><td colspan="8">No line items</td></tr>'}
+              </tbody>
+            </table>
+
+            <div class="totals">
+              <div class="row"><span>Taxable</span><span>₹${fmt.format(Number(data.taxable) || 0)}</span></div>
+              <div class="row"><span>GST</span><span>₹${fmt.format(Number(data.gst) || 0)}</span></div>
+              <div class="grand"><span>Total</span><span>₹${fmt.format(Number(data.amount) || 0)}</span></div>
+            </div>
+
+            <div class="footer">
+              ${data.notes ? `<strong>Notes:</strong> ${data.notes}<br/>` : ''}
+              This challan is for movement of goods and does not represent a tax invoice.
+            </div>
+
+            <div class="sign">
+              <div class="line">Receiver Signature</div>
+              <div class="line">For ${seller.name || 'Company'}</div>
+            </div>
+          </main>
+        </section>
+      `).join('');
+
+      const params = new URLSearchParams(window.location.search);
+      const auto = params.get('auto');
+      if (auto === 'print') {
+        setTimeout(() => window.print(), 300);
+      }
+
+      async function downloadPdf() {
+        if (!window.html2canvas || !window.jspdf) {
+          alert('PDF library not loaded. Please check your internet connection.');
+          return;
+        }
+        const pages = Array.from(document.querySelectorAll('.sheet'));
+        if (!pages.length) return;
+        const pdf = new window.jspdf.jsPDF('p', 'mm', 'a4');
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+
+        for (let i = 0; i < pages.length; i++) {
+          const node = pages[i];
+          const canvas = await window.html2canvas(node, {
+            scale: 2,
+            backgroundColor: '#f6f6fb',
+            width: node.offsetWidth,
+            height: node.offsetHeight,
+            windowWidth: node.scrollWidth,
+            windowHeight: node.scrollHeight
+          });
+          const imgData = canvas.toDataURL('image/png');
+          const imgWidth = canvas.width;
+          const imgHeight = canvas.height;
+          const scale = Math.min(pageWidth / imgWidth, pageHeight / imgHeight);
+          const renderW = imgWidth * scale;
+          const renderH = imgHeight * scale;
+          const x = (pageWidth - renderW) / 2;
+          const y = (pageHeight - renderH) / 2;
+          if (i > 0) pdf.addPage();
+          pdf.addImage(imgData, 'PNG', x, y, renderW, renderH);
+        }
+
+        pdf.save(`${data.id || 'delivery-challan'}.pdf`);
+      }
+
+      if (auto === 'pdf') {
+        setTimeout(downloadPdf, 450);
+      }
+    })();
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+</body>
+</html>

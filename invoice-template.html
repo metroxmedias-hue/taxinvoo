@@ -1,0 +1,1006 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="assets/poppins.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Metrox TaxInvoo Invoice</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Poppins:wght@400;600;700&family=Roboto+Slab:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap');
+
+    :root {
+      --ink: #1a1a22;
+      --muted: rgba(26,26,34,0.6);
+      --accent: #6a2fd9;
+      --accent-dark: #3b1b78;
+      --panel: #ffffff;
+      --line: rgba(0,0,0,0.08);
+      --bg: #f6f6fb;
+      --font: 'Poppins', Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: #f6f6fb;
+      color: var(--ink);
+      padding: 16px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    #invoice-stage {
+      position: relative;
+    }
+
+    .invoice {
+      width: 210mm;
+      min-height: 297mm;
+      display: grid;
+      grid-template-columns: 110px 1fr;
+      background: #f6f6fb;
+      border-radius: 0;
+      overflow: visible;
+      border: none;
+      position: relative;
+      transform-origin: top left;
+    }
+
+    .band {
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,0.12) 0 8%, transparent 9% 100%),
+        radial-gradient(circle at 70% 12%, rgba(255,255,255,0.08) 0 6%, transparent 7% 100%),
+        radial-gradient(circle at 30% 55%, rgba(255,255,255,0.06) 0 7%, transparent 8% 100%),
+        linear-gradient(180deg, #6a2fd9, #3a137a 70%, #250f52);
+      color: white;
+      padding: 22px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      min-height: 297mm;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .band::before,
+    .band::after {
+      content: "";
+      position: absolute;
+      width: 90px;
+      height: 90px;
+      border: 2px solid rgba(255,255,255,0.18);
+      border-radius: 12px;
+      transform: rotate(45deg);
+      opacity: 0.5;
+    }
+
+    .band::before {
+      top: 24mm;
+      left: -18mm;
+    }
+
+    .band::after {
+      bottom: 30mm;
+      left: -22mm;
+    }
+
+    .band-shape {
+      position: absolute;
+      width: 46px;
+      height: 46px;
+      border: 2px solid rgba(255,255,255,0.22);
+      border-radius: 8px;
+      transform: rotate(20deg);
+      opacity: 0.5;
+    }
+
+    .band-shape.one { top: 45mm; right: -10mm; }
+    .band-shape.two { top: 95mm; left: 10mm; transform: rotate(-20deg); }
+    .band-shape.three { bottom: 60mm; right: -14mm; transform: rotate(15deg); }
+
+    .logo {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      background: var(--logo-badge-bg, rgba(255,255,255,0.16));
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      letter-spacing: 1px;
+      border: 1px solid rgba(255,255,255,0.5);
+      box-shadow: 0 8px 18px rgba(10, 8, 28, 0.2);
+      margin-top: 6px;
+      overflow: hidden;
+    }
+
+    .band small { font-size: 11px; text-align: center; opacity: 0.92; }
+
+    #band-company {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.1px;
+      line-height: 1.25;
+      text-align: center;
+      color: #ffffff;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.28);
+      max-width: 98px;
+      margin-top: -2px;
+      word-break: break-word;
+    }
+
+    .main {
+      padding: 28px 34px 28px;
+      display: grid;
+      gap: 14px;
+      background: #f6f6fb;
+      color: #1a1a22;
+      min-height: 297mm;
+      overflow: visible;
+    }
+
+    .header {
+      display: grid;
+      gap: 4px;
+      text-align: center;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 30px;
+      color: var(--accent-dark);
+      letter-spacing: 0.5px;
+    }
+
+    .header span { color: rgba(26,26,34,0.6); font-size: 13px; }
+
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 12px;
+      color: rgba(26,26,34,0.7);
+      font-size: 12px;
+    }
+
+    .meta .box {
+      border: 1px solid rgba(255,255,255,0.4);
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.55);
+      box-shadow: 0 8px 20px rgba(46,46,78,0.08);
+      backdrop-filter: blur(10px);
+    }
+
+    .meta .box strong { color: var(--accent-dark); }
+
+    .party-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 14px;
+    }
+
+    .party-grid.two-col {
+      grid-template-columns: repeat(2, minmax(0,1fr));
+    }
+
+    .party {
+      background: rgba(255,255,255,0.6);
+      border: 1px solid rgba(255,255,255,0.5);
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: rgba(26,26,34,0.8);
+      box-shadow: 0 10px 30px rgba(40,40,70,0.08);
+      backdrop-filter: blur(10px);
+    }
+
+    .party strong { color: var(--accent); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      color: rgba(26,26,34,0.85);
+    }
+
+    thead {
+      display: table-header-group;
+    }
+
+    th, td {
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+      padding: 10px 8px;
+      text-align: left;
+    }
+
+    th { color: var(--accent); font-weight: 700; }
+
+    .totals {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .totals .box {
+      background: rgba(255,255,255,0.6);
+      border: 1px solid rgba(255,255,255,0.5);
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 12px;
+      color: rgba(26,26,34,0.8);
+      box-shadow: 0 10px 30px rgba(40,40,70,0.08);
+      backdrop-filter: blur(10px);
+    }
+
+    .totals .row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px dashed rgba(0,0,0,0.08);
+    }
+
+    .totals .row:last-child { border-bottom: none; }
+
+    .grand {
+      background: var(--accent);
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 14px;
+      display: flex;
+      justify-content: space-between;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      font-size: 11px;
+      color: rgba(26,26,34,0.6);
+      margin-top: 6px;
+    }
+
+    .sign-box {
+      display: grid;
+      grid-template-columns: repeat(2, 90px);
+      gap: 10px;
+      align-items: center;
+    }
+
+    .sign-box .box {
+      width: 90px;
+      height: 90px;
+      border-radius: 12px;
+      border: 1px dashed rgba(0,0,0,0.2);
+      display: grid;
+      place-items: center;
+      font-size: 10px;
+      color: rgba(26,26,34,0.6);
+      overflow: hidden;
+      background: rgba(255,255,255,0.6);
+      box-shadow: 0 10px 30px rgba(40,40,70,0.08);
+      backdrop-filter: blur(10px);
+    }
+
+    .sign-box .box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: center;
+      padding: 6px;
+      box-sizing: border-box;
+      display: block;
+      background: transparent;
+      border-radius: 50%;
+    }
+
+    .watermark {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 64px;
+      letter-spacing: 6px;
+      color: rgba(0,0,0,0.08);
+      font-weight: 700;
+      pointer-events: none;
+      text-transform: uppercase;
+      transform: rotate(-12deg);
+    }
+
+    .paid-stamp {
+      position: absolute;
+      top: 10mm;
+      right: 10mm;
+      transform: none;
+      color: rgba(18, 160, 90, 0.9);
+      font-weight: 900;
+      letter-spacing: 1px;
+      font-size: 16px;
+      text-transform: uppercase;
+      display: none;
+      pointer-events: none;
+      white-space: nowrap;
+      text-align: right;
+    }
+
+    .logo-watermark {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      opacity: 0.06;
+    }
+
+    .logo-watermark img {
+      width: 320px;
+      height: 320px;
+      object-fit: contain;
+    }
+
+    .template-classic .main { background: #0b0b12; }
+    .template-classic th { color: #ffd27a; }
+    .template-minimal .main { background: #0b0b12; }
+    .template-minimal th { color: #9fdcff; }
+
+    @media print {
+      @page { size: A4; margin: 12mm; }
+      body { background: white; padding: 0; display: block; }
+      #invoice-stage {
+        width: auto !important;
+        height: auto !important;
+      }
+      .invoice {
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        width: auto;
+        min-height: auto;
+      }
+      .band,
+      .main {
+        min-height: auto;
+      }
+      tr,
+      .header,
+      .meta,
+      .party-grid,
+      .totals,
+      .footer {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="invoice-stage">
+    <div class="invoice" id="invoice-root">
+      <div class="paid-stamp" id="paid-stamp">PAID</div>
+      <div class="logo-watermark" id="logo-watermark"></div>
+      <aside class="band">
+        <span class="band-shape one"></span>
+        <span class="band-shape two"></span>
+        <span class="band-shape three"></span>
+        <div class="logo">EG</div>
+        <small id="band-company">Metrox TaxInvoo</small>
+      </aside>
+      <main class="main">
+        <div class="header">
+          <h1 id="doc-title">Tax Invoice</h1>
+          <span id="doc-subtitle">Original for Recipient</span>
+        </div>
+        <div class="meta">
+          <div class="box"><span id="doc-date-label">Invoice Date</span><br/><strong id="inv-date">—</strong></div>
+          <div class="box"><span>Month</span><br/><strong id="inv-month">—</strong></div>
+          <div class="box"><span id="doc-no-label">Invoice No</span><br/><strong id="inv-no">—</strong></div>
+        </div>
+        <div class="party-grid">
+          <div class="party">
+            <div style="font-weight:700;color:var(--accent-dark);margin-bottom:6px;">Seller</div>
+            <strong id="seller-name">Your Business</strong><br/>
+            <span id="seller-address">Registered office address</span><br/>
+            <span id="seller-gstin-row">GSTIN: <span id="seller-gstin">—</span><br/></span>
+            Email: <span id="seller-email">—</span><br/>
+            Phone: <span id="seller-phone">—</span>
+          </div>
+          <div class="party">
+            <div style="font-weight:700;color:var(--accent-dark);margin-bottom:6px;">Bill To</div>
+            <strong id="buyer-name">Buyer</strong><br/>
+            <span id="buyer-address">Buyer address</span><br/>
+            <span id="buyer-gstin-row">GSTIN: <span id="buyer-gstin">—</span><br/></span>
+            Email: <span id="buyer-email">—</span><br/>
+            Phone: <span id="buyer-phone">—</span>
+          </div>
+          <div class="party" id="consignee-card" style="display:none;">
+            <div style="font-weight:700;color:var(--accent-dark);margin-bottom:6px;">Ship To</div>
+            <strong id="consignee-name">Consignee</strong><br/>
+            <span id="consignee-address">Consignee address</span><br/>
+            <span id="consignee-gstin-row">GSTIN: <span id="consignee-gstin">—</span><br/></span>
+            Phone: <span id="consignee-phone">—</span>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Item/Service</th>
+              <th>HSN</th>
+              <th>SAC</th>
+              <th>Qty</th>
+              <th>Price</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody id="line-items"></tbody>
+        </table>
+        <div class="totals">
+          <div class="box">
+            <div class="row"><span>Taxable Value</span><strong id="taxable">₹0</strong></div>
+            <div class="row" id="cgst-row"><span>CGST</span><strong id="cgst">₹0</strong></div>
+            <div class="row" id="sgst-row"><span>SGST</span><strong id="sgst">₹0</strong></div>
+            <div class="row" id="igst-row"><span>IGST</span><strong id="igst">₹0</strong></div>
+            <div class="row" id="tcs-row" style="display:none;"><span>TCS</span><strong id="tcs">₹0</strong></div>
+            <div class="row" id="tds-row" style="display:none;"><span>TDS</span><strong id="tds">₹0</strong></div>
+            <div class="row"><span>Round off</span><strong id="roundoff">₹0</strong></div>
+          </div>
+          <div class="box">
+            <div class="grand"><span>Grand Total</span><span id="grand">₹0</span></div>
+            <div class="row" id="net-row" style="display:none;margin-top:10px;"><span>Net Receivable</span><strong id="net-receivable">₹0</strong></div>
+            <div style="margin-top:10px;">
+              <strong>Amount in words:</strong>
+              <div id="grand-words" style="margin-top:6px;">—</div>
+            </div>
+            <div class="row"><span>Notes</span><span id="notes">—</span></div>
+          </div>
+        </div>
+        <div class="totals">
+          <div class="box" id="bank-details-box">
+            <div class="row"><span>Bank</span><strong id="bank-name">—</strong></div>
+            <div class="row"><span>Account</span><strong id="bank-account">—</strong></div>
+            <div class="row"><span>IFSC</span><strong id="bank-ifsc">—</strong></div>
+            <div class="row"><span>Branch</span><strong id="bank-branch">—</strong></div>
+            <div class="row"><span>UPI</span><strong id="bank-upi">—</strong></div>
+          </div>
+          <div class="box">
+            <div class="row" id="buyer-gstin-copy-row"><span>Buyer GSTIN</span><strong id="buyer-gstin-copy">—</strong></div>
+            <div class="row" id="buyer-state-code-row"><span>State Code</span><strong id="buyer-state-code">—</strong></div>
+            <div class="row" id="place-of-supply-row"><span>Place of Supply</span><strong id="place-of-supply">—</strong></div>
+            <div class="row"><span id="doc-type-label">Invoice Type</span><strong id="invoice-type">—</strong></div>
+            <div class="row" id="quote-validity-row" style="display:none;"><span>Valid Until</span><strong id="quote-valid-until">—</strong></div>
+            <div class="row" id="invoice-status-row"><span>Status</span><strong id="invoice-status">—</strong></div>
+          </div>
+        </div>
+        <div class="footer">
+          <div>
+            <span id="footer-text">Thank you for your business.</span><br/>
+            Generated by Metrox TaxInvoo.
+          </div>
+          <div class="sign-box">
+            <div class="box" id="qr-box">QR</div>
+            <div class="box" id="sign-box">Sign</div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    // Client-side PDF export via jsPDF + html2canvas (loaded from CDN below).
+    const params = new URLSearchParams(window.location.search);
+    const stored = (sessionStorage.getItem('Metrox TaxInvoo_export_invoice') || localStorage.getItem('Metrox TaxInvoo_export_invoice'));
+    const data = window.INVOICE_DATA || (stored ? JSON.parse(stored) : {});
+    const invoiceTypeText = String(data.invoiceType || '');
+    const isQuotationDoc = /quotation/i.test(invoiceTypeText);
+    const isProformaDoc = /proforma/i.test(invoiceTypeText);
+    const isPurchaseOrderDoc = /purchase\s*order/i.test(invoiceTypeText);
+    const isNonGstInvoice = !isQuotationDoc && !isProformaDoc && !isPurchaseOrderDoc && (/non[-\s]*gst/i.test(invoiceTypeText) || String(data.invoiceCategory || '').toLowerCase() === 'non-gst');
+    const queryTemplate = params.get('template');
+    const theme = data.theme || {};
+    const fmt = new Intl.NumberFormat('en-IN');
+    const root = document.getElementById('invoice-root');
+    const stage = document.getElementById('invoice-stage');
+    let baseSize = null;
+
+    function measureBase() {
+      root.style.transform = 'scale(1)';
+      const rect = root.getBoundingClientRect();
+      baseSize = { width: rect.width, height: rect.height };
+    }
+
+    function setScale() {
+      if (window.matchMedia('print').matches || params.get('auto')) {
+        root.style.transform = 'scale(1)';
+        stage.style.width = '';
+        stage.style.height = '';
+        return;
+      }
+      if (!baseSize) measureBase();
+      const padding = 32;
+      const maxW = window.innerWidth - padding;
+      const maxH = window.innerHeight - padding;
+      const scale = Math.min(1, maxW / baseSize.width, maxH / baseSize.height);
+      root.style.transform = `scale(${scale.toFixed(3)})`;
+      stage.style.width = `${baseSize.width * scale}px`;
+      stage.style.height = `${baseSize.height * scale}px`;
+    }
+
+    window.addEventListener('resize', setScale);
+    window.addEventListener('load', setScale);
+
+    function setText(id, value) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = value || '—';
+    }
+
+    const date = data.date ? new Date(data.date) : new Date();
+    setText('inv-date', date.toLocaleDateString('en-IN'));
+    setText('inv-month', date.toLocaleString('en-IN', { month: 'long', year: 'numeric' }));
+    setText('inv-no', data.id || '—');
+
+    setText('seller-name', data.seller?.name || 'Your Business');
+    setText('band-company', data.seller?.name || 'Metrox TaxInvoo');
+    setText('seller-address', data.seller?.address || 'Registered office address');
+    setText('seller-gstin', isNonGstInvoice ? '—' : (data.seller?.gstin || '—'));
+    setText('seller-email', data.seller?.email || '—');
+    setText('seller-phone', data.seller?.phone || '—');
+
+    const consignee = data.consignee && typeof data.consignee === 'object' ? data.consignee : { isDifferent: false };
+    const stateLine = data.customer?.state ? `, ${data.customer.state}` : '';
+    const codeLine = data.customer?.stateCode ? ` (${data.customer.stateCode})` : '';
+    const addressLine = (data.customer?.address || 'Buyer address') + stateLine + codeLine;
+    const consigneeStateLine = consignee?.state ? `, ${consignee.state}` : '';
+    const consigneeCodeLine = consignee?.stateCode ? ` (${consignee.stateCode})` : '';
+    const consigneeAddressLine = (consignee?.address || 'Consignee address') + consigneeStateLine + consigneeCodeLine;
+    setText('buyer-name', data.customer?.name || 'Buyer');
+    setText('buyer-address', addressLine);
+    setText('buyer-gstin', isNonGstInvoice ? '—' : (data.customer?.gstin || '—'));
+    setText('buyer-gstin-copy', isNonGstInvoice ? '—' : (data.customer?.gstin || '—'));
+    setText('buyer-email', data.customer?.email || '—');
+    setText('buyer-phone', data.customer?.phone || '—');
+    setText('consignee-name', consignee?.name || 'Consignee');
+    setText('consignee-address', consigneeAddressLine);
+    setText('consignee-gstin', isNonGstInvoice ? '—' : (consignee?.gstin || '—'));
+    setText('consignee-phone', consignee?.phone || '—');
+
+    const itemsBody = document.getElementById('line-items');
+    const items = Array.isArray(data.items) ? data.items : [];
+    const additionalCharges = Array.isArray(data.additionalCharges) ? data.additionalCharges : [];
+    const formatChargeDescription = (charge) => {
+      const name = charge.name || 'Additional Charge';
+      const treatment = String(charge.treatment || '');
+      const appliedRate = Math.max(0, Number(charge.appliedRate ?? charge.rate ?? 0));
+      if (treatment === 'exempt' || treatment === 'reimbursement') {
+        return `${name} (Charge, No GST)`;
+      }
+      return `${name} (Charge, GST ${appliedRate}%)`;
+    };
+    const exportRows = [
+      ...items,
+      ...additionalCharges.map((charge) => ({
+        description: formatChargeDescription(charge),
+        hsn: '',
+        sac: '',
+        qty: 1,
+        price: Number(charge.amount) || 0,
+        total: Number(charge.amount) || 0
+      }))
+    ];
+    itemsBody.innerHTML = exportRows.map(item => `
+      <tr>
+        <td>${item.description || ''}</td>
+        <td>${item.hsn || '-'}</td>
+        <td>${item.sac || '-'}</td>
+        <td>${item.qty || 1}</td>
+        <td>₹${fmt.format(item.price || 0)}</td>
+        <td>₹${fmt.format(item.total || 0)}</td>
+      </tr>
+    `).join('');
+
+    setText('taxable', `₹${fmt.format(data.taxable || 0)}`);
+    setText('cgst', `₹${fmt.format(data.cgst || 0)}`);
+    setText('sgst', `₹${fmt.format(data.sgst || 0)}`);
+    setText('igst', `₹${fmt.format(data.igst || 0)}`);
+    setText('tcs', `₹${fmt.format(data.tcsAmount || 0)}`);
+    setText('tds', `₹${fmt.format(data.tdsAmount || 0)}`);
+    setText('roundoff', `₹${fmt.format(data.roundOff || 0)}`);
+    setText('grand', `₹${fmt.format(data.total || 0)}`);
+    setText('net-receivable', `₹${fmt.format(data.netReceivable || Math.max(0, (Number(data.total) || 0) - (Number(data.tdsAmount) || 0)))}`);
+    setText('notes', data.notes || '—');
+    setText('footer-text', data.footer || 'Thank you for your business.');
+
+    setText('bank-name', data.bank?.name || '—');
+    setText('bank-account', data.bank?.account || '—');
+    setText('bank-ifsc', data.bank?.ifsc || '—');
+    setText('bank-branch', data.bank?.branch || '—');
+    setText('bank-upi', data.bank?.upi || '—');
+    setText('buyer-state-code', data.customer?.stateCode || '—');
+    setText('place-of-supply', data.placeOfSupply || '—');
+    setText('invoice-type', data.invoiceType || '—');
+    setText('invoice-status', data.status || '—');
+    setText('doc-title', isPurchaseOrderDoc ? 'Purchase Order' : (isQuotationDoc ? 'Quotation' : (isProformaDoc ? 'Proforma Invoice' : (isNonGstInvoice ? 'Bill of Supply' : 'Tax Invoice'))));
+    setText('doc-subtitle', isPurchaseOrderDoc ? 'Purchase Order for Supplier' : (isQuotationDoc ? 'Quotation for Reference' : (isProformaDoc ? 'Provisional Invoice for Reference' : (isNonGstInvoice ? 'Non-GST Billing Copy' : 'Original for Recipient'))));
+    setText('doc-date-label', isPurchaseOrderDoc ? 'Order Date' : (isQuotationDoc ? 'Quotation Date' : (isProformaDoc ? 'Proforma Date' : 'Invoice Date')));
+    setText('doc-no-label', isPurchaseOrderDoc ? 'PO Number' : (isQuotationDoc ? 'Quotation No' : (isProformaDoc ? 'Proforma No' : (isNonGstInvoice ? 'Bill No' : 'Invoice No'))));
+    setText('doc-type-label', (isQuotationDoc || isProformaDoc || isPurchaseOrderDoc) ? 'Document Type' : 'Invoice Type');
+    setText('quote-valid-until', data.validUntil || '—');
+
+    function numberToWordsIndian(num) {
+      const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+      const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+      const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+      const twoDigits = (n) => {
+        if (n < 10) return ones[n];
+        if (n < 20) return teens[n - 10];
+        const t = Math.floor(n / 10);
+        const o = n % 10;
+        return `${tens[t]}${o ? ' ' + ones[o] : ''}`;
+      };
+
+      const threeDigits = (n) => {
+        const h = Math.floor(n / 100);
+        const r = n % 100;
+        return `${h ? ones[h] + ' Hundred' : ''}${h && r ? ' ' : ''}${r ? twoDigits(r) : ''}`.trim();
+      };
+
+      if (!num || num === 0) return 'Zero';
+      const crore = Math.floor(num / 10000000);
+      num %= 10000000;
+      const lakh = Math.floor(num / 100000);
+      num %= 100000;
+      const thousand = Math.floor(num / 1000);
+      num %= 1000;
+      const hundred = num;
+
+      const parts = [];
+      if (crore) parts.push(`${twoDigits(crore)} Crore`);
+      if (lakh) parts.push(`${twoDigits(lakh)} Lakh`);
+      if (thousand) parts.push(`${twoDigits(thousand)} Thousand`);
+      if (hundred) parts.push(threeDigits(hundred));
+      return parts.join(' ').trim();
+    }
+
+    const totalValue = Math.round(Number(data.total || 0));
+    const words = `${numberToWordsIndian(totalValue)} Rupees Only`;
+    setText('grand-words', words);
+
+    if (theme.accent) {
+      document.documentElement.style.setProperty('--accent', theme.accent);
+      document.documentElement.style.setProperty('--accent-dark', theme.band || theme.accent);
+    }
+    if (theme.bg) document.documentElement.style.setProperty('--bg', theme.bg);
+    if (data.font) document.documentElement.style.setProperty('--font', `'${data.font}', Arial, sans-serif`);
+    function darkenHexSafe(hex, ratio = 0.35, fallback = '#12062a') {
+      const raw = String(hex || '').trim().toLowerCase();
+      if (!/^#[0-9a-f]{6}$/i.test(raw)) return fallback;
+      const r = parseInt(raw.slice(1, 3), 16);
+      const g = parseInt(raw.slice(3, 5), 16);
+      const b = parseInt(raw.slice(5, 7), 16);
+      const out = [r, g, b].map((v) => Math.max(0, Math.min(255, Math.round(v * (1 - ratio)))));
+      return `#${out.map((v) => v.toString(16).padStart(2, '0')).join('')}`;
+    }
+    if (theme.band) {
+      const band = document.querySelector('.band');
+      const middle = String(theme.band_alt || '#2a0e63').trim();
+      const tail = darkenHexSafe(middle, 0.38, '#12062a');
+      band.style.background = `linear-gradient(180deg, ${theme.band}, ${middle} 70%, ${tail})`;
+    }
+
+    function quantize(value, step = 24) {
+      return Math.max(0, Math.min(255, Math.round(value / step) * step));
+    }
+
+    function parseRgbString(value) {
+      const raw = String(value || '').trim();
+      const match = raw.match(/(\d+)\D+(\d+)\D+(\d+)/);
+      if (!match) return null;
+      return {
+        r: Math.max(0, Math.min(255, Number(match[1]))),
+        g: Math.max(0, Math.min(255, Number(match[2]))),
+        b: Math.max(0, Math.min(255, Number(match[3])))
+      };
+    }
+
+    function luminance(rgb) {
+      if (!rgb) return 255;
+      return (0.2126 * rgb.r) + (0.7152 * rgb.g) + (0.0722 * rgb.b);
+    }
+
+    function rgbToCss(rgb, fallback = 'rgba(255,255,255,0.16)') {
+      if (!rgb) return fallback;
+      return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+    }
+
+    function detectLogoBackgroundColor(img, fallbackRgb = null) {
+      try {
+        const canvas = document.createElement('canvas');
+        const size = 40;
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        if (!ctx) return fallbackRgb;
+        ctx.clearRect(0, 0, size, size);
+        ctx.drawImage(img, 0, 0, size, size);
+        const dataPx = ctx.getImageData(0, 0, size, size).data;
+        const buckets = new Map();
+        const nonWhiteBuckets = new Map();
+        for (let i = 0; i < dataPx.length; i += 8) {
+          const r = dataPx[i];
+          const g = dataPx[i + 1];
+          const b = dataPx[i + 2];
+          const a = dataPx[i + 3];
+          if (a < 90) continue;
+          const qr = quantize(r);
+          const qg = quantize(g);
+          const qb = quantize(b);
+          const key = `${qr},${qg},${qb}`;
+          buckets.set(key, (buckets.get(key) || 0) + 1);
+          const isNearWhite = qr > 232 && qg > 232 && qb > 232;
+          if (!isNearWhite) {
+            nonWhiteBuckets.set(key, (nonWhiteBuckets.get(key) || 0) + 1);
+          }
+        }
+        const source = nonWhiteBuckets.size ? nonWhiteBuckets : buckets;
+        if (!source.size) return fallbackRgb;
+        const [topKey] = [...source.entries()].sort((a, b) => b[1] - a[1])[0];
+        const [r, g, b] = topKey.split(',').map(Number);
+        const picked = { r, g, b };
+        if (luminance(picked) > 235) return fallbackRgb || picked;
+        return picked;
+      } catch (_) {
+        return fallbackRgb;
+      }
+    }
+
+    function normalizeLogoForBadge(img, outSize = 320) {
+      try {
+        const srcW = img.naturalWidth || img.width;
+        const srcH = img.naturalHeight || img.height;
+        if (!srcW || !srcH) return null;
+        const probe = document.createElement('canvas');
+        probe.width = srcW;
+        probe.height = srcH;
+        const pctx = probe.getContext('2d', { willReadFrequently: true });
+        if (!pctx) return null;
+        pctx.drawImage(img, 0, 0, srcW, srcH);
+        const px = pctx.getImageData(0, 0, srcW, srcH).data;
+        let minX = srcW, minY = srcH, maxX = -1, maxY = -1;
+        for (let y = 0; y < srcH; y += 1) {
+          for (let x = 0; x < srcW; x += 1) {
+            const i = (y * srcW + x) * 4;
+            if (px[i + 3] < 20) continue;
+            if (x < minX) minX = x;
+            if (y < minY) minY = y;
+            if (x > maxX) maxX = x;
+            if (y > maxY) maxY = y;
+          }
+        }
+        if (maxX < minX || maxY < minY) return null;
+        const contentW = maxX - minX + 1;
+        const contentH = maxY - minY + 1;
+        const crop = document.createElement('canvas');
+        crop.width = contentW;
+        crop.height = contentH;
+        const cctx = crop.getContext('2d');
+        if (!cctx) return null;
+        cctx.drawImage(img, minX, minY, contentW, contentH, 0, 0, contentW, contentH);
+
+        const out = document.createElement('canvas');
+        out.width = outSize;
+        out.height = outSize;
+        const octx = out.getContext('2d');
+        if (!octx) return null;
+        const pad = Math.round(outSize * 0.08);
+        const box = outSize - (pad * 2);
+        const scale = Math.min(box / contentW, box / contentH);
+        const drawW = Math.max(1, Math.round(contentW * scale));
+        const drawH = Math.max(1, Math.round(contentH * scale));
+        const dx = Math.round((outSize - drawW) / 2);
+        const dy = Math.round((outSize - drawH) / 2);
+        octx.clearRect(0, 0, outSize, outSize);
+        octx.drawImage(crop, 0, 0, contentW, contentH, dx, dy, drawW, drawH);
+        return out.toDataURL('image/png');
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function applyLogoBadgeTheme(src) {
+      const logoEl = document.querySelector('.logo');
+      if (!logoEl || !src) return;
+      const fallbackCss = getComputedStyle(document.documentElement).getPropertyValue('--accent-dark').trim() || '#3b1b78';
+      const fallbackRgb = parseRgbString(fallbackCss) || { r: 59, g: 27, b: 120 };
+      const image = new Image();
+      image.onload = () => {
+        const normalizedSrc = normalizeLogoForBadge(image) || src;
+        logoEl.innerHTML = `<img src="${normalizedSrc}" alt="logo" />`;
+        const pickedRgb = detectLogoBackgroundColor(image, fallbackRgb);
+        logoEl.style.background = rgbToCss(pickedRgb, fallbackCss);
+      };
+      image.onerror = () => {
+        logoEl.innerHTML = `<img src="${src}" alt="logo" />`;
+        logoEl.style.background = fallbackCss;
+      };
+      image.src = src;
+    }
+
+    const watermarkMode = String(data.watermarkMode || (data.watermarkPaid ? 'paid-stamp' : 'none')).toLowerCase();
+    if (data.logo) {
+      applyLogoBadgeTheme(data.logo);
+      const wm = document.getElementById('logo-watermark');
+      wm.innerHTML = `<img src="${data.logo}" alt="logo watermark" />`;
+      wm.style.display = (watermarkMode === 'logo-watermark' || watermarkMode === 'both') ? 'flex' : 'none';
+    }
+
+    if (data.qr) {
+      const qr = document.getElementById('qr-box');
+      qr.innerHTML = `<img src="${data.qr}" alt="qr" />`;
+    }
+
+    if (isQuotationDoc || isProformaDoc || isPurchaseOrderDoc) {
+      const bankBox = document.getElementById('bank-details-box');
+      const qrBox = document.getElementById('qr-box');
+      const statusRow = document.getElementById('invoice-status-row');
+      const validityRow = document.getElementById('quote-validity-row');
+      if (bankBox) bankBox.style.display = 'none';
+      if (qrBox) qrBox.style.display = 'none';
+      if (statusRow) statusRow.style.display = isPurchaseOrderDoc ? 'flex' : 'none';
+      if (validityRow) validityRow.style.display = (isQuotationDoc || isProformaDoc || isPurchaseOrderDoc) ? 'flex' : 'none';
+    }
+
+    const partyGrid = document.querySelector('.party-grid');
+    const consigneeCard = document.getElementById('consignee-card');
+    if (consignee?.isDifferent) {
+      if (consigneeCard) consigneeCard.style.display = '';
+      if (partyGrid) partyGrid.classList.remove('two-col');
+    } else {
+      if (consigneeCard) consigneeCard.style.display = 'none';
+      if (partyGrid) partyGrid.classList.add('two-col');
+    }
+
+    if (isNonGstInvoice) {
+      ['seller-gstin-row', 'buyer-gstin-row', 'consignee-gstin-row', 'cgst-row', 'sgst-row', 'igst-row', 'buyer-gstin-copy-row', 'buyer-state-code-row', 'place-of-supply-row']
+        .forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) el.style.display = 'none';
+        });
+    }
+    const tcsRow = document.getElementById('tcs-row');
+    if (tcsRow) tcsRow.style.display = Number(data.tcsAmount || 0) > 0 ? 'flex' : 'none';
+    const tdsRow = document.getElementById('tds-row');
+    if (tdsRow) tdsRow.style.display = Number(data.tdsAmount || 0) > 0 ? 'flex' : 'none';
+    const netRow = document.getElementById('net-row');
+    if (netRow) netRow.style.display = (Number(data.tdsAmount || 0) > 0 || Number(data.tcsAmount || 0) > 0) ? 'flex' : 'none';
+
+    if (data.signature) {
+      const sign = document.getElementById('sign-box');
+      sign.innerHTML = `<img src="${data.signature}" alt="signature" />`;
+    }
+
+    const effectiveTemplate = queryTemplate || data.template;
+    if (effectiveTemplate) {
+      root.classList.add(`template-${effectiveTemplate}`);
+    }
+
+    if (data.status && !isQuotationDoc && !isProformaDoc && !isPurchaseOrderDoc) {
+      const stamp = document.getElementById('paid-stamp');
+      if (data.status === 'Paid') {
+        stamp.innerHTML = 'PAID';
+        stamp.style.color = 'rgba(18, 160, 90, 0.9)';
+      } else if (data.status === 'Partial') {
+        stamp.innerHTML = 'PARTIALLY<br/>PAID';
+        stamp.style.color = 'rgba(20, 60, 140, 0.9)';
+      } else {
+        stamp.innerHTML = 'UNPAID';
+        stamp.style.color = 'rgba(200, 40, 40, 0.9)';
+      }
+      const stampAllowed = watermarkMode === 'paid-stamp' || watermarkMode === 'both' || (!data.watermarkMode && !!data.watermarkPaid);
+      if (stampAllowed && (data.watermarkPaid || data.status !== 'Paid')) {
+        stamp.style.display = 'block';
+      }
+    }
+
+    if (params.get('auto') === 'print') {
+      setTimeout(() => window.print(), 300);
+    }
+
+    function savePagedCanvasPdf(canvas, filename, backgroundColor) {
+      const pdf = new window.jspdf.jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
+      const pxPerMm = canvasWidth / pageWidth;
+      const pageHeightPx = Math.max(1, Math.floor(pageHeight * pxPerMm));
+      let renderedHeight = 0;
+      let pageIndex = 0;
+
+      while (renderedHeight < canvasHeight) {
+        const sliceHeight = Math.min(pageHeightPx, canvasHeight - renderedHeight);
+        const pageCanvas = document.createElement('canvas');
+        pageCanvas.width = canvasWidth;
+        pageCanvas.height = sliceHeight;
+        const pageContext = pageCanvas.getContext('2d');
+        pageContext.fillStyle = backgroundColor;
+        pageContext.fillRect(0, 0, canvasWidth, sliceHeight);
+        pageContext.drawImage(
+          canvas,
+          0,
+          renderedHeight,
+          canvasWidth,
+          sliceHeight,
+          0,
+          0,
+          canvasWidth,
+          sliceHeight
+        );
+
+        if (pageIndex > 0) pdf.addPage();
+        pdf.addImage(
+          pageCanvas.toDataURL('image/png'),
+          'PNG',
+          0,
+          0,
+          pageWidth,
+          sliceHeight / pxPerMm
+        );
+
+        renderedHeight += sliceHeight;
+        pageIndex += 1;
+      }
+
+      pdf.save(filename);
+    }
+
+    async function downloadPdf() {
+      const target = document.getElementById('invoice-root');
+      if (!window.html2canvas || !window.jspdf) {
+        alert('PDF library not loaded. Please check your internet connection.');
+        return;
+      }
+      if (!baseSize) measureBase();
+      const prevTransform = root.style.transform;
+      const prevW = stage.style.width;
+      const prevH = stage.style.height;
+      const renderHeight = Math.max(target.scrollHeight, target.offsetHeight);
+      root.style.transform = 'scale(1)';
+      stage.style.width = `${baseSize.width}px`;
+      stage.style.height = `${renderHeight}px`;
+      await new Promise(requestAnimationFrame);
+      const canvas = await window.html2canvas(target, {
+        scale: 2,
+        backgroundColor: '#f6f6fb',
+        width: target.offsetWidth,
+        height: renderHeight,
+        windowWidth: target.scrollWidth,
+        windowHeight: renderHeight
+      });
+      root.style.transform = prevTransform;
+      stage.style.width = prevW;
+      stage.style.height = prevH;
+      savePagedCanvasPdf(canvas, `${data.id || 'Metrox TaxInvoo-invoice'}.pdf`, '#f6f6fb');
+    }
+
+    if (params.get('auto') === 'pdf') {
+      setTimeout(downloadPdf, 500);
+    }
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+</body>
+</html>

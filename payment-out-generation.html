@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="assets/poppins.css" />
+  <link rel="stylesheet" href="assets/light-theme-generation-overrides.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Metrox TaxInvoo - Create Payment Out</title>
+  <meta name="description" content="Dedicated Payment Out creation form." />
+  <style>
+    :root {
+      --bg: #10163b;
+      --panel: rgba(22, 29, 74, 0.72);
+      --line: rgba(214,222,255,0.16);
+      --ink: #eef2ff;
+      --muted: #b2badf;
+      --accent: #5b52f3;
+      --danger: #ff8f8f;
+      --input: #151c45;
+    }
+    body.light {
+      --bg: #f4f7ff;
+      --panel: #ffffff;
+      --line: rgba(15,23,42,0.15);
+      --ink: #0f172a;
+      --muted: rgba(15,23,42,0.66);
+      --accent: #4f46e5;
+      --danger: #dc2626;
+      --input: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 24px;
+      font-family: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(900px 520px at 20% -10%, rgba(105,215,216,0.18), transparent),
+        radial-gradient(880px 500px at 110% 5%, rgba(106,77,245,0.14), transparent),
+        linear-gradient(180deg, #0a0d16, var(--bg));
+      display: grid;
+      place-items: center;
+    }
+    body.light {
+      background:
+        radial-gradient(920px 540px at -8% -18%, rgba(79,70,229,0.12), transparent 60%),
+        radial-gradient(820px 500px at 112% -6%, rgba(14,165,233,0.1), transparent 58%),
+        linear-gradient(180deg, #f8faff 0%, #eef3fb 52%, #e8edf6 100%);
+    }
+    .shell {
+      width: min(860px, 100%);
+      background: color-mix(in oklab, var(--panel) 90%, transparent);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 22px;
+      display: grid;
+      gap: 16px;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 22px 46px rgba(7, 18, 52, 0.26);
+    }
+    body.light .shell {
+      background: rgba(255,255,255,0.88);
+      box-shadow: 0 18px 40px rgba(15,23,42,0.12);
+    }
+    .head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    h1 { margin: 0; font-size: 26px; letter-spacing: -0.01em; }
+    .muted { color: var(--muted); font-size: 13px; }
+    form { display: grid; gap: 12px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    label { display: grid; gap: 7px; font-size: 13px; color: var(--muted); }
+    input, select, textarea {
+      width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px;
+      background: var(--input); color: var(--ink); font: inherit; outline: none;
+    }
+    textarea { min-height: 82px; resize: vertical; }
+    .summary {
+      display: grid;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: rgba(255,255,255,0.02);
+    }
+    body.light .summary {
+      background: linear-gradient(180deg, #ffffff, #f8fbff);
+      border-color: rgba(15,23,42,0.1);
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .row strong { color: var(--ink); }
+    .error { color: var(--danger); font-size: 12px; min-height: 18px; }
+    .field-help { font-size: 12px; color: var(--muted); }
+    .field-help.warn { color: #fca5a5; }
+    body.light .field-help.warn { color: #b91c1c; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    button {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 14px;
+      background: linear-gradient(180deg, #171f4d, #131a43);
+      color: var(--ink);
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease, color 160ms ease;
+    }
+    button.primary {
+      border-color: transparent;
+      background: linear-gradient(120deg, #69d7d8, #3d8bde, #6a4df5);
+      color: #ffffff;
+      box-shadow: 0 12px 26px rgba(61,139,222,0.3);
+    }
+    button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(154,169,230,0.45);
+      box-shadow: 0 10px 22px rgba(8,12,32,0.35);
+    }
+    button.primary:hover {
+      background: linear-gradient(120deg, #54c4e2, #4f6af0);
+      box-shadow: 0 14px 28px rgba(79,70,229,0.4);
+    }
+    body.light button {
+      background: linear-gradient(180deg, #ffffff, #f1f5ff);
+      color: #1f2a44;
+      border-color: rgba(15,23,42,0.14);
+      box-shadow: 0 8px 18px rgba(15,23,42,0.08);
+    }
+    body.light button:hover {
+      border-color: rgba(79,70,229,0.3);
+      background: linear-gradient(180deg, #ffffff, #eaf0ff);
+      box-shadow: 0 12px 24px rgba(79,70,229,0.16);
+    }
+    body.light button.primary {
+      color: #ffffff;
+      border-color: transparent;
+      background: linear-gradient(135deg, #4f46e5, #4338ca);
+      box-shadow: 0 14px 30px rgba(79,70,229,0.3);
+    }
+    body.light button.primary:hover {
+      background: linear-gradient(135deg, #4338ca, #3730a3);
+      box-shadow: 0 18px 34px rgba(67,56,202,0.34);
+    }
+    @media (max-width: 760px) {
+      body { padding: 12px; }
+      .shell { padding: 14px; }
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="head">
+      <div>
+        <h1 id="form-title">Create Payment Out</h1>
+        <div class="muted">Record supplier payment in a separate page and return to Payment Out list.</div>
+      </div>
+      <button type="button" id="back-btn">Back to Payment Out</button>
+    </div>
+
+    <form id="payment-out-form">
+      <div class="grid-2">
+        <label>Supplier
+          <select id="supplier" required>
+            <option value="">Select supplier</option>
+          </select>
+        </label>
+        <label>Purchase invoice
+          <select id="purchase" required>
+            <option value="">Select purchase invoice</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="summary">
+        <div class="row"><span><strong>Invoice Summary</strong></span><span></span></div>
+        <div class="row"><span>Total Amount</span><strong id="purchase-total">INR 0</strong></div>
+        <div class="row"><span>Due Amount</span><strong id="purchase-due">INR 0</strong></div>
+      </div>
+
+      <div class="grid-2">
+        <label>Payment amount
+          <input type="number" id="amount" min="0" step="0.01" placeholder="5000" required />
+        </label>
+        <div></div>
+      </div>
+      <div class="grid-2">
+        <label>Payment Method
+          <select id="mode">
+            <option value="cash">Cash</option>
+            <option value="upi">UPI</option>
+            <option value="bank">Bank</option>
+            <option value="cheque">Cheque</option>
+          </select>
+        </label>
+        <label id="account-label">Cash Account
+          <select id="account-select">
+            <option value="cash_in_hand" selected>Cash in Hand</option>
+          </select>
+        </label>
+      </div>
+      <div class="field-help" id="payment-impact">After payment: INR 0 remaining</div>
+
+      <div class="grid-2">
+        <label>Payment date
+          <input type="date" id="date" />
+        </label>
+        <label>Transaction Reference (UTR / Cheque No)
+          <input type="text" id="notes" placeholder="UTR / transaction ref" />
+        </label>
+      </div>
+
+      <div class="summary">
+        <div class="row"><span>Status after payment</span><strong id="status-preview">-</strong></div>
+      </div>
+      <div id="error" class="error"></div>
+      <div class="actions">
+        <button type="submit" class="primary" id="save-btn">Record Payment</button>
+        <button type="button" id="cancel-btn">Cancel</button>
+      </div>
+    </form>
+  </main>
+
+  <script>
+    (function () {
+      const STORAGE_KEY = 'metrox_taxinvoo_demo_state';
+      const BACKUP_KEY = 'metrox_taxinvoo_demo_state_backup';
+      const LAST_GOOD_KEY = 'metrox_taxinvoo_last_good_state';
+      const ACTIVE_BUSINESS_PROFILE_KEY = 'metrox_active_business_profile_v1';
+      const SCOPED_STATE_KEY_SEPARATOR = '__';
+      const FOCUS_KEY = 'metrox_open_payment_out_form';
+      const EDIT_KEY = 'metrox_edit_supplier_payment_id';
+      const target = 'index.html#/payment-out';
+      const fmt = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 });
+
+      const theme = localStorage.getItem('Metrox TaxInvoo_theme');
+      if (theme === 'light') document.body.classList.add('light');
+
+      const formTitle = document.getElementById('form-title');
+      const supplierEl = document.getElementById('supplier');
+      const purchaseEl = document.getElementById('purchase');
+      const purchaseTotalEl = document.getElementById('purchase-total');
+      const purchaseDueEl = document.getElementById('purchase-due');
+      const amountEl = document.getElementById('amount');
+      const modeEl = document.getElementById('mode');
+      const dateEl = document.getElementById('date');
+      const notesEl = document.getElementById('notes');
+      const accountLabelEl = document.getElementById('account-label');
+      const accountSelectEl = document.getElementById('account-select');
+      const paymentImpactEl = document.getElementById('payment-impact');
+      const statusEl = document.getElementById('status-preview');
+      const errorEl = document.getElementById('error');
+      const saveBtn = document.getElementById('save-btn');
+
+      dateEl.value = new Date().toISOString().slice(0, 10);
+
+      function goBack() {
+        try { localStorage.setItem(FOCUS_KEY, '1'); } catch (_) {}
+        window.location.href = target;
+      }
+
+      document.getElementById('back-btn').addEventListener('click', goBack);
+      document.getElementById('cancel-btn').addEventListener('click', goBack);
+
+      function getScopedLocalStateKeys() {
+        const profileId = String(localStorage.getItem(ACTIVE_BUSINESS_PROFILE_KEY) || '').trim().replace(/[^a-zA-Z0-9_-]/g, '');
+        if (!profileId) {
+          return { primary: STORAGE_KEY, backup: BACKUP_KEY, lastGood: LAST_GOOD_KEY };
+        }
+        return {
+          primary: STORAGE_KEY + SCOPED_STATE_KEY_SEPARATOR + profileId,
+          backup: BACKUP_KEY + SCOPED_STATE_KEY_SEPARATOR + profileId,
+          lastGood: LAST_GOOD_KEY + SCOPED_STATE_KEY_SEPARATOR + profileId
+        };
+      }
+
+      function parseState() {
+        try {
+          const scoped = getScopedLocalStateKeys();
+          const raw = localStorage.getItem(scoped.primary)
+            || localStorage.getItem(scoped.backup)
+            || localStorage.getItem(scoped.lastGood)
+            || localStorage.getItem(STORAGE_KEY)
+            || localStorage.getItem(BACKUP_KEY)
+            || localStorage.getItem(LAST_GOOD_KEY);
+          const parsed = raw ? JSON.parse(raw) : {};
+          return parsed && typeof parsed === 'object' ? parsed : {};
+        } catch (_) {
+          return {};
+        }
+      }
+
+      function saveState(next) {
+        const payload = next && typeof next === 'object' ? next : {};
+        payload._meta = { ...(payload._meta || {}), updated_at: new Date().toISOString() };
+        const serialized = JSON.stringify(payload);
+        const scoped = getScopedLocalStateKeys();
+        localStorage.setItem(scoped.primary, serialized);
+        localStorage.setItem(scoped.backup, serialized);
+        localStorage.setItem(scoped.lastGood, serialized);
+      }
+
+      function normalizeName(name) {
+        return String(name || '').trim().toLowerCase();
+      }
+      function esc(value) {
+        return String(value || '').replace(/[&<>'"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[ch] || ch));
+      }
+
+      const state = parseState();
+      state.purchases = Array.isArray(state.purchases) ? state.purchases : [];
+      state.supplierPayments = Array.isArray(state.supplierPayments) ? state.supplierPayments : [];
+      if (!state.cashBank || typeof state.cashBank !== 'object') {
+        state.cashBank = { accounts: [], openingCash: 0, cashAdjustments: [], transfers: [], defaultBankAccountId: '' };
+      }
+      if (!Array.isArray(state.cashBank.accounts)) state.cashBank.accounts = [];
+      const editingId = localStorage.getItem(EDIT_KEY) || '';
+      if (editingId) localStorage.removeItem(EDIT_KEY);
+      const editingPayment = editingId ? state.supplierPayments.find((p) => p.id === editingId) : null;
+
+      if (editingPayment) {
+        formTitle.textContent = 'Edit Payment Out';
+        saveBtn.textContent = 'Record Payment';
+      }
+
+      function getPurchasePaidExcludingCurrent(purchaseId) {
+        return state.supplierPayments
+          .filter((p) => p.purchaseId === purchaseId && p.id !== editingId)
+          .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+      }
+
+      function getPurchaseDue(purchase) {
+        const total = Number(purchase?.total) || 0;
+        const paid = getPurchasePaidExcludingCurrent(purchase?.id);
+        return Math.max(0, total - paid);
+      }
+
+      function getSuppliers() {
+        const names = new Set();
+        state.purchases.forEach((p) => { if (p.supplier) names.add(String(p.supplier)); });
+        return Array.from(names).sort((a, b) => a.localeCompare(b));
+      }
+
+      function renderSupplierOptions() {
+        const suppliers = getSuppliers();
+        supplierEl.innerHTML = ['<option value="">Select supplier</option>']
+          .concat(suppliers.map((s) => `<option value="${esc(s)}">${esc(s)}</option>`))
+          .join('');
+      }
+
+      function renderPurchaseOptions() {
+        const supplier = supplierEl.value;
+        const rows = state.purchases
+          .filter((p) => normalizeName(p.supplier) === normalizeName(supplier))
+          .map((p) => ({ ...p, due: getPurchaseDue(p) }))
+          .filter((p) => p.due > 0 || p.id === editingPayment?.purchaseId);
+        purchaseEl.innerHTML = ['<option value="">Select purchase invoice</option>']
+          .concat(rows.map((p) => `<option value="${esc(p.id)}">${esc(p.billNo || p.id)} • Due ₹${fmt.format(p.due)}</option>`))
+          .join('');
+      }
+
+      function updateAccountField() {
+        const method = String(modeEl.value || 'cash').toLowerCase();
+        if (!accountLabelEl || !accountSelectEl) return;
+        if (method === 'bank') {
+          accountLabelEl.firstChild.textContent = 'Select Bank Account';
+          const bankAccounts = (state.cashBank.accounts || []).map((acc) => ({
+            id: String(acc?.id || '').trim(),
+            name: String(acc?.accountName || '').trim()
+          })).filter((acc) => acc.id && acc.name);
+          if (!bankAccounts.length) {
+            accountSelectEl.innerHTML = '<option value="">No bank accounts added</option>';
+            accountSelectEl.disabled = true;
+          } else {
+            accountSelectEl.disabled = false;
+            accountSelectEl.innerHTML = bankAccounts
+              .map((acc) => `<option value="${esc(acc.id)}">${esc(acc.name)}</option>`)
+              .join('');
+          }
+          if (editingPayment?.accountId) {
+            const matchedById = Array.from(accountSelectEl.options).find((opt) =>
+              String(opt.value || '').trim() === String(editingPayment.accountId || '').trim()
+            );
+            if (matchedById) accountSelectEl.value = matchedById.value;
+          }
+          if (editingPayment?.accountName) {
+            const matched = Array.from(accountSelectEl.options).find((opt) =>
+              String(opt.textContent || '').toLowerCase() === String(editingPayment.accountName || '').toLowerCase()
+            );
+            if (matched) accountSelectEl.value = matched.value;
+          }
+          if (editingPayment?.accountName && !Array.from(accountSelectEl.options).some((opt) =>
+            String(opt.textContent || '').toLowerCase() === String(editingPayment.accountName || '').toLowerCase()
+          )) {
+            const legacy = document.createElement('option');
+            legacy.value = String(editingPayment.accountId || editingPayment.accountName || '').trim();
+            legacy.textContent = String(editingPayment.accountName || '').trim();
+            legacy.selected = true;
+            accountSelectEl.appendChild(legacy);
+            accountSelectEl.disabled = false;
+          }
+          return;
+        }
+        accountLabelEl.firstChild.textContent = 'Cash Account';
+        accountSelectEl.innerHTML = '<option value="cash_in_hand">Cash in Hand</option>';
+        accountSelectEl.disabled = false;
+      }
+
+      function updateSummary() {
+        const purchaseId = purchaseEl.value;
+        const purchase = state.purchases.find((p) => p.id === purchaseId);
+        if (!purchase) {
+          purchaseTotalEl.textContent = 'INR 0';
+          purchaseDueEl.textContent = 'INR 0';
+          statusEl.textContent = '-';
+          return;
+        }
+        const due = getPurchaseDue(purchase);
+        purchaseTotalEl.textContent = `INR ${fmt.format(Number(purchase.total) || 0)}`;
+        purchaseDueEl.textContent = `INR ${fmt.format(due)}`;
+        if (!editingPayment || purchase.id !== editingPayment.purchaseId) amountEl.value = due.toFixed(2);
+        updateStatus();
+      }
+
+      function updateStatus() {
+        errorEl.textContent = '';
+        const purchase = state.purchases.find((p) => p.id === purchaseEl.value);
+        if (!purchase) {
+          statusEl.textContent = '-';
+          if (paymentImpactEl) paymentImpactEl.textContent = 'After payment: INR 0 remaining';
+          if (paymentImpactEl) paymentImpactEl.classList.remove('warn');
+          return;
+        }
+        const due = getPurchaseDue(purchase);
+        const amount = Number(amountEl.value) || 0;
+        if (amount > due) {
+          errorEl.textContent = 'Payment amount cannot exceed purchase due.';
+          if (paymentImpactEl) {
+            paymentImpactEl.textContent = `After payment: INR ${fmt.format(0)} remaining`;
+            paymentImpactEl.classList.add('warn');
+          }
+          statusEl.textContent = '-';
+          return;
+        }
+        const remaining = Math.max(0, due - amount);
+        if (paymentImpactEl) {
+          paymentImpactEl.textContent = `After payment: INR ${fmt.format(remaining)} remaining`;
+          paymentImpactEl.classList.remove('warn');
+        }
+        if (amount <= 0) statusEl.textContent = '-';
+        else if (remaining === 0) statusEl.textContent = 'Paid';
+        else statusEl.textContent = `Partial (₹${fmt.format(remaining)} remaining)`;
+      }
+
+      renderSupplierOptions();
+
+      if (editingPayment) {
+        supplierEl.value = editingPayment.supplier || '';
+        renderPurchaseOptions();
+        purchaseEl.value = editingPayment.purchaseId || '';
+        amountEl.value = Number(editingPayment.amount || 0) ? Number(editingPayment.amount || 0).toFixed(2) : '';
+        modeEl.value = editingPayment.mode || 'cash';
+        dateEl.value = editingPayment.date || new Date().toISOString().slice(0, 10);
+        notesEl.value = editingPayment.notes || '';
+      } else {
+        renderPurchaseOptions();
+      }
+      updateAccountField();
+      updateSummary();
+
+      supplierEl.addEventListener('change', () => {
+        renderPurchaseOptions();
+        purchaseEl.value = '';
+        updateSummary();
+      });
+      purchaseEl.addEventListener('change', updateSummary);
+      amountEl.addEventListener('input', updateStatus);
+      modeEl.addEventListener('change', updateAccountField);
+
+      document.getElementById('payment-out-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        errorEl.textContent = '';
+
+        const supplier = supplierEl.value;
+        const purchaseId = purchaseEl.value;
+        const purchase = state.purchases.find((p) => p.id === purchaseId);
+        const amount = Number(amountEl.value) || 0;
+        const date = dateEl.value || new Date().toISOString().slice(0, 10);
+        if (!supplier || !purchase || amount <= 0) {
+          errorEl.textContent = 'Supplier, purchase invoice, and amount are required.';
+          return;
+        }
+        const due = getPurchaseDue(purchase);
+        if (amount > due) {
+          errorEl.textContent = 'Payment amount cannot exceed purchase due.';
+          return;
+        }
+        if ((modeEl.value || '').toLowerCase() === 'bank' && !String(accountSelectEl?.value || '').trim()) {
+          errorEl.textContent = 'Please add/select a bank account from Cash & Bank.';
+          return;
+        }
+
+        const payload = {
+          id: editingId || `PMT-${Date.now()}`,
+          supplier,
+          purchaseId,
+          amount,
+          mode: modeEl.value || 'cash',
+          accountType: (modeEl.value || 'cash').toLowerCase() === 'bank' ? 'bank' : 'cash',
+          accountId: (modeEl.value || 'cash').toLowerCase() === 'bank' ? String(accountSelectEl?.value || '').trim() : 'cash_in_hand',
+          bankAccountId: (modeEl.value || 'cash').toLowerCase() === 'bank' ? String(accountSelectEl?.value || '').trim() : '',
+          accountName: accountSelectEl?.selectedOptions?.[0]?.textContent || 'Cash in Hand',
+          paidFrom: accountSelectEl?.selectedOptions?.[0]?.textContent || 'Cash in Hand',
+          date,
+          notes: notesEl.value.trim()
+        };
+
+        if (editingId) {
+          const idx = state.supplierPayments.findIndex((p) => p.id === editingId);
+          if (idx !== -1) state.supplierPayments[idx] = payload;
+          else state.supplierPayments.push(payload);
+        } else {
+          state.supplierPayments.push(payload);
+        }
+
+        saveState(state);
+        goBack();
+      });
+    })();
+  </script>
+</body>
+</html>

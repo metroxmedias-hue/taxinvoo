@@ -1,0 +1,20 @@
+{
+  "name": "metrox-taxinvoo-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "subscription:expiry": "node src/jobs/subscriptionExpiryJob.js",
+    "subscription:expiry:dry": "node src/jobs/subscriptionExpiryJob.js --dry-run",
+    "firestore:cleanup:test": "node src/scripts/cleanupFirestoreTestData.js",
+    "firestore:cleanup:test:dry": "node src/scripts/cleanupFirestoreTestData.js --dry-run"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "firebase-admin": "^12.7.0"
+  }
+}
