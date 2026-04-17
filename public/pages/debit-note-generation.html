@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="../assets/poppins.css" />
+  <link rel="stylesheet" href="../assets/light-theme-generation-overrides.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Metrox TaxInvoo - Create Debit Note</title>
+  <meta name="description" content="Dedicated Debit Note creation form." />
+  <style>
+    :root {
+      --bg: #10163b;
+      --panel: rgba(22, 29, 74, 0.72);
+      --line: rgba(214,222,255,0.16);
+      --ink: #eef2ff;
+      --muted: #b2badf;
+      --accent: #5b52f3;
+      --danger: #ff8f8f;
+      --input: #151c45;
+    }
+    body.light {
+      --bg: #f4f7ff;
+      --panel: #ffffff;
+      --line: rgba(15,23,42,0.15);
+      --ink: #0f172a;
+      --muted: rgba(15,23,42,0.66);
+      --accent: #4f46e5;
+      --danger: #dc2626;
+      --input: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 24px;
+      font-family: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(920px 520px at 18% -10%, rgba(106,77,245,0.16), transparent),
+        radial-gradient(900px 520px at 112% 3%, rgba(105,215,216,0.14), transparent),
+        linear-gradient(180deg, #0a0d16, var(--bg));
+      display: grid;
+      place-items: center;
+    }
+    .shell {
+      width: min(900px, 100%);
+      background: color-mix(in oklab, var(--panel) 90%, transparent);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 22px;
+      display: grid;
+      gap: 16px;
+      backdrop-filter: blur(6px);
+    }
+    .head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    h1 { margin: 0; font-size: 26px; letter-spacing: -0.01em; }
+    .muted { color: var(--muted); font-size: 13px; }
+    form { display: grid; gap: 12px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    label { display: grid; gap: 7px; font-size: 13px; color: var(--muted); }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: var(--input);
+      color: var(--ink);
+      font: inherit;
+      outline: none;
+    }
+    textarea { min-height: 88px; resize: vertical; }
+    .summary {
+      display: grid;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: rgba(255,255,255,0.02);
+    }
+    .summary h4 {
+      margin: 0 0 4px;
+      font-size: 14px;
+      color: var(--ink);
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .row strong { color: var(--ink); }
+    .row strong.value-strong {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+    }
+    .impact-options {
+      display: grid;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .impact-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--ink);
+      font-size: 13px;
+    }
+    .impact-option input {
+      width: auto;
+    }
+    .impact-note {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .error { color: var(--danger); font-size: 12px; min-height: 16px; }
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    button {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 14px;
+      background: #151c45;
+      color: var(--ink);
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button.primary {
+      border-color: transparent;
+      background: linear-gradient(120deg, #69d7d8, #3d8bde, #6a4df5);
+      color: #ffffff;
+    }
+    @media (max-width: 760px) {
+      body { padding: 12px; }
+      .shell { padding: 14px; }
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="head">
+      <div>
+        <h1 id="form-title">Create Debit Note</h1>
+        <div class="muted">Create debit note against existing purchase invoice and track it in Debit Note list.</div>
+      </div>
+      <button type="button" id="back-btn">Back to Debit Note</button>
+    </div>
+
+    <form id="debit-note-form">
+      <div class="grid-2">
+        <label>Supplier
+          <select id="supplier" required>
+            <option value="">Select supplier</option>
+          </select>
+        </label>
+        <label>Purchase invoice
+          <select id="purchase" required>
+            <option value="">Select purchase invoice</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="summary">
+        <h4>Purchase Summary</h4>
+        <div class="row"><span>Purchase total</span><strong class="value-strong" id="purchase-total">INR 0</strong></div>
+        <div class="row"><span>Already noted</span><strong class="value-strong" id="already-noted">INR 0</strong></div>
+        <div class="row"><span>Max note allowed</span><strong class="value-strong" id="max-note">INR 0</strong></div>
+      </div>
+
+      <div class="grid-2">
+        <label>Debit note amount
+          <input type="number" id="amount" min="0" step="0.01" placeholder="1000" required />
+        </label>
+        <label>Debit note date
+          <input type="date" id="date" />
+        </label>
+      </div>
+
+      <div class="grid-2">
+        <label>Reason
+          <select id="reason">
+            <option value="purchase_return">Purchase return</option>
+            <option value="quality_issue">Quality issue</option>
+            <option value="rate_difference">Rate difference</option>
+            <option value="other">Other</option>
+          </select>
+        </label>
+        <label>Status
+          <select id="status">
+            <option value="Issued">Issued</option>
+            <option value="Adjusted">Adjusted</option>
+            <option value="Refund Pending">Refund Pending</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="summary">
+        <h4>Financial Impact</h4>
+        <div class="row"><span>Purchase Amount</span><strong id="impact-purchase-amount">INR 0</strong></div>
+        <div class="row"><span>Already Paid</span><strong id="impact-paid-amount">INR 0</strong></div>
+        <div class="row"><span>After Debit Note</span><strong id="impact-after-note">INR 0</strong></div>
+        <div class="impact-note" id="impact-note">Supplier payable will reduce by INR 0</div>
+      </div>
+
+      <div class="summary">
+        <h4>Payment Handling</h4>
+        <div class="impact-options">
+          <label class="impact-option"><input type="radio" name="impact-type" value="Adjusted" checked /> Adjust in payable</label>
+          <label class="impact-option"><input type="radio" name="impact-type" value="Refund" /> Expect refund from supplier</label>
+          <label class="impact-option"><input type="radio" name="impact-type" value="Credit" /> Keep as supplier credit</label>
+        </div>
+      </div>
+
+      <div class="summary">
+        <h4>GST Impact Preview</h4>
+        <div class="row"><span>GST Reversal</span><strong id="gst-reversal-total">INR 0</strong></div>
+        <div class="row"><span>CGST Reversal</span><strong id="gst-reversal-cgst">INR 0</strong></div>
+        <div class="row"><span>SGST Reversal</span><strong id="gst-reversal-sgst">INR 0</strong></div>
+        <div class="row"><span>IGST Reversal</span><strong id="gst-reversal-igst">INR 0</strong></div>
+      </div>
+
+      <div class="summary">
+        <h4>Linking</h4>
+        <div class="row"><span>Linked Purchase Return</span><strong id="linked-purchase-return">—</strong></div>
+      </div>
+
+      <label>Notes
+        <textarea id="notes" placeholder="Reason details, item details, approvals, etc."></textarea>
+      </label>
+
+      <div class="error" id="error"></div>
+      <div class="actions">
+        <button type="submit" class="primary" id="save-btn">Create Debit Note</button>
+        <button type="button" id="cancel-btn">Cancel</button>
+      </div>
+    </form>
+  </main>
+
+  <script>
+    (function () {
+      const STORAGE_KEY = 'metrox_taxinvoo_demo_state';
+      const BACKUP_KEY = 'metrox_taxinvoo_demo_state_backup';
+      const LAST_GOOD_KEY = 'metrox_taxinvoo_last_good_state';
+      const ACTIVE_BUSINESS_PROFILE_KEY = 'metrox_active_business_profile_v1';
+      const SCOPED_STATE_KEY_SEPARATOR = '__';
+      const FOCUS_KEY = 'metrox_open_debit_note_form';
+      const EDIT_KEY = 'metrox_edit_debit_note_id';
+      const PREFILL_KEY = 'metrox_debit_note_prefill_from_purchase_return';
+      const target = '../app/index.html#/debit-note';
+      const fmt = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 });
+
+      const theme = localStorage.getItem('Metrox TaxInvoo_theme');
+      if (theme === 'light') document.body.classList.add('light');
+
+      const formTitle = document.getElementById('form-title');
+      const supplierEl = document.getElementById('supplier');
+      const purchaseEl = document.getElementById('purchase');
+      const purchaseTotalEl = document.getElementById('purchase-total');
+      const alreadyNotedEl = document.getElementById('already-noted');
+      const maxNoteEl = document.getElementById('max-note');
+      const impactPurchaseAmountEl = document.getElementById('impact-purchase-amount');
+      const impactPaidAmountEl = document.getElementById('impact-paid-amount');
+      const impactAfterNoteEl = document.getElementById('impact-after-note');
+      const impactNoteEl = document.getElementById('impact-note');
+      const gstReversalTotalEl = document.getElementById('gst-reversal-total');
+      const gstReversalCgstEl = document.getElementById('gst-reversal-cgst');
+      const gstReversalSgstEl = document.getElementById('gst-reversal-sgst');
+      const gstReversalIgstEl = document.getElementById('gst-reversal-igst');
+      const linkedPurchaseReturnEl = document.getElementById('linked-purchase-return');
+      const impactTypeInputs = Array.from(document.querySelectorAll('input[name="impact-type"]'));
+      const amountEl = document.getElementById('amount');
+      const dateEl = document.getElementById('date');
+      const reasonEl = document.getElementById('reason');
+      const statusEl = document.getElementById('status');
+      const notesEl = document.getElementById('notes');
+      const errorEl = document.getElementById('error');
+      const saveBtn = document.getElementById('save-btn');
+
+      dateEl.value = new Date().toISOString().slice(0, 10);
+
+      function esc(value) {
+        return String(value || '').replace(/[&<>'"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[ch] || ch));
+      }
+
+      function normalizeName(name) {
+        return String(name || '').trim().toLowerCase();
+      }
+
+      function goBack() {
+        try { localStorage.setItem(FOCUS_KEY, '1'); } catch (_) {}
+        window.location.href = target;
+      }
+
+      document.getElementById('back-btn').addEventListener('click', goBack);
+      document.getElementById('cancel-btn').addEventListener('click', goBack);
+
+      function getScopedLocalStateKeys() {
+        const profileId = String(localStorage.getItem(ACTIVE_BUSINESS_PROFILE_KEY) || '').trim().replace(/[^a-zA-Z0-9_-]/g, '');
+        if (!profileId) {
+          return { primary: STORAGE_KEY, backup: BACKUP_KEY, lastGood: LAST_GOOD_KEY };
+        }
+        return {
+          primary: STORAGE_KEY + SCOPED_STATE_KEY_SEPARATOR + profileId,
+          backup: BACKUP_KEY + SCOPED_STATE_KEY_SEPARATOR + profileId,
+          lastGood: LAST_GOOD_KEY + SCOPED_STATE_KEY_SEPARATOR + profileId
+        };
+      }
+
+      function parseState() {
+        try {
+          const scoped = getScopedLocalStateKeys();
+          const raw = localStorage.getItem(scoped.primary)
+            || localStorage.getItem(scoped.backup)
+            || localStorage.getItem(scoped.lastGood)
+            || localStorage.getItem(STORAGE_KEY)
+            || localStorage.getItem(BACKUP_KEY)
+            || localStorage.getItem(LAST_GOOD_KEY);
+          const parsed = raw ? JSON.parse(raw) : {};
+          return parsed && typeof parsed === 'object' ? parsed : {};
+        } catch (_) {
+          return {};
+        }
+      }
+
+      function saveState(next) {
+        const payload = next && typeof next === 'object' ? next : {};
+        payload._meta = { ...(payload._meta || {}), updated_at: new Date().toISOString() };
+        const serialized = JSON.stringify(payload);
+        const scoped = getScopedLocalStateKeys();
+        localStorage.setItem(scoped.primary, serialized);
+        localStorage.setItem(scoped.backup, serialized);
+        localStorage.setItem(scoped.lastGood, serialized);
+      }
+
+      const state = parseState();
+      state.purchases = Array.isArray(state.purchases) ? state.purchases : [];
+      state.debitNotes = Array.isArray(state.debitNotes) ? state.debitNotes : [];
+      state.purchaseReturns = Array.isArray(state.purchaseReturns) ? state.purchaseReturns : [];
+      state.supplierPayments = Array.isArray(state.supplierPayments) ? state.supplierPayments : [];
+      const editingId = localStorage.getItem(EDIT_KEY) || '';
+      if (editingId) localStorage.removeItem(EDIT_KEY);
+      const prefillRaw = localStorage.getItem(PREFILL_KEY) || '';
+      let prefill = null;
+      if (prefillRaw) {
+        try { prefill = JSON.parse(prefillRaw); } catch (_) { prefill = null; }
+        try { localStorage.removeItem(PREFILL_KEY); } catch (_) {}
+      }
+      const editingNote = editingId ? state.debitNotes.find((x) => x.id === editingId) : null;
+
+      if (editingNote) {
+        formTitle.textContent = 'Edit Debit Note';
+        saveBtn.textContent = 'Create Debit Note';
+      }
+
+      function notedForPurchase(purchaseId) {
+        return state.debitNotes
+          .filter((x) => x.purchaseId === purchaseId && x.id !== editingId)
+          .reduce((sum, x) => sum + (Number(x.amount) || 0), 0);
+      }
+
+      function paidForPurchase(purchaseId) {
+        return state.supplierPayments
+          .filter((x) => String(x.purchaseId || '') === String(purchaseId || ''))
+          .reduce((sum, x) => sum + (Number(x.amount) || 0), 0);
+      }
+
+      function getSelectedImpactType() {
+        const selected = impactTypeInputs.find((input) => input.checked);
+        return String(selected?.value || 'Adjusted');
+      }
+
+      function suppliers() {
+        const names = new Set();
+        state.purchases.forEach((p) => {
+          if (p.supplier) names.add(String(p.supplier));
+        });
+        return Array.from(names).sort((a, b) => a.localeCompare(b));
+      }
+
+      function renderSupplierOptions() {
+        supplierEl.innerHTML = ['<option value="">Select supplier</option>']
+          .concat(suppliers().map((name) => `<option value="${esc(name)}">${esc(name)}</option>`))
+          .join('');
+      }
+
+      function renderPurchaseOptions() {
+        const supplier = supplierEl.value;
+        const rows = state.purchases
+          .filter((p) => normalizeName(p.supplier) === normalizeName(supplier));
+        purchaseEl.innerHTML = ['<option value="">Select purchase invoice</option>']
+          .concat(rows.map((p) => `<option value="${esc(p.id)}">${esc(p.billNo || p.id)}</option>`))
+          .join('');
+      }
+
+      function updateSummary() {
+        errorEl.textContent = '';
+        const purchase = state.purchases.find((p) => p.id === purchaseEl.value);
+        if (!purchase) {
+          purchaseTotalEl.textContent = 'INR 0';
+          alreadyNotedEl.textContent = 'INR 0';
+          maxNoteEl.textContent = 'INR 0';
+          impactPurchaseAmountEl.textContent = 'INR 0';
+          impactPaidAmountEl.textContent = 'INR 0';
+          impactAfterNoteEl.textContent = 'INR 0';
+          impactNoteEl.textContent = 'Supplier payable will reduce by INR 0';
+          gstReversalTotalEl.textContent = 'INR 0';
+          gstReversalCgstEl.textContent = 'INR 0';
+          gstReversalSgstEl.textContent = 'INR 0';
+          gstReversalIgstEl.textContent = 'INR 0';
+          return;
+        }
+        const total = Number(purchase.total) || 0;
+        const already = notedForPurchase(purchase.id);
+        const allowed = Math.max(0, total - already);
+        purchaseTotalEl.textContent = `INR ${fmt.format(total)}`;
+        alreadyNotedEl.textContent = `INR ${fmt.format(already)}`;
+        maxNoteEl.textContent = `INR ${fmt.format(allowed)}`;
+        updateFinancialImpact();
+      }
+
+      function updateFinancialImpact() {
+        const purchase = state.purchases.find((p) => p.id === purchaseEl.value);
+        const amount = Math.max(0, Number(amountEl.value) || 0);
+        if (!purchase) return;
+        const total = Number(purchase.total) || 0;
+        const paid = paidForPurchase(purchase.id);
+        const already = notedForPurchase(purchase.id);
+        const afterDebitPurchaseTotal = Math.max(0, total - already - amount);
+        const afterDebitPayable = Math.max(0, afterDebitPurchaseTotal - paid);
+        const cgst = Number(purchase.inputCgst) || 0;
+        const sgst = Number(purchase.inputSgst) || 0;
+        const igst = Number(purchase.inputIgst) || 0;
+        const ratio = total > 0 ? (amount / total) : 0;
+        const revCgst = ratio * cgst;
+        const revSgst = ratio * sgst;
+        const revIgst = ratio * igst;
+        const revTotal = revCgst + revSgst + revIgst;
+
+        impactPurchaseAmountEl.textContent = `INR ${fmt.format(total)}`;
+        impactPaidAmountEl.textContent = `INR ${fmt.format(paid)}`;
+        impactAfterNoteEl.textContent = `INR ${fmt.format(afterDebitPayable)}`;
+        impactNoteEl.textContent = `Supplier payable will reduce by INR ${fmt.format(amount)}`;
+
+        gstReversalTotalEl.textContent = `INR ${fmt.format(revTotal)}`;
+        gstReversalCgstEl.textContent = `INR ${fmt.format(revCgst)}`;
+        gstReversalSgstEl.textContent = `INR ${fmt.format(revSgst)}`;
+        gstReversalIgstEl.textContent = `INR ${fmt.format(revIgst)}`;
+      }
+
+      renderSupplierOptions();
+      if (editingNote) {
+        supplierEl.value = editingNote.supplier || '';
+        renderPurchaseOptions();
+        purchaseEl.value = editingNote.purchaseId || '';
+        amountEl.value = Number(editingNote.amount || 0) || '';
+        dateEl.value = editingNote.date || new Date().toISOString().slice(0, 10);
+        reasonEl.value = editingNote.reason || 'other';
+        statusEl.value = editingNote.status || 'Issued';
+        const impactInput = impactTypeInputs.find((input) => String(input.value || '') === String(editingNote.impactType || 'Adjusted'));
+        if (impactInput) impactInput.checked = true;
+        if (linkedPurchaseReturnEl) linkedPurchaseReturnEl.textContent = editingNote.linkedPurchaseReturnId || '—';
+        notesEl.value = editingNote.notes || '';
+      } else if (prefill && typeof prefill === 'object') {
+        const supplierName = String(prefill.supplier || '').trim();
+        const purchaseId = String(prefill.purchaseId || '').trim();
+        const purchaseReturnId = String(prefill.purchaseReturnId || '').trim();
+        const amount = Math.max(0, Number(prefill.amount) || 0);
+        if (supplierName) supplierEl.value = supplierName;
+        renderPurchaseOptions();
+        if (purchaseId) purchaseEl.value = purchaseId;
+        if (amount > 0) amountEl.value = amount.toFixed(2);
+        if (purchaseReturnId && linkedPurchaseReturnEl) linkedPurchaseReturnEl.textContent = purchaseReturnId;
+        if (supplierName) supplierEl.disabled = true;
+        if (purchaseId) purchaseEl.disabled = true;
+        if (amount > 0) amountEl.readOnly = true;
+        if (reasonEl) reasonEl.value = 'purchase_return';
+      } else {
+        renderPurchaseOptions();
+      }
+      updateSummary();
+
+      supplierEl.addEventListener('change', () => {
+        renderPurchaseOptions();
+        purchaseEl.value = '';
+        updateSummary();
+      });
+      purchaseEl.addEventListener('change', updateSummary);
+      amountEl.addEventListener('input', updateFinancialImpact);
+      impactTypeInputs.forEach((input) => input.addEventListener('change', updateFinancialImpact));
+
+      document.getElementById('debit-note-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        errorEl.textContent = '';
+
+        const supplier = supplierEl.value;
+        const purchaseId = purchaseEl.value;
+        const purchase = state.purchases.find((p) => p.id === purchaseId);
+        const amount = Number(amountEl.value) || 0;
+        const date = dateEl.value || new Date().toISOString().slice(0, 10);
+        if (!supplier || !purchase || amount <= 0) {
+          errorEl.textContent = 'Supplier, purchase invoice, and amount are required.';
+          return;
+        }
+
+        const total = Number(purchase.total) || 0;
+        const already = notedForPurchase(purchase.id);
+        const allowed = Math.max(0, total - already);
+        if (amount > allowed) {
+          errorEl.textContent = `Debit note amount exceeds allowed limit (INR ${fmt.format(allowed)}).`;
+          return;
+        }
+
+        const payload = {
+          id: editingId || `DN-${Date.now()}`,
+          supplier,
+          purchaseId,
+          amount,
+          date,
+          reason: reasonEl.value || 'other',
+          status: statusEl.value || 'Issued',
+          impactType: getSelectedImpactType(),
+          linkedPurchaseReturnId: String(linkedPurchaseReturnEl?.textContent || '').trim() === '—' ? '' : String(linkedPurchaseReturnEl?.textContent || '').trim(),
+          gstReversal: (() => {
+            const cgst = Number(purchase.inputCgst) || 0;
+            const sgst = Number(purchase.inputSgst) || 0;
+            const igst = Number(purchase.inputIgst) || 0;
+            return total > 0 ? Number((((amount / total) * (cgst + sgst + igst)) || 0).toFixed(2)) : 0;
+          })(),
+          notes: notesEl.value.trim()
+        };
+
+        if (editingId) {
+          const idx = state.debitNotes.findIndex((x) => x.id === editingId);
+          if (idx !== -1) state.debitNotes[idx] = payload;
+          else state.debitNotes.push(payload);
+        } else {
+          state.debitNotes.push(payload);
+        }
+
+        saveState(state);
+        goBack();
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="../assets/poppins.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Balance Sheet Export</title>
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    @page { size: A4 portrait; margin: 12mm; }
+    body {
+      margin: 0;
+      font-family: "Inter", "Segoe UI", Arial, sans-serif;
+      color: #0f172a;
+      background: #fff;
+      font-size: 12px;
+    }
+    .sheet { width: 100%; }
+    .head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 14px;
+      border-bottom: 1px solid #dbe1ea;
+      padding-bottom: 10px;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .logo {
+      width: 44px;
+      height: 44px;
+      object-fit: contain;
+      border-radius: 10px;
+      border: 1px solid #dbe1ea;
+      background: #fff;
+      flex: 0 0 auto;
+    }
+    .logo-fallback {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: #fff;
+      background: #1d4ed8;
+      flex: 0 0 auto;
+    }
+    .company h1 { margin: 0; font-size: 18px; line-height: 1.2; font-weight: 700; }
+    .meta { margin-top: 3px; color: #475569; font-size: 11px; line-height: 1.4; white-space: pre-line; }
+    .report-title { text-align: right; }
+    .report-title h2 { margin: 0; font-size: 18px; line-height: 1.2; font-weight: 700; }
+    .report-title p { margin: 3px 0 0; color: #475569; font-size: 11px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      border: 1px solid #dbe1ea;
+    }
+    th {
+      background: #f3f6fb;
+      color: #1e293b;
+      text-align: left;
+      font-size: 11px;
+      letter-spacing: .02em;
+      padding: 8px 10px;
+      border-bottom: 1px solid #dbe1ea;
+    }
+    th.amt, td.amt { text-align: right; }
+    td {
+      padding: 6px 10px;
+      border-top: 1px solid #edf1f7;
+      vertical-align: top;
+    }
+    .section-head td {
+      background: #f8fafc;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .line-label { color: #334155; font-size: 11.5px; }
+    .totals { margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .total-box {
+      border: 1px solid #dbe1ea;
+      background: #f8fafc;
+      padding: 9px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 700;
+    }
+    .footer {
+      margin-top: 10px;
+      border-top: 1px solid #dbe1ea;
+      padding-top: 6px;
+      color: #64748b;
+      font-size: 10px;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+  <div class="sheet">
+    <header class="head">
+      <div class="brand">
+        <div id="logoWrap"></div>
+        <div class="company">
+          <h1 id="companyName">Your Company</h1>
+          <div class="meta" id="companyMeta"></div>
+        </div>
+      </div>
+      <div class="report-title">
+        <h2 id="reportTitle">Balance Sheet</h2>
+        <p id="reportSubtitle">As of today</p>
+        <p id="generatedMeta"></p>
+      </div>
+    </header>
+
+    <section class="grid">
+      <table>
+        <thead>
+          <tr><th>Liabilities</th><th class="amt">Amount</th></tr>
+        </thead>
+        <tbody id="leftBody"></tbody>
+      </table>
+      <table>
+        <thead>
+          <tr><th>Assets</th><th class="amt">Amount</th></tr>
+        </thead>
+        <tbody id="rightBody"></tbody>
+      </table>
+    </section>
+
+    <section class="totals">
+      <div class="total-box"><span id="leftTotalLabel">Total Liabilities</span><span id="leftTotalAmount">₹0</span></div>
+      <div class="total-box"><span id="rightTotalLabel">Total Assets</span><span id="rightTotalAmount">₹0</span></div>
+    </section>
+
+    <div class="footer">Metrox TaxInvoo | Balance Sheet Export</div>
+  </div>
+
+  <script>
+    (function () {
+      const fmt = new Intl.NumberFormat('en-IN');
+      const esc = (value) => String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+      const formatCurrency = (value) => `₹${fmt.format(Number(value) || 0)}`;
+      const raw = (sessionStorage.getItem('Metrox TaxInvoo_balance_sheet_export') || localStorage.getItem('Metrox TaxInvoo_balance_sheet_export'));
+      if (!raw) return;
+      let payload = null;
+      try {
+        payload = JSON.parse(raw);
+      } catch (_) {
+        return;
+      }
+      const report = payload?.report || {};
+      const company = payload?.company || {};
+      const generatedAt = payload?.generatedAt ? new Date(payload.generatedAt) : new Date();
+
+      const logoWrap = document.getElementById('logoWrap');
+      if (company.logo) {
+        logoWrap.innerHTML = `<img src="${esc(company.logo)}" alt="Company logo" class="logo" />`;
+      } else {
+        const initial = String(company.name || 'M').trim().slice(0, 1).toUpperCase() || 'M';
+        logoWrap.innerHTML = `<div class="logo-fallback">${esc(initial)}</div>`;
+      }
+
+      const name = String(company.name || 'Your Company');
+      const address = String(company.address || '');
+      const phone = String(company.phone || '');
+      const gstin = String(company.gstin || '');
+      const metaParts = [];
+      if (address) metaParts.push(address);
+      if (phone) metaParts.push(`Phone: ${phone}`);
+      if (gstin) metaParts.push(`GSTIN: ${gstin}`);
+
+      document.getElementById('companyName').textContent = name;
+      document.getElementById('companyMeta').textContent = metaParts.join(' | ');
+      document.getElementById('reportTitle').textContent = report.title || 'Balance Sheet';
+      document.getElementById('reportSubtitle').textContent = report.subtitle || 'As of today';
+      document.getElementById('generatedMeta').textContent =
+        `Generated: ${generatedAt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}, ${generatedAt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
+
+      const renderRows = (rows) => (rows || []).map((row) => {
+        const head = `
+          <tr class="section-head">
+            <td>${esc(row.title || 'Section')}</td>
+            <td class="amt">${formatCurrency(row.amount || 0)}</td>
+          </tr>
+        `;
+        const lines = (row.lines || []).map((line) => `
+          <tr>
+            <td class="line-label">${esc(line.label || 'Line Item')}</td>
+            <td class="amt">${formatCurrency(line.amount || 0)}</td>
+          </tr>
+        `).join('');
+        return head + lines;
+      }).join('');
+
+      document.getElementById('leftBody').innerHTML = renderRows(report.left);
+      document.getElementById('rightBody').innerHTML = renderRows(report.right);
+      document.getElementById('leftTotalLabel').textContent = report.totals?.leftLabel || 'Total Liabilities';
+      document.getElementById('rightTotalLabel').textContent = report.totals?.rightLabel || 'Total Assets';
+      document.getElementById('leftTotalAmount').textContent = formatCurrency(report.totals?.leftAmount || 0);
+      document.getElementById('rightTotalAmount').textContent = formatCurrency(report.totals?.rightAmount || 0);
+
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('auto') === 'pdf' || params.get('auto') === 'print') {
+        setTimeout(() => {
+          window.print();
+        }, 120);
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,527 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="../assets/poppins.css" />
+  <link rel="stylesheet" href="../assets/light-theme-generation-overrides.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Metrox TaxInvoo - Create Purchase Return</title>
+  <meta name="description" content="Dedicated Purchase Return creation form." />
+  <style>
+    :root {
+      --bg: #10163b;
+      --panel: rgba(22, 29, 74, 0.72);
+      --line: rgba(214,222,255,0.16);
+      --ink: #eef2ff;
+      --muted: #b2badf;
+      --accent: #5b52f3;
+      --danger: #ff8f8f;
+      --input: #151c45;
+    }
+    body.light {
+      --bg: #f4f7ff;
+      --panel: #ffffff;
+      --line: rgba(15,23,42,0.15);
+      --ink: #0f172a;
+      --muted: rgba(15,23,42,0.66);
+      --accent: #4f46e5;
+      --danger: #dc2626;
+      --input: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 24px;
+      font-family: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(920px 520px at 18% -10%, rgba(106,77,245,0.16), transparent),
+        radial-gradient(900px 520px at 112% 3%, rgba(105,215,216,0.14), transparent),
+        linear-gradient(180deg, #0a0d16, var(--bg));
+      display: grid;
+      place-items: center;
+    }
+    .shell {
+      width: min(900px, 100%);
+      background: color-mix(in oklab, var(--panel) 90%, transparent);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 22px;
+      display: grid;
+      gap: 16px;
+      backdrop-filter: blur(6px);
+    }
+    .head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    h1 { margin: 0; font-size: 26px; letter-spacing: -0.01em; }
+    .muted { color: var(--muted); font-size: 13px; }
+    form { display: grid; gap: 12px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    label { display: grid; gap: 7px; font-size: 13px; color: var(--muted); }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: var(--input);
+      color: var(--ink);
+      font: inherit;
+      outline: none;
+    }
+    textarea { min-height: 88px; resize: vertical; }
+    .summary {
+      display: grid;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: rgba(255,255,255,0.02);
+    }
+    .summary h4 {
+      margin: 0 0 4px;
+      font-size: 14px;
+      color: var(--ink);
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .row strong { color: var(--ink); }
+    .summary .row strong.value-strong {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+    }
+    .impact-options {
+      display: grid;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .impact-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--ink);
+      font-size: 13px;
+    }
+    .impact-option input {
+      width: auto;
+    }
+    .impact-note {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .error { color: var(--danger); font-size: 12px; min-height: 16px; }
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    button {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 14px;
+      background: #151c45;
+      color: var(--ink);
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button.primary {
+      border-color: transparent;
+      background: linear-gradient(120deg, #69d7d8, #3d8bde, #6a4df5);
+      color: #ffffff;
+    }
+    @media (max-width: 760px) {
+      body { padding: 12px; }
+      .shell { padding: 14px; }
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="head">
+      <div>
+        <h1 id="form-title">Create Purchase Return</h1>
+        <div class="muted">Create return against existing purchase invoice and track it in Purchase Return list.</div>
+      </div>
+      <button type="button" id="back-btn">Back to Purchase Return</button>
+    </div>
+
+    <form id="purchase-return-form">
+      <div class="grid-2">
+        <label>Supplier
+          <select id="supplier" required>
+            <option value="">Select supplier</option>
+          </select>
+        </label>
+        <label>Purchase invoice
+          <select id="purchase" required>
+            <option value="">Select purchase invoice</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="summary">
+        <h4>Purchase Summary</h4>
+        <div class="row"><span>Purchase total</span><strong class="value-strong" id="purchase-total">INR 0</strong></div>
+        <div class="row"><span>Already returned</span><strong class="value-strong" id="already-returned">INR 0</strong></div>
+        <div class="row"><span>Max return allowed</span><strong class="value-strong" id="max-return">INR 0</strong></div>
+      </div>
+
+      <div class="grid-2">
+        <label>Return amount
+          <input type="number" id="amount" min="0" step="0.01" placeholder="1000" required />
+        </label>
+        <label>Return date
+          <input type="date" id="date" />
+        </label>
+      </div>
+
+      <div class="grid-2">
+        <label>Reason
+          <select id="reason">
+            <option value="goods_damaged">Goods damaged</option>
+            <option value="quality_issue">Quality issue</option>
+            <option value="pricing_adjustment">Pricing adjustment</option>
+            <option value="other">Other</option>
+          </select>
+        </label>
+        <label>Status
+          <select id="status">
+            <option value="Issued">Issued</option>
+            <option value="Refunded">Refunded</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="summary">
+        <h4>Payment Impact</h4>
+        <div class="row"><span>Purchase Paid</span><strong id="purchase-paid">INR 0</strong></div>
+        <div class="row"><span>After Return</span><strong id="after-return">INR 0</strong></div>
+        <div class="row"><span>Updated Due Amount</span><strong id="updated-due">INR 0</strong></div>
+        <div class="impact-note" id="payable-note">After return, payable will reduce to INR 0</div>
+        <div class="impact-options">
+          <label class="impact-option"><input type="radio" name="refund-impact" value="credit" checked /> Keep as supplier credit</label>
+          <label class="impact-option"><input type="radio" name="refund-impact" value="refunded" /> Refund received</label>
+          <label class="impact-option"><input type="radio" name="refund-impact" value="adjusted" /> Adjust in next purchase</label>
+        </div>
+      </div>
+
+      <div class="summary">
+        <h4>Debit Note Preview</h4>
+        <div class="row"><span>Debit Note No</span><strong id="debit-note-no">—</strong></div>
+        <div class="row"><span>Linked Purchase Invoice</span><strong id="linked-purchase-invoice">—</strong></div>
+        <div class="row"><span>Return Amount</span><strong id="preview-return-amount">INR 0</strong></div>
+        <div class="row"><span>GST Adjustment</span><strong id="preview-gst-adjustment">INR 0</strong></div>
+      </div>
+
+      <label>Notes
+        <textarea id="notes" placeholder="Reason details, item returned, quantity, approvals, etc."></textarea>
+      </label>
+
+      <div class="error" id="error"></div>
+      <div class="actions">
+        <button type="submit" class="primary" id="save-btn">Create Purchase Return</button>
+        <button type="button" id="cancel-btn">Cancel</button>
+      </div>
+    </form>
+  </main>
+
+  <script>
+    (function () {
+      const STORAGE_KEY = 'metrox_taxinvoo_demo_state';
+      const BACKUP_KEY = 'metrox_taxinvoo_demo_state_backup';
+      const LAST_GOOD_KEY = 'metrox_taxinvoo_last_good_state';
+      const ACTIVE_BUSINESS_PROFILE_KEY = 'metrox_active_business_profile_v1';
+      const SCOPED_STATE_KEY_SEPARATOR = '__';
+      const FOCUS_KEY = 'metrox_open_purchase_return_form';
+      const EDIT_KEY = 'metrox_edit_purchase_return_id';
+      const target = '../app/index.html#/purchase-return';
+      const fmt = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 });
+
+      const theme = localStorage.getItem('Metrox TaxInvoo_theme');
+      if (theme === 'light') document.body.classList.add('light');
+
+      const formTitle = document.getElementById('form-title');
+      const supplierEl = document.getElementById('supplier');
+      const purchaseEl = document.getElementById('purchase');
+      const purchaseTotalEl = document.getElementById('purchase-total');
+      const alreadyReturnedEl = document.getElementById('already-returned');
+      const maxReturnEl = document.getElementById('max-return');
+      const purchasePaidEl = document.getElementById('purchase-paid');
+      const afterReturnEl = document.getElementById('after-return');
+      const updatedDueEl = document.getElementById('updated-due');
+      const payableNoteEl = document.getElementById('payable-note');
+      const debitNoteNoEl = document.getElementById('debit-note-no');
+      const linkedPurchaseInvoiceEl = document.getElementById('linked-purchase-invoice');
+      const previewReturnAmountEl = document.getElementById('preview-return-amount');
+      const previewGstAdjustmentEl = document.getElementById('preview-gst-adjustment');
+      const refundImpactInputs = Array.from(document.querySelectorAll('input[name="refund-impact"]'));
+      const amountEl = document.getElementById('amount');
+      const dateEl = document.getElementById('date');
+      const reasonEl = document.getElementById('reason');
+      const statusEl = document.getElementById('status');
+      const notesEl = document.getElementById('notes');
+      const errorEl = document.getElementById('error');
+      const saveBtn = document.getElementById('save-btn');
+
+      dateEl.value = new Date().toISOString().slice(0, 10);
+
+      function esc(value) {
+        return String(value || '').replace(/[&<>'"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[ch] || ch));
+      }
+
+      function normalizeName(name) {
+        return String(name || '').trim().toLowerCase();
+      }
+
+      function goBack() {
+        try { localStorage.setItem(FOCUS_KEY, '1'); } catch (_) {}
+        window.location.href = target;
+      }
+
+      document.getElementById('back-btn').addEventListener('click', goBack);
+      document.getElementById('cancel-btn').addEventListener('click', goBack);
+
+      function getScopedLocalStateKeys() {
+        const profileId = String(localStorage.getItem(ACTIVE_BUSINESS_PROFILE_KEY) || '').trim().replace(/[^a-zA-Z0-9_-]/g, '');
+        if (!profileId) {
+          return { primary: STORAGE_KEY, backup: BACKUP_KEY, lastGood: LAST_GOOD_KEY };
+        }
+        return {
+          primary: STORAGE_KEY + SCOPED_STATE_KEY_SEPARATOR + profileId,
+          backup: BACKUP_KEY + SCOPED_STATE_KEY_SEPARATOR + profileId,
+          lastGood: LAST_GOOD_KEY + SCOPED_STATE_KEY_SEPARATOR + profileId
+        };
+      }
+
+      function parseState() {
+        try {
+          const scoped = getScopedLocalStateKeys();
+          const raw = localStorage.getItem(scoped.primary)
+            || localStorage.getItem(scoped.backup)
+            || localStorage.getItem(scoped.lastGood)
+            || localStorage.getItem(STORAGE_KEY)
+            || localStorage.getItem(BACKUP_KEY)
+            || localStorage.getItem(LAST_GOOD_KEY);
+          const parsed = raw ? JSON.parse(raw) : {};
+          return parsed && typeof parsed === 'object' ? parsed : {};
+        } catch (_) {
+          return {};
+        }
+      }
+
+      function saveState(next) {
+        const payload = next && typeof next === 'object' ? next : {};
+        payload._meta = { ...(payload._meta || {}), updated_at: new Date().toISOString() };
+        const serialized = JSON.stringify(payload);
+        const scoped = getScopedLocalStateKeys();
+        localStorage.setItem(scoped.primary, serialized);
+        localStorage.setItem(scoped.backup, serialized);
+        localStorage.setItem(scoped.lastGood, serialized);
+      }
+
+      const state = parseState();
+      state.purchases = Array.isArray(state.purchases) ? state.purchases : [];
+      state.purchaseReturns = Array.isArray(state.purchaseReturns) ? state.purchaseReturns : [];
+      const editingId = localStorage.getItem(EDIT_KEY) || '';
+      if (editingId) localStorage.removeItem(EDIT_KEY);
+      const editingReturn = editingId ? state.purchaseReturns.find((x) => x.id === editingId) : null;
+
+      if (editingReturn) {
+        formTitle.textContent = 'Edit Purchase Return';
+        saveBtn.textContent = 'Create Purchase Return';
+      }
+
+      function returnedForPurchase(purchaseId) {
+        return state.purchaseReturns
+          .filter((x) => x.purchaseId === purchaseId && x.id !== editingId)
+          .reduce((sum, x) => sum + (Number(x.amount) || 0), 0);
+      }
+
+      function paidForPurchase(purchaseId) {
+        return (state.supplierPayments || [])
+          .filter((x) => String(x.purchaseId || '') === String(purchaseId || ''))
+          .reduce((sum, x) => sum + (Number(x.amount) || 0), 0);
+      }
+
+      function getSelectedRefundStatus() {
+        const selected = refundImpactInputs.find((input) => input.checked);
+        const value = String(selected?.value || 'credit').toLowerCase();
+        if (value === 'refunded') return 'Refunded';
+        if (value === 'adjusted') return 'Adjusted';
+        return 'Credited';
+      }
+
+      function updateImpactAndPreview() {
+        const purchase = state.purchases.find((p) => p.id === purchaseEl.value);
+        const amount = Math.max(0, Number(amountEl.value) || 0);
+        if (!purchase) {
+          purchasePaidEl.textContent = 'INR 0';
+          afterReturnEl.textContent = 'INR 0';
+          updatedDueEl.textContent = 'INR 0';
+          payableNoteEl.textContent = 'After return, payable will reduce to INR 0';
+          debitNoteNoEl.textContent = '—';
+          linkedPurchaseInvoiceEl.textContent = '—';
+          previewReturnAmountEl.textContent = 'INR 0';
+          previewGstAdjustmentEl.textContent = 'INR 0';
+          return;
+        }
+        const total = Number(purchase.total) || 0;
+        const already = returnedForPurchase(purchase.id);
+        const paid = paidForPurchase(purchase.id);
+        const afterReturnInvoiceTotal = Math.max(0, total - (already + amount));
+        const afterReturnPayable = Math.max(0, afterReturnInvoiceTotal - paid);
+        const inputTaxTotal = (Number(purchase.inputCgst) || 0) + (Number(purchase.inputSgst) || 0) + (Number(purchase.inputIgst) || 0);
+        const gstAdjustment = total > 0 ? (amount / total) * inputTaxTotal : 0;
+        purchasePaidEl.textContent = `INR ${fmt.format(paid)}`;
+        afterReturnEl.textContent = `INR ${fmt.format(afterReturnPayable)}`;
+        updatedDueEl.textContent = `INR ${fmt.format(afterReturnPayable)}`;
+        payableNoteEl.textContent = `After return, payable will reduce to INR ${fmt.format(afterReturnPayable)}`;
+        const baseNo = String(purchase.billNo || purchase.id || 'PUR').replace(/[^a-zA-Z0-9-]/g, '').slice(-10) || 'PUR';
+        debitNoteNoEl.textContent = editingReturn?.debitNoteNo || `DN-${baseNo}`;
+        linkedPurchaseInvoiceEl.textContent = String(purchase.billNo || purchase.id || '—');
+        previewReturnAmountEl.textContent = `INR ${fmt.format(amount)}`;
+        previewGstAdjustmentEl.textContent = `INR ${fmt.format(gstAdjustment)}`;
+      }
+
+      function suppliers() {
+        const names = new Set();
+        state.purchases.forEach((p) => {
+          if (p.supplier) names.add(String(p.supplier));
+        });
+        return Array.from(names).sort((a, b) => a.localeCompare(b));
+      }
+
+      function renderSupplierOptions() {
+        supplierEl.innerHTML = ['<option value="">Select supplier</option>']
+          .concat(suppliers().map((name) => `<option value="${esc(name)}">${esc(name)}</option>`))
+          .join('');
+      }
+
+      function renderPurchaseOptions() {
+        const supplier = supplierEl.value;
+        const rows = state.purchases
+          .filter((p) => normalizeName(p.supplier) === normalizeName(supplier));
+        purchaseEl.innerHTML = ['<option value="">Select purchase invoice</option>']
+          .concat(rows.map((p) => `<option value="${esc(p.id)}">${esc(p.billNo || p.id)}</option>`))
+          .join('');
+      }
+
+      function updateSummary() {
+        errorEl.textContent = '';
+        const purchase = state.purchases.find((p) => p.id === purchaseEl.value);
+        if (!purchase) {
+          purchaseTotalEl.textContent = 'INR 0';
+          alreadyReturnedEl.textContent = 'INR 0';
+          maxReturnEl.textContent = 'INR 0';
+          updateImpactAndPreview();
+          return;
+        }
+        const total = Number(purchase.total) || 0;
+        const already = returnedForPurchase(purchase.id);
+        const allowed = Math.max(0, total - already);
+        purchaseTotalEl.textContent = `INR ${fmt.format(total)}`;
+        alreadyReturnedEl.textContent = `INR ${fmt.format(already)}`;
+        maxReturnEl.textContent = `INR ${fmt.format(allowed)}`;
+        updateImpactAndPreview();
+      }
+
+      renderSupplierOptions();
+      if (editingReturn) {
+        supplierEl.value = editingReturn.supplier || '';
+        renderPurchaseOptions();
+        purchaseEl.value = editingReturn.purchaseId || '';
+        amountEl.value = Number(editingReturn.amount || 0) || '';
+        dateEl.value = editingReturn.date || new Date().toISOString().slice(0, 10);
+        reasonEl.value = editingReturn.reason || 'other';
+        statusEl.value = editingReturn.status || 'Issued';
+        const existingRefundStatus = String(editingReturn.refundStatus || '').toLowerCase();
+        const impactValue = existingRefundStatus === 'refunded' ? 'refunded' : (existingRefundStatus === 'adjusted' ? 'adjusted' : 'credit');
+        const impactInput = refundImpactInputs.find((input) => input.value === impactValue);
+        if (impactInput) impactInput.checked = true;
+        notesEl.value = editingReturn.notes || '';
+      } else {
+        renderPurchaseOptions();
+      }
+      updateSummary();
+
+      supplierEl.addEventListener('change', () => {
+        renderPurchaseOptions();
+        purchaseEl.value = '';
+        updateSummary();
+      });
+      purchaseEl.addEventListener('change', updateSummary);
+      amountEl.addEventListener('input', updateImpactAndPreview);
+      refundImpactInputs.forEach((input) => {
+        input.addEventListener('change', updateImpactAndPreview);
+      });
+
+      document.getElementById('purchase-return-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        errorEl.textContent = '';
+
+        const supplier = supplierEl.value;
+        const purchaseId = purchaseEl.value;
+        const purchase = state.purchases.find((p) => p.id === purchaseId);
+        const amount = Number(amountEl.value) || 0;
+        const date = dateEl.value || new Date().toISOString().slice(0, 10);
+        if (!supplier || !purchase || amount <= 0) {
+          errorEl.textContent = 'Supplier, purchase invoice, and amount are required.';
+          return;
+        }
+
+        const total = Number(purchase.total) || 0;
+        const already = returnedForPurchase(purchase.id);
+        const allowed = Math.max(0, total - already);
+        if (amount > allowed) {
+          errorEl.textContent = `Return amount exceeds allowed limit (INR ${fmt.format(allowed)}).`;
+          return;
+        }
+
+        const payload = {
+          id: editingId || `PR-${Date.now()}`,
+          supplier,
+          purchaseId,
+          amount,
+          date,
+          reason: reasonEl.value || 'other',
+          status: statusEl.value || 'Issued',
+          refundStatus: getSelectedRefundStatus(),
+          debitNoteNo: String(debitNoteNoEl.textContent || '').trim() || '',
+          linkedPurchaseInvoice: String(linkedPurchaseInvoiceEl.textContent || '').trim() || '',
+          gstAdjustment: (() => {
+            const inputTaxTotal = (Number(purchase.inputCgst) || 0) + (Number(purchase.inputSgst) || 0) + (Number(purchase.inputIgst) || 0);
+            return total > 0 ? Number((((amount / total) * inputTaxTotal) || 0).toFixed(2)) : 0;
+          })(),
+          notes: notesEl.value.trim()
+        };
+
+        if (editingId) {
+          const idx = state.purchaseReturns.findIndex((x) => x.id === editingId);
+          if (idx !== -1) state.purchaseReturns[idx] = payload;
+          else state.purchaseReturns.push(payload);
+        } else {
+          state.purchaseReturns.push(payload);
+        }
+
+        saveState(state);
+        goBack();
+      });
+    })();
+  </script>
+</body>
+</html>

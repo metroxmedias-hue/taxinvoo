@@ -1,0 +1,986 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="../assets/poppins.css" />
+  <link rel="stylesheet" href="../assets/light-theme-generation-overrides.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Metrox TaxInvoo - Create Sales Return</title>
+  <meta name="description" content="Dedicated Sales Return creation form." />
+  <style>
+    :root {
+      --bg: #10163b;
+      --panel: rgba(22, 29, 74, 0.72);
+      --line: rgba(214,222,255,0.16);
+      --ink: #eef2ff;
+      --muted: #b2badf;
+      --accent: #5b52f3;
+      --danger: #ff8f8f;
+      --input: #151c45;
+    }
+    body.light {
+      --bg: #f4f7ff;
+      --panel: #ffffff;
+      --line: rgba(15,23,42,0.15);
+      --ink: #0f172a;
+      --muted: rgba(15,23,42,0.66);
+      --accent: #4f46e5;
+      --danger: #dc2626;
+      --input: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 24px;
+      font-family: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(920px 520px at 18% -10%, rgba(106,77,245,0.16), transparent),
+        radial-gradient(900px 520px at 112% 3%, rgba(105,215,216,0.14), transparent),
+        linear-gradient(180deg, #0a0d16, var(--bg));
+      display: grid;
+      place-items: center;
+    }
+    .shell {
+      width: min(1180px, 100%);
+      background: color-mix(in oklab, var(--panel) 90%, transparent);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 20px;
+      display: grid;
+      gap: 16px;
+      backdrop-filter: blur(6px);
+    }
+    .head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    h1 {
+      margin: 0;
+      font-size: 26px;
+      letter-spacing: -0.01em;
+    }
+    .muted { color: var(--muted); font-size: 13px; }
+    form { display: grid; gap: 22px; }
+    .layout-grid-two {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    label {
+      display: grid;
+      gap: 7px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: var(--input);
+      color: var(--ink);
+      font: inherit;
+      outline: none;
+    }
+    textarea { min-height: 88px; resize: vertical; }
+    .summary {
+      display: grid;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: rgba(255,255,255,0.02);
+    }
+    .section {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px;
+      display: grid;
+      gap: 10px;
+      background: rgba(255,255,255,0.02);
+    }
+    .section-title {
+      margin: 0;
+      font-size: 12px;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .warning-strip {
+      width: 100%;
+      border: 1px solid rgba(245,158,11,0.35);
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: rgba(245,158,11,0.14);
+      color: #c2410c;
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.4;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .warning-icon {
+      font-size: 14px;
+      line-height: 1;
+    }
+    .return-type-badge {
+      display: inline-flex;
+      width: fit-content;
+      align-items: center;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      padding: 5px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    .return-type-badge.full {
+      color: #047857;
+      border-color: rgba(16,185,129,0.3);
+      background: rgba(16,185,129,0.12);
+    }
+    .return-type-badge.partial {
+      color: #b45309;
+      border-color: rgba(251,146,60,0.3);
+      background: rgba(251,146,60,0.12);
+    }
+    .toggle-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--ink);
+      font-weight: 600;
+    }
+    .item-wise-wrap[hidden] {
+      display: none;
+    }
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    .items-table th,
+    .items-table td {
+      border-bottom: 1px solid var(--line);
+      padding: 8px 6px;
+      text-align: left;
+      white-space: nowrap;
+    }
+    .items-table th {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .items-table td input {
+      padding: 6px 8px;
+      border-radius: 8px;
+      font-size: 12px;
+    }
+    .impact-note {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .smart-return-note {
+      font-size: 12px;
+      color: #047857;
+      font-weight: 600;
+      line-height: 1.4;
+      min-height: 16px;
+    }
+    .option-grid {
+      display: grid;
+      gap: 10px;
+    }
+    .option-grid label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--ink);
+      font-weight: 600;
+      cursor: pointer;
+      line-height: 1.35;
+    }
+    .option-grid input[type="radio"] {
+      width: 16px;
+      height: 16px;
+      min-width: 16px;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      accent-color: var(--accent);
+      box-shadow: none;
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .row strong { color: var(--ink); }
+    .error {
+      color: var(--danger);
+      font-size: 12px;
+      min-height: 16px;
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    button {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 16px;
+      background: #151c45;
+      color: var(--ink);
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      min-height: 42px;
+    }
+    button.primary {
+      border-color: transparent;
+      background: linear-gradient(120deg, #69d7d8, #3d8bde, #6a4df5);
+      color: #ffffff;
+    }
+    .return-type-row {
+      align-items: center;
+      justify-content: flex-start;
+      gap: 8px;
+    }
+    .return-type-row > span {
+      min-width: 92px;
+      font-weight: 600;
+    }
+    #gst-impact-wrap .summary {
+      background: rgba(91,82,243,0.06);
+      border-color: rgba(91,82,243,0.2);
+    }
+    #credit-note-total {
+      font-size: 14px;
+      font-weight: 800;
+    }
+    .section-cn {
+      border-color: rgba(91,82,243,0.35);
+      background: rgba(91,82,243,0.07);
+    }
+    .section-cn .summary {
+      border-color: rgba(91,82,243,0.25);
+      background: rgba(255,255,255,0.06);
+      gap: 10px;
+    }
+    .section-cn .section-title {
+      color: #4338ca;
+      font-size: 13px;
+    }
+    #cn-preview-number {
+      font-size: 16px;
+      font-weight: 800;
+    }
+    .section-notes textarea {
+      width: 100%;
+    }
+    body.light .section {
+      background: #ffffff;
+      border-color: rgba(15,23,42,0.12);
+      box-shadow: 0 6px 16px rgba(15,23,42,0.04);
+    }
+    body.light .summary {
+      background: #ffffff;
+      border-color: rgba(15,23,42,0.12);
+    }
+    body.light #gst-impact-wrap .summary {
+      background: rgba(91,82,243,0.06);
+      border-color: rgba(91,82,243,0.2);
+    }
+    body.light .section-cn {
+      border-color: rgba(91,82,243,0.3);
+      background: rgba(91,82,243,0.07);
+    }
+    body.light .section-cn .summary {
+      background: #ffffff;
+      border-color: rgba(91,82,243,0.22);
+    }
+    @media (max-width: 760px) {
+      body { padding: 12px; }
+      .shell { padding: 14px; }
+      .grid-2 { grid-template-columns: 1fr; }
+      .layout-grid-two { grid-template-columns: 1fr; }
+      form { gap: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="head">
+      <div>
+        <h1>Create Sales Return</h1>
+        <div class="muted">Create return against existing invoice and track it in Sales Return list.</div>
+      </div>
+      <button type="button" id="back-btn">Back to Sales Return</button>
+    </div>
+
+    <form id="sales-return-form">
+      <div class="warning-strip"><span class="warning-icon">⚠</span><span>This will generate a Credit Note and reduce GST liability</span></div>
+
+      <div class="layout-grid-two">
+        <div class="section">
+          <h3 class="section-title">1. Invoice Info</h3>
+          <div class="grid-2">
+            <label>Customer
+              <select id="customer" required>
+                <option value="">Select customer</option>
+              </select>
+            </label>
+            <label>Invoice
+              <select id="invoice" required>
+                <option value="">Select invoice</option>
+              </select>
+            </label>
+          </div>
+          <div class="summary">
+            <div class="row"><span>Invoice total</span><strong id="invoice-total">INR 0</strong></div>
+            <div class="row"><span>Already returned</span><strong id="already-returned">INR 0</strong></div>
+            <div class="row"><span>Max return allowed</span><strong id="max-return">INR 0</strong></div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3 class="section-title">2. Return Details</h3>
+          <div class="grid-2">
+            <label>Return amount
+              <input type="number" id="amount" min="0" step="0.01" placeholder="1000" required />
+            </label>
+            <label>Return date
+              <input type="date" id="date" />
+            </label>
+          </div>
+          <div class="row return-type-row"><span>Return Type:</span><strong id="return-type-badge" class="return-type-badge partial">Partial Return</strong></div>
+          <div class="smart-return-note" id="smart-return-note"></div>
+          <label class="toggle-line"><input type="checkbox" id="enable-item-wise-return" /> Enable item-wise return</label>
+          <div id="item-wise-wrap" class="item-wise-wrap" hidden>
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Qty Sold</th>
+                  <th>Qty Return</th>
+                  <th>Price</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody id="item-wise-body"></tbody>
+            </table>
+            <div class="impact-note" id="item-wise-note">Switch off item-wise to use direct amount entry.</div>
+          </div>
+          <div class="grid-2">
+            <label>Reason
+              <select id="reason">
+                <option value="goods_damaged">Goods damaged</option>
+                <option value="service_cancelled">Service cancelled</option>
+                <option value="pricing_adjustment">Pricing adjustment</option>
+                <option value="other">Other</option>
+              </select>
+            </label>
+            <label>Status
+              <select id="status">
+                <option value="issued" selected>Issued</option>
+                <option value="draft">Draft</option>
+                <option value="refunded">Refunded</option>
+                <option value="adjusted">Adjusted</option>
+              </select>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="layout-grid-two">
+        <div class="section" id="gst-impact-wrap">
+          <h3 class="section-title">3. GST Impact</h3>
+          <div class="summary">
+            <div class="row"><span>Return Amount</span><strong id="gst-return-amount">INR 0</strong></div>
+            <div class="row"><span>GST Reversal</span><strong id="gst-reversal">INR 0</strong></div>
+            <div class="row"><span>Credit Note Total</span><strong id="credit-note-total">INR 0</strong></div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3 class="section-title">4. Payment Impact</h3>
+          <div class="summary">
+            <div class="row"><span>Invoice Paid</span><strong id="invoice-paid">INR 0</strong></div>
+            <div class="row"><span>After Return</span><strong id="payment-impact-text">-</strong></div>
+          </div>
+          <div class="option-grid">
+            <label><input type="radio" name="refund-mode" value="credit" checked /> Keep as credit</label>
+            <label><input type="radio" name="refund-mode" value="refund" /> Refund to customer</label>
+            <label><input type="radio" name="refund-mode" value="adjust" /> Adjust in next invoice</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="section section-cn">
+        <h3 class="section-title">Credit Note Preview</h3>
+        <div class="summary">
+          <div class="row"><span>Credit Note Number</span><strong id="cn-preview-number">CN-001</strong></div>
+          <div class="row"><span>Linked Invoice</span><strong id="cn-preview-invoice">—</strong></div>
+          <div class="row"><span>Return Value</span><strong id="cn-preview-amount">INR 0</strong></div>
+          <div class="row"><span>GST Adjustment</span><strong id="cn-preview-gst">INR 0</strong></div>
+        </div>
+      </div>
+
+      <div class="section section-notes">
+        <h3 class="section-title">5. Notes</h3>
+        <label>Notes
+          <textarea id="notes" placeholder="Reason details, item returned, quantity, approvals, etc."></textarea>
+        </label>
+      </div>
+
+      <div class="error" id="error"></div>
+      <div class="actions">
+        <button type="submit" class="primary" id="save-btn">Save Sales Return</button>
+        <button type="button" id="cancel-btn">Cancel</button>
+      </div>
+    </form>
+  </main>
+
+  <script>
+    (function () {
+      const STORAGE_KEY = 'metrox_taxinvoo_demo_state';
+      const BACKUP_KEY = 'metrox_taxinvoo_demo_state_backup';
+      const LAST_GOOD_KEY = 'metrox_taxinvoo_last_good_state';
+      const ACTIVE_BUSINESS_PROFILE_KEY = 'metrox_active_business_profile_v1';
+      const SCOPED_STATE_KEY_SEPARATOR = '__';
+      const FOCUS_KEY = 'metrox_open_sales_return_form';
+      const target = '../app/index.html#/sales-transactions';
+      const fmt = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 });
+
+      const theme = localStorage.getItem('Metrox TaxInvoo_theme');
+      if (theme === 'light') document.body.classList.add('light');
+
+      const customerEl = document.getElementById('customer');
+      const invoiceEl = document.getElementById('invoice');
+      const invoiceTotalEl = document.getElementById('invoice-total');
+      const alreadyReturnedEl = document.getElementById('already-returned');
+      const maxReturnEl = document.getElementById('max-return');
+      const amountEl = document.getElementById('amount');
+      const dateEl = document.getElementById('date');
+      const reasonEl = document.getElementById('reason');
+      const statusEl = document.getElementById('status');
+      const notesEl = document.getElementById('notes');
+      const returnTypeBadgeEl = document.getElementById('return-type-badge');
+      const smartReturnNoteEl = document.getElementById('smart-return-note');
+      const enableItemWiseReturnEl = document.getElementById('enable-item-wise-return');
+      const itemWiseWrapEl = document.getElementById('item-wise-wrap');
+      const itemWiseBodyEl = document.getElementById('item-wise-body');
+      const itemWiseNoteEl = document.getElementById('item-wise-note');
+      const gstImpactWrapEl = document.getElementById('gst-impact-wrap');
+      const gstReturnAmountEl = document.getElementById('gst-return-amount');
+      const gstReversalEl = document.getElementById('gst-reversal');
+      const creditNoteTotalEl = document.getElementById('credit-note-total');
+      const invoicePaidEl = document.getElementById('invoice-paid');
+      const paymentImpactTextEl = document.getElementById('payment-impact-text');
+      const cnPreviewNumberEl = document.getElementById('cn-preview-number');
+      const cnPreviewInvoiceEl = document.getElementById('cn-preview-invoice');
+      const cnPreviewAmountEl = document.getElementById('cn-preview-amount');
+      const cnPreviewGstEl = document.getElementById('cn-preview-gst');
+      const errorEl = document.getElementById('error');
+      const saveBtn = document.getElementById('save-btn');
+
+      dateEl.value = new Date().toISOString().slice(0, 10);
+
+      function goBack() {
+        try { localStorage.setItem(FOCUS_KEY, '1'); } catch (_) {}
+        window.location.href = target;
+      }
+
+      document.getElementById('back-btn').addEventListener('click', goBack);
+      document.getElementById('cancel-btn').addEventListener('click', goBack);
+
+      function getScopedLocalStateKeys() {
+        const profileId = String(localStorage.getItem(ACTIVE_BUSINESS_PROFILE_KEY) || '').trim().replace(/[^a-zA-Z0-9_-]/g, '');
+        if (!profileId) {
+          return { primary: STORAGE_KEY, backup: BACKUP_KEY, lastGood: LAST_GOOD_KEY };
+        }
+        return {
+          primary: STORAGE_KEY + SCOPED_STATE_KEY_SEPARATOR + profileId,
+          backup: BACKUP_KEY + SCOPED_STATE_KEY_SEPARATOR + profileId,
+          lastGood: LAST_GOOD_KEY + SCOPED_STATE_KEY_SEPARATOR + profileId
+        };
+      }
+
+      function parseState() {
+        const isObject = (value) => value && typeof value === 'object' && !Array.isArray(value);
+        const countRecords = (payload) => {
+          if (!isObject(payload)) return 0;
+          const invoices = Array.isArray(payload.invoices) ? payload.invoices.length : 0;
+          const salesReturns = Array.isArray(payload.salesReturns) ? payload.salesReturns.length : 0;
+          const payments = Array.isArray(payload.payments) ? payload.payments.length : 0;
+          const quotations = Array.isArray(payload.quotations) ? payload.quotations.length : 0;
+          const purchases = Array.isArray(payload.purchases) ? payload.purchases.length : 0;
+          const customers = isObject(payload.customers) ? Object.keys(payload.customers).length : 0;
+          return invoices + salesReturns + payments + quotations + purchases + customers;
+        };
+
+        const parsePayload = (raw) => {
+          if (!raw) return null;
+          try {
+            const parsed = JSON.parse(raw);
+            return isObject(parsed) ? parsed : null;
+          } catch (_) {
+            return null;
+          }
+        };
+
+        const pickBestPayload = (keys) => {
+          let best = null;
+          keys.forEach((key) => {
+            const payload = parsePayload(localStorage.getItem(key));
+            const count = countRecords(payload);
+            if (!payload || count <= 0) return;
+            const updatedAt = Date.parse(String(payload?._meta?.updated_at || '')) || 0;
+            if (!best || count > best.count || (count === best.count && updatedAt > best.updatedAt)) {
+              best = { payload, count, updatedAt };
+            }
+          });
+          return best?.payload || null;
+        };
+
+        try {
+          const scoped = getScopedLocalStateKeys();
+          const directKeys = [scoped.primary, scoped.backup, scoped.lastGood, STORAGE_KEY, BACKUP_KEY, LAST_GOOD_KEY];
+          const directPayload = pickBestPayload(directKeys);
+          if (directPayload) return directPayload;
+
+          const candidateKeys = new Set(directKeys);
+          Object.keys(localStorage).forEach((key) => {
+            if (
+              key === STORAGE_KEY
+              || key === BACKUP_KEY
+              || key === LAST_GOOD_KEY
+              || key.startsWith(`${STORAGE_KEY}${SCOPED_STATE_KEY_SEPARATOR}`)
+              || key.startsWith(`${BACKUP_KEY}${SCOPED_STATE_KEY_SEPARATOR}`)
+              || key.startsWith(`${LAST_GOOD_KEY}${SCOPED_STATE_KEY_SEPARATOR}`)
+            ) {
+              candidateKeys.add(key);
+            }
+          });
+          return pickBestPayload(Array.from(candidateKeys)) || {};
+        } catch (_) {
+          return {};
+        }
+      }
+
+      function saveState(next) {
+        const payload = next && typeof next === 'object' ? next : {};
+        payload._meta = { ...(payload._meta || {}), updated_at: new Date().toISOString() };
+        const serialized = JSON.stringify(payload);
+        const scoped = getScopedLocalStateKeys();
+        localStorage.setItem(scoped.primary, serialized);
+        localStorage.setItem(scoped.backup, serialized);
+        localStorage.setItem(scoped.lastGood, serialized);
+      }
+
+      const state = parseState();
+      state.customers = state.customers && typeof state.customers === 'object' ? state.customers : {};
+      state.invoices = Array.isArray(state.invoices) ? state.invoices : [];
+      state.salesReturns = Array.isArray(state.salesReturns) ? state.salesReturns : [];
+      state.creditNotes = Array.isArray(state.creditNotes) ? state.creditNotes : [];
+
+      const customers = Object.keys(state.customers)
+        .filter((name) => !state.customers[name]?.deleted)
+        .sort((a, b) => a.localeCompare(b));
+
+      customerEl.innerHTML = ['<option value="">Select customer</option>']
+        .concat(customers.map((name) => `<option value="${name}">${name}</option>`))
+        .join('');
+
+      function getInvoiceById(id) {
+        return state.invoices.find((inv) => String(inv.id) === String(id));
+      }
+
+      function getReturnedAmount(invoiceId) {
+        return (state.salesReturns || [])
+          .filter((r) => {
+            if (String(r.invoiceId) !== String(invoiceId)) return false;
+            const status = String(r.status || '').toLowerCase();
+            return status !== 'cancelled' && status !== 'draft';
+          })
+          .reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+      }
+
+      function getInvoiceGstAmount(inv) {
+        return (Number(inv?.cgst) || 0) + (Number(inv?.sgst) || 0) + (Number(inv?.igst) || 0);
+      }
+
+      function isNonGstInvoice(inv) {
+        const invoiceType = String(inv?.invoiceType || inv?.type || '').toLowerCase();
+        const category = String(inv?.invoiceCategory || '').toLowerCase();
+        return invoiceType.includes('non-gst') || category === 'non-gst';
+      }
+
+      function getRefundMode() {
+        const selected = document.querySelector('input[name="refund-mode"]:checked');
+        return String(selected?.value || 'credit').toLowerCase();
+      }
+
+      function getInvoiceLineItems(inv) {
+        const rows = Array.isArray(inv?.items) ? inv.items : [];
+        return rows.map((item, index) => {
+          const qtySold = Math.max(0, Number(item?.qty) || 0);
+          const price = Math.max(0, Number(item?.price) || 0);
+          const fallbackTotal = qtySold * price;
+          const total = Math.max(0, Number(item?.total) || fallbackTotal);
+          const unitPrice = qtySold > 0 ? total / qtySold : price;
+          return {
+            idx: index,
+            title: String(item?.description || item?.name || `Item ${index + 1}`),
+            qtySold,
+            unitPrice: Number.isFinite(unitPrice) ? unitPrice : 0
+          };
+        }).filter((row) => row.qtySold > 0 || row.unitPrice > 0);
+      }
+
+      function renderItemWiseRows(inv) {
+        if (!itemWiseBodyEl) return;
+        const items = getInvoiceLineItems(inv);
+        if (!items.length) {
+          itemWiseBodyEl.innerHTML = '';
+          if (itemWiseNoteEl) itemWiseNoteEl.textContent = 'No line items found on this invoice. Using direct amount entry.';
+          return;
+        }
+        itemWiseBodyEl.innerHTML = items.map((row) => `
+          <tr>
+            <td>${row.title}</td>
+            <td>${row.qtySold}</td>
+            <td><input type="number" min="0" step="1" max="${row.qtySold}" value="0" data-item-return-qty="${row.idx}" /></td>
+            <td>INR ${fmt.format(row.unitPrice)}</td>
+            <td id="item-return-total-${row.idx}">INR 0</td>
+          </tr>
+        `).join('');
+        if (itemWiseNoteEl) itemWiseNoteEl.textContent = 'Enter returned quantity per line item (cannot exceed sold quantity).';
+      }
+
+      function getItemWiseReturnTotal(inv) {
+        if (!enableItemWiseReturnEl?.checked) return null;
+        const items = getInvoiceLineItems(inv);
+        if (!items.length) return null;
+        let total = 0;
+        items.forEach((row) => {
+          const input = itemWiseBodyEl?.querySelector(`[data-item-return-qty="${row.idx}"]`);
+          const qty = Math.max(0, Math.min(row.qtySold, Number(input?.value) || 0));
+          const lineTotal = qty * row.unitPrice;
+          total += lineTotal;
+          const totalEl = document.getElementById(`item-return-total-${row.idx}`);
+          if (totalEl) totalEl.textContent = `INR ${fmt.format(lineTotal)}`;
+          if (input && Number(input.value) !== qty) input.value = String(qty);
+        });
+        return total;
+      }
+
+      function getCreditNotePreviewNumber() {
+        const count = (state.salesReturns || []).length + 1;
+        return `CN-${String(count).padStart(3, '0')}`;
+      }
+
+      function toStatusLabel(value) {
+        const raw = String(value || '').toLowerCase();
+        if (raw === 'draft') return 'Draft';
+        if (raw === 'refunded') return 'Refunded';
+        if (raw === 'adjusted') return 'Adjusted';
+        if (raw === 'cancelled') return 'Cancelled';
+        return 'Issued';
+      }
+
+      function normalizeCreditNoteStatusFromSalesReturn(statusValue) {
+        const raw = String(statusValue || '').toLowerCase();
+        if (raw === 'draft') return 'Draft';
+        if (raw === 'refunded') return 'Refunded';
+        if (raw === 'adjusted') return 'Adjusted';
+        if (raw === 'cancelled') return 'Cancelled';
+        return 'Issued';
+      }
+
+      function deriveCreditNoteIdFromSalesReturn(row) {
+        const explicit = String(row?.creditNoteNumber || '').trim();
+        if (explicit) return explicit;
+        const sourceId = String(row?.id || '').trim();
+        const stripped = sourceId.replace(/^SR-?/i, '');
+        return `CN-${stripped || Date.now()}`;
+      }
+
+      function upsertLinkedCreditNoteFromSalesReturn(row) {
+        if (!row || typeof row !== 'object') return;
+        const creditNoteId = deriveCreditNoteIdFromSalesReturn(row);
+        const linkedSalesReturnId = String(row.id || '').trim();
+        const nextStatus = normalizeCreditNoteStatusFromSalesReturn(row.status || row.legacyStatus);
+        const nextData = {
+          id: creditNoteId,
+          date: row.date || new Date().toISOString().slice(0, 10),
+          customer: row.customer || '',
+          invoiceId: row.invoiceId || '',
+          amount: Number(row.amount) || 0,
+          reason: row.reason || 'other',
+          status: nextStatus,
+          notes: String(row.notes || '').trim(),
+          createdAt: row.createdAt || new Date().toISOString(),
+          sourceType: 'sales_return',
+          linkedSalesReturnId
+        };
+        const existing = (state.creditNotes || []).find((entry) => {
+          if (String(entry?.linkedSalesReturnId || '') === linkedSalesReturnId && linkedSalesReturnId) return true;
+          return String(entry?.id || '') === String(creditNoteId);
+        });
+        if (existing) {
+          Object.assign(existing, { ...existing, ...nextData });
+          return;
+        }
+        state.creditNotes.push(nextData);
+      }
+
+      function renderInvoiceOptions(customerName) {
+        const rows = state.invoices
+          .filter((inv) => !customerName || inv.customer === customerName)
+          .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+        invoiceEl.innerHTML = ['<option value="">Select invoice</option>']
+          .concat(rows.map((inv) => `<option value="${inv.id}">${inv.id} | ${inv.customer}</option>`))
+          .join('');
+      }
+
+      function syncInvoiceSummary() {
+        const inv = getInvoiceById(invoiceEl.value);
+        if (!inv) {
+          invoiceTotalEl.textContent = 'INR 0';
+          alreadyReturnedEl.textContent = 'INR 0';
+          maxReturnEl.textContent = 'INR 0';
+          if (invoicePaidEl) invoicePaidEl.textContent = 'INR 0';
+          if (paymentImpactTextEl) paymentImpactTextEl.textContent = '-';
+          if (gstReturnAmountEl) gstReturnAmountEl.textContent = 'INR 0';
+          if (gstReversalEl) gstReversalEl.textContent = 'INR 0';
+          if (creditNoteTotalEl) creditNoteTotalEl.textContent = 'INR 0';
+          if (cnPreviewInvoiceEl) cnPreviewInvoiceEl.textContent = '—';
+          if (cnPreviewAmountEl) cnPreviewAmountEl.textContent = 'INR 0';
+          if (cnPreviewGstEl) cnPreviewGstEl.textContent = 'INR 0';
+          if (cnPreviewNumberEl) cnPreviewNumberEl.textContent = getCreditNotePreviewNumber();
+          if (returnTypeBadgeEl) {
+            returnTypeBadgeEl.textContent = 'Partial Return';
+            returnTypeBadgeEl.className = 'return-type-badge partial';
+          }
+          if (smartReturnNoteEl) smartReturnNoteEl.textContent = '';
+          if (itemWiseBodyEl) itemWiseBodyEl.innerHTML = '';
+          if (itemWiseWrapEl) itemWiseWrapEl.hidden = !enableItemWiseReturnEl?.checked;
+          amountEl.readOnly = false;
+          saveBtn.disabled = false;
+          errorEl.textContent = '';
+          return;
+        }
+        const total = Number(inv.total) || 0;
+        const returned = getReturnedAmount(inv.id);
+        const maxAllowed = Math.max(0, total - returned);
+        const paid = Number(inv.paidAmount) || 0;
+        invoiceTotalEl.textContent = `INR ${fmt.format(total)}`;
+        alreadyReturnedEl.textContent = `INR ${fmt.format(returned)}`;
+        maxReturnEl.textContent = `INR ${fmt.format(maxAllowed)}`;
+        if (invoicePaidEl) invoicePaidEl.textContent = `INR ${fmt.format(paid)}`;
+        if (cnPreviewInvoiceEl) cnPreviewInvoiceEl.textContent = inv.id || '—';
+        if (cnPreviewNumberEl) cnPreviewNumberEl.textContent = getCreditNotePreviewNumber();
+
+        renderItemWiseRows(inv);
+        if (itemWiseWrapEl) itemWiseWrapEl.hidden = !enableItemWiseReturnEl?.checked;
+
+        const itemWiseTotal = getItemWiseReturnTotal(inv);
+        const useItemWise = enableItemWiseReturnEl?.checked && Number.isFinite(itemWiseTotal);
+        amountEl.readOnly = !!useItemWise;
+
+        if (useItemWise) {
+          amountEl.value = String(Number(itemWiseTotal).toFixed(2));
+        } else if (!amountEl.value || Number(amountEl.value) <= 0) {
+          amountEl.value = maxAllowed.toFixed(2);
+        }
+
+        const amount = Number(amountEl.value) || 0;
+        const safeAmount = Math.max(0, amount);
+        const ratio = total > 0 ? (getInvoiceGstAmount(inv) / total) : 0;
+        const gstReversal = isNonGstInvoice(inv) ? 0 : (safeAmount * Math.max(0, ratio));
+        if (gstImpactWrapEl) gstImpactWrapEl.hidden = isNonGstInvoice(inv);
+        if (gstReturnAmountEl) gstReturnAmountEl.textContent = `INR ${fmt.format(safeAmount)}`;
+        if (gstReversalEl) gstReversalEl.textContent = `INR ${fmt.format(gstReversal)}`;
+        if (creditNoteTotalEl) creditNoteTotalEl.textContent = `INR ${fmt.format(safeAmount)}`;
+        if (cnPreviewAmountEl) cnPreviewAmountEl.textContent = `INR ${fmt.format(safeAmount)}`;
+        if (cnPreviewGstEl) cnPreviewGstEl.textContent = `INR ${fmt.format(gstReversal)}`;
+
+        const type = maxAllowed > 0 && Math.abs(safeAmount - maxAllowed) <= 0.01 ? 'full' : 'partial';
+        if (returnTypeBadgeEl) {
+          returnTypeBadgeEl.textContent = type === 'full' ? 'Full Return' : 'Partial Return';
+          returnTypeBadgeEl.className = `return-type-badge ${type}`;
+        }
+        if (smartReturnNoteEl) {
+          smartReturnNoteEl.textContent = type === 'full' ? 'Entire invoice will be reversed' : '';
+        }
+
+        const projectedTarget = Math.max(0, total - (returned + safeAmount));
+        if (paid > projectedTarget) {
+          const refundable = paid - projectedTarget;
+          if (paymentImpactTextEl) paymentImpactTextEl.textContent = `Refundable amount INR ${fmt.format(refundable)}`;
+        } else {
+          const creditBalance = projectedTarget - paid;
+          if (paymentImpactTextEl) paymentImpactTextEl.textContent = `Credit balance INR ${fmt.format(creditBalance)}`;
+        }
+
+        if (maxAllowed <= 0) {
+          saveBtn.disabled = true;
+          errorEl.textContent = 'This invoice is already fully returned.';
+          return;
+        }
+
+        saveBtn.disabled = false;
+        if (safeAmount > maxAllowed) {
+          errorEl.textContent = 'Return exceeds allowed amount';
+        } else if (safeAmount < 0) {
+          errorEl.textContent = 'Return amount cannot be negative.';
+        } else if (safeAmount > total) {
+          errorEl.textContent = 'Return amount cannot exceed invoice amount.';
+        } else if (safeAmount === 0) {
+          errorEl.textContent = 'Return amount must be greater than 0.';
+        } else {
+          errorEl.textContent = '';
+        }
+      }
+
+      customerEl.addEventListener('change', () => {
+        renderInvoiceOptions(customerEl.value);
+        syncInvoiceSummary();
+      });
+
+      invoiceEl.addEventListener('change', () => {
+        const inv = getInvoiceById(invoiceEl.value);
+        if (inv && customerEl.value !== inv.customer) customerEl.value = inv.customer;
+        syncInvoiceSummary();
+      });
+
+      amountEl.addEventListener('input', syncInvoiceSummary);
+      if (enableItemWiseReturnEl) {
+        enableItemWiseReturnEl.addEventListener('change', syncInvoiceSummary);
+      }
+      if (itemWiseBodyEl) {
+        itemWiseBodyEl.addEventListener('input', (event) => {
+          if (!event.target?.matches?.('[data-item-return-qty]')) return;
+          syncInvoiceSummary();
+        });
+      }
+      document.querySelectorAll('input[name="refund-mode"]').forEach((radio) => {
+        radio.addEventListener('change', syncInvoiceSummary);
+      });
+
+      renderInvoiceOptions('');
+      syncInvoiceSummary();
+
+      if (!state.invoices.length) {
+        saveBtn.disabled = true;
+        errorEl.textContent = 'No invoices available. Create invoice first, then create sales return.';
+      }
+
+      document.getElementById('sales-return-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const invoice = getInvoiceById(invoiceEl.value);
+        const amount = Number(amountEl.value) || 0;
+        const date = dateEl.value || new Date().toISOString().slice(0, 10);
+        const refundMode = getRefundMode();
+
+        if (!invoice) {
+          errorEl.textContent = 'Select an invoice.';
+          return;
+        }
+        if (amount <= 0) {
+          errorEl.textContent = 'Return amount must be greater than 0.';
+          return;
+        }
+        const alreadyReturned = getReturnedAmount(invoice.id);
+        const maxAllowed = Math.max(0, (Number(invoice.total) || 0) - alreadyReturned);
+        const invoiceTotal = Number(invoice.total) || 0;
+        if (amount > maxAllowed) {
+          errorEl.textContent = 'Return exceeds allowed amount';
+          return;
+        }
+        if (amount < 0) {
+          errorEl.textContent = 'Return amount cannot be negative.';
+          return;
+        }
+        if (amount > invoiceTotal) {
+          errorEl.textContent = 'Return amount cannot exceed invoice amount.';
+          return;
+        }
+
+        const returnType = Math.abs(amount - maxAllowed) <= 0.01 ? 'full' : 'partial';
+        const gstRatio = invoiceTotal > 0 ? (getInvoiceGstAmount(invoice) / invoiceTotal) : 0;
+        const gstReversal = isNonGstInvoice(invoice) ? 0 : (amount * Math.max(0, gstRatio));
+        const creditNoteNumber = getCreditNotePreviewNumber();
+        const paid = Number(invoice.paidAmount) || 0;
+        const projectedTarget = Math.max(0, invoiceTotal - (alreadyReturned + amount));
+        const refundableAmount = paid > projectedTarget ? (paid - projectedTarget) : 0;
+        const creditBalanceAmount = Math.max(0, projectedTarget - paid);
+
+        const payload = {
+          id: `SR-${Date.now()}`,
+          date,
+          customer: invoice.customer,
+          invoiceId: invoice.id,
+          amount,
+          reason: reasonEl.value || 'other',
+          status: String(statusEl.value || 'issued').toLowerCase(),
+          notes: String(notesEl.value || '').trim(),
+          createdAt: new Date().toISOString(),
+          returnType,
+          creditNoteNumber,
+          gstReversal: Number(gstReversal.toFixed(2)),
+          refundMode,
+          refundStatus: refundMode === 'refund' ? 'pending' : (refundMode === 'adjust' ? 'adjust_pending' : 'credit_pending'),
+          legacyStatus: toStatusLabel(statusEl.value || 'issued'),
+          itemWiseEnabled: !!enableItemWiseReturnEl?.checked,
+          refundableAmount: Number(refundableAmount.toFixed(2)),
+          creditBalanceAmount: Number(creditBalanceAmount.toFixed(2))
+        };
+
+        // Backward-compatible invoice adjustment metadata for credit note impact.
+        invoice.salesReturnAmount = Number((Number(invoice.salesReturnAmount) || 0) + amount);
+        invoice.salesReturnGst = Number((Number(invoice.salesReturnGst) || 0) + Number(gstReversal.toFixed(2)));
+        invoice.returnAdjustedTotal = Math.max(0, invoiceTotal - Number(invoice.salesReturnAmount || 0));
+        invoice.returnAdjustedGst = Math.max(0, getInvoiceGstAmount(invoice) - Number(invoice.salesReturnGst || 0));
+        invoice.lastCreditNoteNumber = creditNoteNumber;
+
+        // Backward-compatible customer credit ledger for future adjustment.
+        const customerProfile = state.customers[invoice.customer] || {};
+        if (refundMode === 'credit' || refundMode === 'adjust') {
+          customerProfile.returnCreditBalance = Number((Number(customerProfile.returnCreditBalance) || 0) + amount);
+        }
+        state.customers[invoice.customer] = customerProfile;
+
+        state.salesReturns.push(payload);
+        upsertLinkedCreditNoteFromSalesReturn(payload);
+        saveState(state);
+        goBack();
+      });
+    })();
+  </script>
+</body>
+</html>
