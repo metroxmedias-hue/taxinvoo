@@ -15569,7 +15569,7 @@
                         <strong id="settings-account-plan">—</strong>
                         <div class="summary">
                           <div class="row"><span>Status</span><strong id="settings-account-status">—</strong></div>
-                          <div class="row"><span>Trial days left</span><strong id="settings-account-trial-days">—</strong></div>
+                          <div class="row"><span>Days left</span><strong id="settings-account-trial-days">—</strong></div>
                           <div class="row"><span>Next renewal</span><strong id="settings-account-renewal">—</strong></div>
                         </div>
                         <button class="btn primary" type="button" id="settings-buy-plan-btn">Upgrade Plan</button>
@@ -26795,7 +26795,7 @@
       const banner = document.getElementById('upgrade-banner');
       const bannerMsg = document.getElementById('upgrade-message');
       const bannerCta = document.getElementById('upgrade-cta');
-      const status = (localStorage.getItem('metrox_plan_status') || (planKey === 'trial' ? 'trial' : 'active')).toLowerCase();
+      const access = checkUserAccess(window.businessData || {});
       const trialEndRaw = String(window.businessData?.trial_ends_at || '').trim();
       const trialEndDate = trialEndRaw ? new Date(trialEndRaw) : null;
       const formatTrialCountdown = (ms) => {
@@ -26853,15 +26853,19 @@
         }
       };
       if (banner) {
-        if (status === 'expired' || status === 'hold') {
-          bannerMsg.textContent = 'Plan inactive. Upgrade to restore access.';
+        if (access === 'expired') {
+          const planType = String(window.businessData?.plan_type || '').trim().toLowerCase();
+          const isPaidPlan = planType === 'starter' || planType === 'growth' || planType === 'pro';
+          bannerMsg.textContent = isPaidPlan
+            ? 'Plan inactive. Upgrade to restore access.'
+            : 'Trial expired. Upgrade to continue.';
           banner.classList.add('urgent');
           banner.style.display = 'flex';
           if (window.__trialBannerTick) {
             clearInterval(window.__trialBannerTick);
             window.__trialBannerTick = null;
           }
-        } else if (planKey === 'trial') {
+        } else if (access === 'trial_active') {
           renderTrialBanner();
           banner.style.display = 'flex';
           if (window.__trialBannerTick) clearInterval(window.__trialBannerTick);
@@ -31075,6 +31079,24 @@
 
     function loadProfilePlan() {
       const business = window.businessData && typeof window.businessData === 'object' ? window.businessData : {};
+      function getDaysLeft(endDate) {
+        if (!endDate) return null;
+        const now = new Date();
+        const end = new Date(endDate);
+        if (!Number.isFinite(end.getTime())) return null;
+        const diff = end - now;
+        return Math.ceil(diff / (1000 * 60 * 60 * 24));
+      }
+      function formatDate(dateString) {
+        if (!dateString) return '—';
+        const date = new Date(dateString);
+        if (!Number.isFinite(date.getTime())) return '—';
+        return date.toLocaleDateString('en-IN', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric'
+        });
+      }
       const normalizePlan = (value) => {
         const raw = String(value || '').trim().toLowerCase();
         if (raw === 'trial') return 'trial';
@@ -31087,24 +31109,6 @@
         .trim()
         .toLowerCase()
         .replace(/\b\w/g, (ch) => ch.toUpperCase());
-      const toSafeDate = (value) => {
-        if (!value) return null;
-        if (value instanceof Date && Number.isFinite(value.getTime())) return value;
-        if (typeof value?.toDate === 'function') {
-          const parsed = value.toDate();
-          if (parsed instanceof Date && Number.isFinite(parsed.getTime())) return parsed;
-        }
-        const parsed = new Date(value);
-        return Number.isFinite(parsed.getTime()) ? parsed : null;
-      };
-      const formatDate = (date) => {
-        if (!(date instanceof Date) || !Number.isFinite(date.getTime())) return '—';
-        try {
-          return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-        } catch (_) {
-          return date.toISOString().slice(0, 10);
-        }
-      };
       const rawPlan = String(
         business.plan_type
         || business.current_plan
@@ -31117,37 +31121,28 @@
       const rawStatus = String(
         business.plan_status
         || business.subscription_status
-        || localStorage.getItem('metrox_plan_status')
         || ''
       ).trim().toLowerCase();
+      const access = checkUserAccess(business);
       const status = rawStatus
         ? titleCase(rawStatus.replace(/_/g, ' '))
-        : (planKey ? (planKey === 'trial' ? 'Trial' : 'Active') : '—');
-      const trialEndDate = toSafeDate(business.trial_ends_at);
-      const storedTrialDays = String(localStorage.getItem('metrox_trial_days_left') || '').trim();
-      let trialDays = '—';
-      if (planKey === 'trial') {
-        if (trialEndDate) {
-          const diffMs = trialEndDate.getTime() - Date.now();
-          trialDays = String(Math.max(0, Math.ceil(diffMs / (24 * 60 * 60 * 1000))));
-        } else if (storedTrialDays) {
-          trialDays = storedTrialDays;
-        } else {
-          trialDays = '0';
-        }
-      }
-      const renewalRaw = business.next_billing_date || business.current_period_end || localStorage.getItem('metrox_next_billing') || '';
-      const renewalDate = toSafeDate(renewalRaw);
-      const renewal = planKey === 'trial'
-        ? '—'
-        : (renewalDate ? formatDate(renewalDate) : (String(renewalRaw || '').trim() || '—'));
+        : (
+          access === 'full_access'
+            ? 'Active'
+            : access === 'trial_active'
+              ? 'Trial'
+              : 'Expired'
+        );
+      const endDate = business.subscription_end_date || business.trial_ends_at;
+      const daysLeft = getDaysLeft(endDate);
+      const renewal = formatDate(endDate);
       const accountPlanEl = document.getElementById('settings-account-plan');
       const accountStatusEl = document.getElementById('settings-account-status');
       const accountTrialEl = document.getElementById('settings-account-trial-days');
       const accountRenewalEl = document.getElementById('settings-account-renewal');
       if (accountPlanEl) accountPlanEl.textContent = plan;
       if (accountStatusEl) accountStatusEl.textContent = status;
-      if (accountTrialEl) accountTrialEl.textContent = trialDays;
+      if (accountTrialEl) accountTrialEl.textContent = daysLeft ? `${daysLeft} days left` : '—';
       if (accountRenewalEl) accountRenewalEl.textContent = renewal;
     }
 
@@ -34944,13 +34939,30 @@
     }
 
     function checkAccess(business) {
-      if (!business) return false;
-      const end = business.trial_ends_at;
-      if (!end) return false;
-      const trialEnd = new Date(end).getTime();
-      const now = Date.now();
-      if (!Number.isFinite(trialEnd)) return false;
-      return now <= trialEnd && business.is_active !== false;
+      return checkUserAccess(business) !== 'expired';
+    }
+
+    function checkUserAccess(user) {
+      if (!user || typeof user !== 'object') return 'expired';
+      const planType = String(user.plan_type || user.current_plan || '').trim().toLowerCase();
+      const planStatus = String(user.plan_status || user.subscription_status || 'active').trim().toLowerCase();
+
+      // Priority 1: paid plans with active status.
+      if ((planType === 'growth' || planType === 'pro' || planType === 'starter') && planStatus === 'active') {
+        return 'full_access';
+      }
+
+      // Priority 2: trial users.
+      const trialEndRaw = user.trial_ends_at || null;
+      const trialEnd = typeof trialEndRaw?.toDate === 'function'
+        ? trialEndRaw.toDate()
+        : new Date(trialEndRaw);
+      if (trialEnd instanceof Date && Number.isFinite(trialEnd.getTime()) && new Date() <= trialEnd) {
+        return 'trial_active';
+      }
+
+      // Priority 3: expired.
+      return 'expired';
     }
 
     async function loadBusiness(userData) {

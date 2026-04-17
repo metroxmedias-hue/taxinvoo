@@ -5313,12 +5313,41 @@
       if (!["starter", "growth", "pro"].includes(normalizedPlan)) {
         throw new Error("Invalid plan selected.");
       }
+      const user = activeUser || auth.currentUser;
+      if (!user?.uid) {
+        alert("Please login to upgrade your plan.");
+        return;
+      }
+      const now = new Date();
+      const nextMonth = new Date(now);
+      nextMonth.setMonth(nextMonth.getMonth() + 1);
+
+      const userRef = doc(db, ...userDocPath(user.uid));
+      await updateDoc(userRef, {
+        plan_type: normalizedPlan,
+        plan_status: "active",
+        subscription_status: "active",
+        subscription_start_date: now.toISOString(),
+        subscription_end_date: nextMonth.toISOString(),
+        billing_cycle: "monthly",
+        trial_ends_at: null,
+        updated_at: serverTimestamp()
+      });
+
       const businessRef = await resolveBusinessRef();
       if (!businessRef) return;
       await updateDoc(businessRef, {
         plan_type: normalizedPlan,
         plan_status: "active",
+        subscription_status: "active",
+        subscription_start_date: now.toISOString(),
+        subscription_end_date: nextMonth.toISOString(),
+        billing_cycle: "monthly",
+        next_billing_date: nextMonth.toISOString(),
+        current_period_end: nextMonth.toISOString(),
         is_active: true,
+        trial_starts_at: null,
+        trial_ends_at: null,
         updated_at: serverTimestamp()
       });
       alert("Plan upgraded successfully!");

@@ -64,6 +64,11 @@ export const PLAN_CONFIG = {
 const TRIAL_DAYS = 3;
 const GRACE_DAYS = 1;
 export const TRIAL_EXPIRED_MESSAGE = "Your trial has expired. Please upgrade your plan to continue.";
+const PAID_PLANS = new Set([
+  SUBSCRIPTION_PLANS.starter,
+  SUBSCRIPTION_PLANS.growth,
+  SUBSCRIPTION_PLANS.pro
+]);
 
 function nowDate() {
   return new Date();
@@ -155,36 +160,33 @@ function resolveBusinessTrialEnd(business) {
   return toDate(business?.trial_ends_at || null);
 }
 
+function checkUserAccess(business, refDate = nowDate()) {
+  if (!business || typeof business !== "object") return "expired";
+  const planType = normalizeBusinessPlanType(business);
+  const planStatus = normalizeBusinessPlanStatus(business);
+
+  // Priority 1: paid plan with active status.
+  if (PAID_PLANS.has(planType) && planStatus === SUBSCRIPTION_STATUS.active) {
+    return "full_access";
+  }
+
+  // Priority 2: trial validity.
+  const trialEnd = resolveBusinessTrialEnd(business);
+  if (trialEnd && refDate <= trialEnd) {
+    return "trial_active";
+  }
+
+  // Priority 3: expired.
+  return "expired";
+}
+
 export function checkAccess(business) {
-  if (!business) return false;
-  const end = business.trial_ends_at;
-  if (!end) return false;
-  const trialEnd = new Date(end).getTime();
-  const now = Date.now();
-  if (!Number.isFinite(trialEnd)) return false;
-  return now <= trialEnd && business.is_active !== false;
+  return checkUserAccess(business) !== "expired";
 }
 
 export function isBusinessAccessActive(business) {
   if (!business || typeof business !== "object") return true;
-  const planType = normalizeBusinessPlanType(business);
-  const status = normalizeBusinessPlanStatus(business);
-  const isActive = business?.is_active;
-  const timeAccess = checkAccess(business);
-
-  if (typeof isActive === "boolean") {
-    return isActive && timeAccess;
-  }
-  if (planType !== SUBSCRIPTION_PLANS.trial) {
-    return true;
-  }
-  if (status === SUBSCRIPTION_STATUS.expired) {
-    return false;
-  }
-  if (!timeAccess) {
-    return false;
-  }
-  return true;
+  return checkUserAccess(business) !== "expired";
 }
 
 export function evaluateSubscriptionStatus(subscription, refDate = nowDate()) {
@@ -527,8 +529,23 @@ export async function upgradeSubscription(userId, selectedPlan, periodDays = 30)
   const plan = normalizePlan(selectedPlan);
   if (plan === SUBSCRIPTION_PLANS.trial) throw new Error("Cannot upgrade to trial.");
 
+  const now = new Date();
   const currentPeriodEnd = new Date(Date.now() + periodDays * 24 * 60 * 60 * 1000);
   const subRef = doc(db, ...subscriptionDocPath(userId));
+  await setDoc(
+    doc(db, ...userDocPath(userId)),
+    {
+      plan_type: plan,
+      plan_status: SUBSCRIPTION_STATUS.active,
+      subscription_status: SUBSCRIPTION_STATUS.active,
+      subscription_start_date: now.toISOString(),
+      subscription_end_date: currentPeriodEnd.toISOString(),
+      billing_cycle: "monthly",
+      trial_ends_at: null,
+      updated_at: serverTimestamp()
+    },
+    { merge: true }
+  );
   await setDoc(
     subRef,
     {
@@ -550,7 +567,15 @@ export async function upgradeSubscription(userId, selectedPlan, periodDays = 30)
       doc(db, ...businessDocPath(businessOwnerUid, businessId)),
       {
         current_plan: plan,
+        plan_type: plan,
+        plan_status: SUBSCRIPTION_STATUS.active,
         subscription_status: SUBSCRIPTION_STATUS.active,
+        subscription_start_date: now.toISOString(),
+        subscription_end_date: currentPeriodEnd.toISOString(),
+        billing_cycle: "monthly",
+        next_billing_date: currentPeriodEnd.toISOString(),
+        current_period_end: currentPeriodEnd.toISOString(),
+        trial_ends_at: null,
         updated_at: serverTimestamp()
       },
       { merge: true }
