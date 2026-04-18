@@ -451,7 +451,16 @@
     }
 
     .nav-item.feature-nav-locked {
-      opacity: 0.9;
+      opacity: 0.72;
+      border-style: dashed;
+      cursor: not-allowed;
+      filter: saturate(0.78);
+    }
+
+    .nav-item.feature-nav-locked:hover {
+      border-color: rgba(239, 68, 68, 0.3);
+      color: rgba(148, 163, 184, 0.96);
+      background: rgba(15, 23, 42, 0.1);
     }
 
     .nav-item[data-screen="ledger"],
@@ -27145,6 +27154,32 @@
       return false;
     }
 
+    function getPlanKeyForRestrictionGate() {
+      const user = getUserDataSnapshot() || {};
+      return normalizePlanKey(
+        user.plan_type
+        || user.current_plan
+        || localStorage.getItem('metrox_plan')
+        || window.APP_PLAN
+        || 'starter'
+      );
+    }
+
+    function hasStrictReportsAccess() {
+      const planKey = getPlanKeyForRestrictionGate();
+      const accessModule = window.METROX_PLAN_ACCESS;
+      if (typeof accessModule?.canAccessReports === 'function') {
+        return !!accessModule.canAccessReports(planKey);
+      }
+      if (typeof accessModule?.hasAccess === 'function') {
+        return !!accessModule.hasAccess(planKey, 'reports');
+      }
+      if (typeof window.hasAccess === 'function') {
+        return !!window.hasAccess(planKey, 'reports');
+      }
+      return planKey === 'growth' || planKey === 'pro';
+    }
+
     function openGrowthUpgradeCta() {
       const ctaMessage = 'Upgrade to Growth to unlock this feature 🚀';
       if (!confirm(`${ctaMessage}\n\nOpen pricing now?`)) return;
@@ -27154,6 +27189,7 @@
     (async () => {
       try {
         const module = await import('../js/planAccess.js');
+        window.METROX_PLAN_ACCESS = module || {};
         if (typeof module?.hasAccess === 'function') {
           window.hasAccess = module.hasAccess;
           try { applyPlanGates(); } catch (_) {}
@@ -28955,9 +28991,9 @@
         alert('Access denied for this section.');
         return;
       }
-      if (targetId === 'report-detail' && !hasPlanFeatureAccess('reports')) {
+      if ((targetId === 'reports' || targetId === 'report-detail') && !hasStrictReportsAccess()) {
         alert('Upgrade to Growth to unlock this feature 🚀');
-        showScreen('reports', 'Reports');
+        showScreen('dashboard', 'Dashboard');
         return;
       }
       if (targetId === 'settings' && USE_STANDALONE_SETTINGS_PAGE && !IS_SETTINGS_STANDALONE_PAGE) {
@@ -29495,7 +29531,7 @@
         : String(window.location.hash || '');
       const safeRouteValue = String(routeValue || '').toLowerCase();
       if (!safeRouteValue.includes('report')) return false;
-      if (typeof hasPlanFeatureAccess === 'function' && hasPlanFeatureAccess('reports')) return false;
+      if (hasStrictReportsAccess()) return false;
       alert('🚀 Upgrade to Growth to access Reports');
       if (window.location.hash !== '#/dashboard') {
         window.location.hash = '#/dashboard';
@@ -46160,7 +46196,7 @@
     window.blockIfNoFeature = blockIfNoFeature;
 
     function applyReportsPlanLock() {
-      const reportsEnabled = hasPlanFeatureAccess('reports');
+      const reportsEnabled = hasStrictReportsAccess();
       if (reportsShell) reportsShell.classList.toggle('feature-locked-blur', !reportsEnabled);
       if (reportsLockOverlay) reportsLockOverlay.hidden = reportsEnabled;
       if (reportsNavItem) reportsNavItem.classList.toggle('feature-nav-locked', !reportsEnabled);
