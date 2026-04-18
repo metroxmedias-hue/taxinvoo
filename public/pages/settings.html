@@ -15569,8 +15569,8 @@
                         <strong id="settings-account-plan">—</strong>
                         <div class="summary">
                           <div class="row"><span>Status</span><strong id="settings-account-status">—</strong></div>
-                          <div class="row"><span>Days left</span><strong id="settings-account-trial-days">—</strong></div>
-                          <div class="row"><span>Next renewal</span><strong id="settings-account-renewal">—</strong></div>
+                          <div class="row"><span>Days left</span><strong id="daysLeft">—</strong></div>
+                          <div class="row"><span>Next renewal</span><strong id="nextRenewal">—</strong></div>
                         </div>
                         <button class="btn primary" type="button" id="settings-buy-plan-btn">Upgrade Plan</button>
                         <div class="muted" style="font-size:12px;">Renewal and trial info updates automatically based on your active subscription.</div>
@@ -31078,24 +31078,12 @@
     } catch (_) {}
 
     function loadProfilePlan() {
-      const business = window.businessData && typeof window.businessData === 'object' ? window.businessData : {};
-      function getDaysLeft(endDate) {
-        if (!endDate) return null;
+      const businessData = window.businessData && typeof window.businessData === 'object' ? window.businessData : {};
+      function getDaysLeft(date) {
+        if (!date || isNaN(date)) return null;
         const now = new Date();
-        const end = new Date(endDate);
-        if (!Number.isFinite(end.getTime())) return null;
-        const diff = end - now;
+        const diff = date - now;
         return Math.ceil(diff / (1000 * 60 * 60 * 24));
-      }
-      function formatDate(dateString) {
-        if (!dateString) return '—';
-        const date = new Date(dateString);
-        if (!Number.isFinite(date.getTime())) return '—';
-        return date.toLocaleDateString('en-IN', {
-          day: 'numeric',
-          month: 'short',
-          year: 'numeric'
-        });
       }
       const normalizePlan = (value) => {
         const raw = String(value || '').trim().toLowerCase();
@@ -31110,8 +31098,8 @@
         .toLowerCase()
         .replace(/\b\w/g, (ch) => ch.toUpperCase());
       const rawPlan = String(
-        business.plan_type
-        || business.current_plan
+        businessData.plan_type
+        || businessData.current_plan
         || localStorage.getItem('metrox_plan')
         || ''
       ).trim().toLowerCase();
@@ -31119,11 +31107,11 @@
       const planLabelMap = { trial: 'Trial', starter: 'Starter', growth: 'Growth', pro: 'Pro' };
       const plan = planKey ? (planLabelMap[planKey] || titleCase(planKey)) : '—';
       const rawStatus = String(
-        business.plan_status
-        || business.subscription_status
+        businessData.plan_status
+        || businessData.subscription_status
         || ''
       ).trim().toLowerCase();
-      const access = checkUserAccess(business);
+      const access = checkUserAccess(businessData);
       const status = rawStatus
         ? titleCase(rawStatus.replace(/_/g, ' '))
         : (
@@ -31133,17 +31121,34 @@
               ? 'Trial'
               : 'Expired'
         );
-      const endDate = business.subscription_end_date || business.trial_ends_at;
+      const endDateRaw = businessData.subscription_end_date || businessData.trial_ends_at;
+      let endDate = null;
+      if (typeof endDateRaw?.toDate === 'function') {
+        endDate = endDateRaw.toDate();
+      } else if (endDateRaw?.seconds) {
+        endDate = new Date(endDateRaw.seconds * 1000);
+      } else if (endDateRaw) {
+        endDate = new Date(endDateRaw);
+      }
+      console.log("END DATE:", endDate);
       const daysLeft = getDaysLeft(endDate);
-      const renewal = formatDate(endDate);
+      const renewal = endDate && !isNaN(endDate)
+        ? endDate.toLocaleDateString('en-IN', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+          })
+        : '—';
       const accountPlanEl = document.getElementById('settings-account-plan');
       const accountStatusEl = document.getElementById('settings-account-status');
-      const accountTrialEl = document.getElementById('settings-account-trial-days');
-      const accountRenewalEl = document.getElementById('settings-account-renewal');
+      const daysLeftEl = document.getElementById('daysLeft');
+      const nextRenewalEl = document.getElementById('nextRenewal');
+      console.log("BUSINESS DATA:", businessData);
+      console.log(businessData);
       if (accountPlanEl) accountPlanEl.textContent = plan;
       if (accountStatusEl) accountStatusEl.textContent = status;
-      if (accountTrialEl) accountTrialEl.textContent = daysLeft ? `${daysLeft} days left` : '—';
-      if (accountRenewalEl) accountRenewalEl.textContent = renewal;
+      if (daysLeftEl) daysLeftEl.innerText = daysLeft ? `${daysLeft} days left` : '—';
+      if (nextRenewalEl) nextRenewalEl.innerText = renewal;
     }
 
     loadProfilePlan();
@@ -34147,6 +34152,9 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+    // Debug helpers: expose Firebase handles for console checks on settings page.
+    window.auth = auth;
+    window.db = db;
     const STORAGE_KEY = 'metrox_taxinvoo_demo_state';
     const BACKUP_KEY = 'metrox_taxinvoo_demo_state_backup';
     const LAST_GOOD_KEY = 'metrox_taxinvoo_last_good_state';
@@ -34965,10 +34973,18 @@
       return 'expired';
     }
 
-    async function loadBusiness(userData) {
+    async function loadBusiness(userData, preferredBusinessId = '') {
       const ownerUid = String(userData?.business_owner_uid || userData?.user_id || auth.currentUser?.uid || '').trim();
       if (!ownerUid) return null;
-      const expectedBusinessId = String(userData?.business_id || '').trim();
+      const expectedBusinessId = String(
+        preferredBusinessId
+        || userData?.business_id
+        || localStorage.getItem('activeBusinessProfileId')
+        || localStorage.getItem('activeBusinessId')
+        || window.currentBusinessId
+        || resolveRealtimeBusinessId()
+        || ''
+      ).trim();
       const businessRef = collection(db, 'users', ownerUid, 'businesses');
       let snap = null;
       try {
@@ -34977,21 +34993,54 @@
         snap = await getDocs(businessRef);
       }
       if (!snap || snap.empty) return null;
-      const businessDoc = snap.docs.find((row) => row.id === expectedBusinessId) || snap.docs[0];
-      const businessData = { ...(businessDoc.data() || {}), business_id: businessDoc.id };
+
+      const docs = snap.docs || [];
+      const preferredDoc = expectedBusinessId
+        ? docs.find((row) => row.id === expectedBusinessId) || null
+        : null;
+      const paidActiveDoc = docs.find((row) => checkUserAccess(row.data() || {}) === 'full_access') || null;
+
+      let businessDoc = preferredDoc || docs[0];
+      if (paidActiveDoc && checkUserAccess(businessDoc?.data?.() || {}) !== 'full_access') {
+        businessDoc = paidActiveDoc;
+      }
+      if (!businessDoc) return null;
+
+      const businessDocId = businessDoc.id;
+      const businessDocRef = businessDoc.ref;
+      const businessData = { ...(businessDoc.data() || {}), business_id: businessDocId };
       window.businessData = businessData;
+      if (businessDocId) {
+        try {
+          localStorage.setItem('activeBusinessId', businessDocId);
+        } catch (_) {}
+      }
       try {
         const normalizedPlan = String(businessData.plan_type || businessData.current_plan || '').trim().toLowerCase();
         if (normalizedPlan) localStorage.setItem('metrox_plan', normalizedPlan);
       } catch (_) {}
+
+      if (auth.currentUser?.uid && businessDocId && businessDocId !== expectedBusinessId) {
+        try {
+          await setDoc(doc(db, 'users', auth.currentUser.uid), {
+            business_id: businessDocId,
+            updated_at: serverTimestamp()
+          }, { merge: true });
+        } catch (_) {}
+      }
+
       try {
         if (typeof loadProfilePlan === 'function') loadProfilePlan();
       } catch (_) {}
       const hasAccess = checkAccess(businessData);
       window.APP_ACCESS = hasAccess;
+      console.log("BUSINESS ID USED:", businessDocId);
       console.log('🔥 CORRECT BUSINESS:', businessData);
+      console.log("BUSINESS DATA:", businessData);
+      console.log(businessData);
       if (!hasAccess) showExpiredBanner();
-      return { businessId: businessDoc.id, businessData };
+      window.currentBusinessRef = businessDocRef;
+      return { businessId: businessDocId, businessData };
     }
 
     function showExpiredUpgradeBanner() {
@@ -35145,12 +35194,14 @@
       try {
         const userSnap = await getDoc(doc(db, 'users', user.uid));
         const userData = userSnap.exists() ? userSnap.data() : null;
-        const businessId = String(userData?.business_id || resolveRealtimeBusinessId()).trim();
-        if (!businessId) {
-          currentBusinessId = null;
-          if (typeof window.renderManageUsersPanel === 'function') window.renderManageUsersPanel();
-          return;
-        }
+        console.log("FULL USER DATA:", userData);
+        const businessIdHint = String(
+          userData?.business_id
+          || localStorage.getItem('activeBusinessId')
+          || localStorage.getItem('activeBusinessProfileId')
+          || resolveRealtimeBusinessId()
+          || ''
+        ).trim();
         const role = (userData?.role || 'owner').toLowerCase();
         const rolePermissionsRaw = role === 'owner'
           ? { ...OWNER_PERMISSIONS }
@@ -35160,10 +35211,17 @@
         if (typeof window.setRoleAccess === 'function') {
           window.setRoleAccess(resolvedProfile);
         }
-        currentBusinessId = businessId;
-        startManageUsersRealtimeSync();
-        const loadedBusiness = await loadBusiness(userData);
+        const loadedBusiness = await loadBusiness(userData, businessIdHint);
         const businessData = loadedBusiness?.businessData || null;
+        console.log("FULL BUSINESS DATA:", businessData);
+        const resolvedBusinessId = String(loadedBusiness?.businessId || businessIdHint || '').trim();
+        if (!resolvedBusinessId) {
+          currentBusinessId = null;
+          if (typeof window.renderManageUsersPanel === 'function') window.renderManageUsersPanel();
+          return;
+        }
+        currentBusinessId = resolvedBusinessId;
+        startManageUsersRealtimeSync();
         if (!businessData) return;
         applySoftLockGuards();
         const biz = businessData;
@@ -35180,7 +35238,6 @@
         };
         mergeCompanyIntoLocalState(companyPatch);
         hydrateCompanyForms(companyPatch);
-        const resolvedBusinessId = String(loadedBusiness?.businessId || businessId || '').trim();
         const cloudStateSnap = await getDoc(doc(db, 'businesses', resolvedBusinessId, 'app_meta', 'state'));
         if (cloudStateSnap.exists()) {
           const cloudState = cloudStateSnap.data() || {};
@@ -35233,5 +35290,6 @@
       }
     });
   </script>
+  <script type="module" src="/js/settings-subscription.js"></script>
 </body>
 </html>

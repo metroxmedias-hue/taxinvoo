@@ -433,6 +433,10 @@
       background: rgba(241, 245, 255, 0.18);
     }
 
+    .nav-item.feature-nav-locked {
+      opacity: 0.9;
+    }
+
     .nav-item[data-screen="ledger"],
     .nav-item[data-screen="profit-loss"] {
       display: none !important;
@@ -9957,6 +9961,64 @@
         linear-gradient(180deg, rgba(9, 20, 42, 0.94), rgba(8, 14, 31, 0.98));
       box-shadow: 0 16px 30px rgba(2, 8, 23, 0.32);
       overflow: hidden;
+    }
+
+    #reports {
+      position: relative;
+    }
+
+    .feature-locked-blur {
+      filter: blur(3px) saturate(0.85);
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .feature-lock-overlay {
+      position: absolute;
+      inset: 18px;
+      z-index: 8;
+      border-radius: 20px;
+      background: rgba(7, 13, 28, 0.62);
+      border: 1px solid rgba(106, 77, 245, 0.3);
+      display: grid;
+      place-items: center;
+      padding: 20px;
+    }
+
+    .feature-lock-card {
+      max-width: 560px;
+      width: 100%;
+      text-align: center;
+      border-radius: 16px;
+      padding: 20px;
+      border: 1px solid rgba(148, 163, 184, 0.32);
+      background: linear-gradient(180deg, rgba(18, 28, 52, 0.94), rgba(14, 22, 40, 0.98));
+      box-shadow: 0 16px 34px rgba(2, 8, 23, 0.38);
+      display: grid;
+      gap: 12px;
+      justify-items: center;
+    }
+
+    .feature-lock-icon {
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .feature-lock-card h5 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .feature-lock-card p {
+      margin: 0;
+      color: #b9c5da;
+      font-size: 14px;
+    }
+
+    .sales-txn-row-menu button[data-reminder-upgrade-lock="1"] {
+      color: #d5def0;
+      background: rgba(99, 102, 241, 0.14);
+      border: 1px solid rgba(99, 102, 241, 0.35);
     }
 
     .reports-head {
@@ -22065,13 +22127,13 @@
 
     onAuthStateChanged(auth, (user) => {
       if (!user) {
-        window.location.replace('/pages/login.html');
+        window.location.replace('../pages/login.html');
         return;
       }
       window.__metroxAuthGuardPassed = true;
       releaseAuthGate();
     }, () => {
-      window.location.replace('/pages/login.html');
+      window.location.replace('../pages/login.html');
     });
   </script>
   <script>
@@ -25484,6 +25546,14 @@
         </section>
 
         <section class="screen" id="reports">
+          <div class="feature-lock-overlay" id="reports-lock-overlay" hidden>
+            <div class="feature-lock-card">
+              <div class="feature-lock-icon" aria-hidden="true">🔒</div>
+              <h5>Reports are locked on Starter</h5>
+              <p>Upgrade to Growth to unlock this feature 🚀</p>
+              <button class="btn primary" type="button" id="reports-upgrade-cta">Upgrade to Growth to unlock this feature 🚀</button>
+            </div>
+          </div>
           <div class="reports-shell">
             <div class="reports-head">
               <div>
@@ -26958,9 +27028,67 @@
       return hasPermission(need);
     }
 
-    function getCurrentPlanKey() {
-      return normalizePlanKey(window.APP_PLAN || window.businessData?.plan_type || localStorage.getItem('metrox_plan') || 'starter');
+    function getUserDataSnapshot() {
+      if (typeof window.getUserData === 'function') {
+        const user = window.getUserData();
+        if (user && typeof user === 'object') return user;
+      }
+      if (window.businessData && typeof window.businessData === 'object') {
+        return window.businessData;
+      }
+      return null;
     }
+
+    function syncGlobalBusinessData(data = {}) {
+      const next = data && typeof data === 'object' ? { ...data } : {};
+      window.businessData = next;
+      if (typeof window.setUserData === 'function') {
+        window.setUserData(next);
+      }
+      return next;
+    }
+
+    function getCurrentPlanKey() {
+      const user = getUserDataSnapshot();
+      return normalizePlanKey(user?.plan_type || user?.current_plan || window.APP_PLAN || localStorage.getItem('metrox_plan') || 'starter');
+    }
+
+    function getPlanKeyForAccessCheck() {
+      const plan = getCurrentPlanKey();
+      return plan === 'trial' ? 'pro' : plan;
+    }
+
+    function hasPlanFeatureAccess(feature) {
+      const safeFeature = String(feature || '').trim().toLowerCase();
+      const planKey = getPlanKeyForAccessCheck();
+      if (typeof window.hasAccess === 'function') {
+        return !!window.hasAccess(planKey, safeFeature);
+      }
+      const features = PLAN_FEATURES[planKey] || PLAN_FEATURES.starter;
+      if (safeFeature === 'basic_invoice' || safeFeature === 'client_management') return true;
+      if (safeFeature === 'unlimited_invoice') return Number(features.invoice_limit) === -1;
+      if (safeFeature === 'reports') return !!features.gst_reports;
+      if (safeFeature === 'reminders') return features.reminders === true || features.reminders === 'automated';
+      if (safeFeature === 'analytics') return !!features.analytics;
+      if (safeFeature === 'multi_user') return !!features.team_access;
+      return false;
+    }
+
+    function openGrowthUpgradeCta() {
+      const ctaMessage = 'Upgrade to Growth to unlock this feature 🚀';
+      if (!confirm(`${ctaMessage}\n\nOpen pricing now?`)) return;
+      showScreen('settings', 'Settings', { settingsPage: 'billing' });
+    }
+
+    (async () => {
+      try {
+        const module = await import('../js/planAccess.js');
+        if (typeof module?.hasAccess === 'function') {
+          window.hasAccess = module.hasAccess;
+          try { applyPlanGates(); } catch (_) {}
+        }
+      } catch (_) {}
+    })();
 
     const navItems = document.querySelectorAll('.nav-item');
     document.querySelectorAll('.nav-item[data-screen="ledger"], .nav-item[data-screen="profit-loss"]').forEach((item) => {
@@ -27040,6 +27168,13 @@
     const reportsFilterButtons = document.querySelectorAll('[data-reports-filter]');
     const reportsFindInput = document.getElementById('reports-find');
     const reportsGrid = document.getElementById('reports-grid');
+    const reportsScreen = document.getElementById('reports');
+    const reportsShell = reportsScreen?.querySelector('.reports-shell');
+    const reportsLockOverlay = document.getElementById('reports-lock-overlay');
+    const reportsUpgradeCta = document.getElementById('reports-upgrade-cta');
+    const reportsNavItem = document.querySelector('.nav-item[data-screen="reports"]');
+    const reportsNavLabel = reportsNavItem?.querySelector('.nav-item-label');
+    const remindersSettingsLink = document.querySelector('[data-settings-page-link="reminders"]');
     const reportsFavouritesList = document.getElementById('reports-favourites-list');
     const reportsVisibleCount = document.getElementById('reports-visible-count');
     const reportsCategoryCount = document.getElementById('reports-category-count');
@@ -27292,7 +27427,7 @@
         return;
       }
       if (!canCreateInvoice(getBusinessForInvoiceLimit())) {
-        alert('Invoice limit reached. Upgrade your plan.');
+        alert('Starter plan allows up to 50 invoices/month. Upgrade to Growth to unlock this feature 🚀');
         return;
       }
       try {
@@ -27470,7 +27605,7 @@
         return;
       }
       if (!canCreateInvoice(getBusinessForInvoiceLimit())) {
-        alert('Invoice limit reached. Upgrade your plan.');
+        alert('Starter plan allows up to 50 invoices/month. Upgrade to Growth to unlock this feature 🚀');
         return;
       }
       if (!challanId) return;
@@ -27608,6 +27743,10 @@
     function showSettingsPage(page, options = {}) {
       const { updateHash = true } = options;
       const safePage = normalizeSettingsPage(page);
+      if (safePage === 'reminders' && !hasPlanFeatureAccess('reminders')) {
+        openGrowthUpgradeCta();
+        return;
+      }
       currentSettingsPage = safePage;
       settingsPageLinks.forEach((btn) => {
         btn.classList.toggle('active', btn.dataset.settingsPageLink === safePage);
@@ -27696,6 +27835,7 @@
     }
 
     function applyRouteFromHash() {
+      if (checkRouteAccess()) return;
       const route = parseRouteFromHash();
       if (route.screen === SALES_ROUTE_PARENT) {
         setSalesTransactionPage(route.salesPage || DEFAULT_SALES_PAGE);
@@ -28731,8 +28871,16 @@
 
     function showScreen(targetId, labelOverride, options = {}) {
       const { updateHash = true, settingsPage = null, salesPage = null, purchasesPage = null } = options;
+      if (checkRouteAccess(targetId)) {
+        return;
+      }
       if (!canAccessScreen(targetId)) {
         alert('Access denied for this section.');
+        return;
+      }
+      if (targetId === 'report-detail' && !hasPlanFeatureAccess('reports')) {
+        alert('Upgrade to Growth to unlock this feature 🚀');
+        showScreen('reports', 'Reports');
         return;
       }
       syncSidebarActiveState(targetId);
@@ -28823,6 +28971,7 @@
       item.addEventListener('click', () => {
         const targetScreen = item.dataset.screen;
         if (!targetScreen) return;
+        if (checkRouteAccess(targetScreen)) return;
         if (!IS_SETTINGS_STANDALONE_PAGE && targetScreen === 'settings') {
           window.location.href = '../pages/settings.html#/settings/account';
           return;
@@ -28838,6 +28987,12 @@
         showScreen(item.dataset.screen, labelOverride, { settingsPage });
       });
     });
+
+    if (reportsUpgradeCta) {
+      reportsUpgradeCta.addEventListener('click', () => {
+        showScreen('settings', 'Settings', { settingsPage: 'billing' });
+      });
+    }
 
     function setSalesTransactionPage(pageId) {
       const safeId = pageId || 'sales-invoice';
@@ -29250,6 +29405,27 @@
 
     window.addEventListener('hashchange', applyRouteFromHash);
 
+    window.addEventListener("hashchange", checkRouteAccess);
+    window.addEventListener("load", checkRouteAccess);
+
+    function checkRouteAccess(routeHint = '') {
+      const routeValue = typeof routeHint === 'string'
+        ? routeHint
+        : String(window.location.hash || '');
+      const safeRouteValue = String(routeValue || '').toLowerCase();
+      if (!safeRouteValue.includes('report')) return false;
+      if (typeof hasPlanFeatureAccess === 'function' && hasPlanFeatureAccess('reports')) return false;
+      alert('🚀 Upgrade to Growth to access Reports');
+      if (window.location.hash !== '#/dashboard') {
+        window.location.hash = '#/dashboard';
+      } else {
+        try {
+          showScreen('dashboard', 'Dashboard', { updateHash: false });
+        } catch (_) {}
+      }
+      return true;
+    }
+
     function openOnboardingModal() {
       if (!onboardingModal) return;
       onboardingModal.classList.add('active');
@@ -29471,7 +29647,7 @@
         await window.metroxAuthLogout();
         return;
       }
-      window.location.href = '/pages/login.html';
+      window.location.href = '../pages/login.html';
     };
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) logoutBtn.addEventListener('click', (e) => {
@@ -34900,6 +35076,10 @@
     }
 
     function openDashboardReminder(channel, invoiceId) {
+      if (!hasPlanFeatureAccess('reminders')) {
+        alert('Upgrade to Growth to unlock this feature 🚀');
+        return;
+      }
       const invoice = (state.invoices || []).find((item) => item.id === invoiceId);
       if (!invoice) return;
       const dueAmount = getInvoiceDue(invoice);
@@ -36876,6 +37056,7 @@
     }
 
     function runReminderEngine(options = {}) {
+      if (!hasPlanFeatureAccess('reminders')) return;
       const reminders = ensureReminderState();
       const now = new Date();
       const todayKey = dayKeyFromDate(now);
@@ -45837,22 +46018,23 @@
     }
 
     function getBusinessForInvoiceLimit() {
-      const planType = String(window.businessData?.plan_type || getCurrentPlanKey() || 'starter').trim().toLowerCase();
-      const invoiceCountRaw = Number(window.businessData?.invoice_count);
+      const user = getUserDataSnapshot() || {};
+      const planType = String(user.plan_type || getCurrentPlanKey() || 'starter').trim().toLowerCase();
+      const invoiceCountRaw = Number(user.invoice_count);
       const fallbackCount = Number(state?.invoices?.length || 0);
       const invoiceCount = Number.isFinite(invoiceCountRaw) ? invoiceCountRaw : fallbackCount;
       return {
-        ...(window.businessData || {}),
+        ...user,
         plan_type: planType,
         invoice_count: invoiceCount
       };
     }
 
     function canCreateInvoice(business) {
-      const features = window.APP_FEATURES || PLAN_FEATURES.starter;
-      if (features.invoice_limit === -1) return true;
+      if (!hasPlanFeatureAccess('basic_invoice')) return false;
+      if (hasPlanFeatureAccess('unlimited_invoice')) return true;
       const count = Number(business?.invoice_count || 0);
-      return count < Number(features.invoice_limit || 0);
+      return count < 50;
     }
 
     async function refreshBusinessForInvoiceLimit() {
@@ -45860,7 +46042,8 @@
         try {
           const latest = await window.fetchLatestBusinessData();
           if (latest && typeof latest === 'object') {
-            window.businessData = { ...(window.businessData || {}), ...latest };
+            const currentUser = getUserDataSnapshot() || {};
+            syncGlobalBusinessData({ ...currentUser, ...latest });
           }
         } catch (_) {}
       }
@@ -45870,19 +46053,39 @@
     async function enforceInvoiceLimitOrAlert() {
       const business = await refreshBusinessForInvoiceLimit();
       if (canCreateInvoice(business)) return true;
-      if (typeof setInvoiceUiNote === 'function') setInvoiceUiNote('Invoice limit reached. Upgrade your plan.', 'warning');
-      alert('Invoice limit reached. Upgrade your plan.');
+      const message = 'Starter plan allows up to 50 invoices/month. Upgrade to Growth to unlock this feature 🚀';
+      if (typeof setInvoiceUiNote === 'function') setInvoiceUiNote(message, 'warning');
+      alert(message);
       return false;
     }
 
     function blockIfNoFeature(feature) {
-      if (!window.APP_FEATURES?.[feature]) {
-        alert('This feature is not available in your plan. Please upgrade.');
+      const mappedFeature = {
+        gst_reports: 'reports',
+        analytics: 'analytics',
+        team_access: 'multi_user',
+        reminders: 'reminders'
+      }[String(feature || '').trim()] || '';
+      if (mappedFeature && !hasPlanFeatureAccess(mappedFeature)) {
+        alert('Upgrade to Growth to unlock this feature 🚀');
         return true;
       }
+      if (!mappedFeature && !window.APP_FEATURES?.[feature]) return true;
       return false;
     }
     window.blockIfNoFeature = blockIfNoFeature;
+
+    function applyReportsPlanLock() {
+      const reportsEnabled = hasPlanFeatureAccess('reports');
+      if (reportsShell) reportsShell.classList.toggle('feature-locked-blur', !reportsEnabled);
+      if (reportsLockOverlay) reportsLockOverlay.hidden = reportsEnabled;
+      if (reportsNavItem) reportsNavItem.classList.toggle('feature-nav-locked', !reportsEnabled);
+      if (reportsNavLabel) {
+        const baseLabel = reportsNavLabel.dataset.baseLabel || reportsNavLabel.textContent.replace(' 🔒', '').trim() || 'Reports';
+        reportsNavLabel.dataset.baseLabel = baseLabel;
+        reportsNavLabel.textContent = reportsEnabled ? baseLabel : `${baseLabel} 🔒`;
+      }
+    }
 
     function applyFeatureLocks() {
       const featureMap = {
@@ -45952,7 +46155,7 @@
         btn.style.opacity = limitReached ? '0.5' : '';
       });
       if (invoiceNote) {
-        invoiceNote.textContent = limitReached ? 'Invoice limit reached. Upgrade your plan.' : '';
+        invoiceNote.textContent = limitReached ? 'Starter plan allows up to 50 invoices/month. Upgrade to Growth to unlock this feature 🚀' : '';
         invoiceNote.style.display = limitReached ? 'block' : 'none';
       }
 
@@ -45968,6 +46171,11 @@
         showGSTReports();
       }
       applyFeatureLocks();
+      applyReportsPlanLock();
+      if (remindersSettingsLink) {
+        const remindersEnabled = hasPlanFeatureAccess('reminders');
+        remindersSettingsLink.textContent = remindersEnabled ? 'Reminders' : 'Reminders 🔒';
+      }
 
       document.querySelectorAll('[data-export], [data-download]').forEach(btn => {
         btn.disabled = !canDownloadPdf;
@@ -45986,8 +46194,9 @@
       const banner = document.getElementById('upgrade-banner');
       const bannerMsg = document.getElementById('upgrade-message');
       const bannerCta = document.getElementById('upgrade-cta');
-      const access = checkUserAccess(window.businessData || {});
-      const trialEndRaw = String(window.businessData?.trial_ends_at || '').trim();
+      const user = getUserDataSnapshot() || {};
+      const access = checkUserAccess(user);
+      const trialEndRaw = String(user.trial_ends_at || '').trim();
       const trialEndDate = trialEndRaw ? new Date(trialEndRaw) : null;
       const formatTrialCountdown = (ms) => {
         const totalSeconds = Math.max(0, Math.floor(ms / 1000));
@@ -46043,7 +46252,7 @@
       };
       if (banner) {
         if (access === 'expired') {
-          const planType = normalizePlanKey(window.businessData?.plan_type || 'trial');
+          const planType = normalizePlanKey(user.plan_type || user.current_plan || 'trial');
           const isPaidPlan = planType === 'starter' || planType === 'growth' || planType === 'pro';
           bannerMsg.textContent = isPaidPlan
             ? 'Plan inactive. Upgrade to restore access.'
@@ -47019,6 +47228,10 @@
     }
 
     function sendSelectedSalesInvoiceReminders() {
+      if (!hasPlanFeatureAccess('reminders')) {
+        alert('Upgrade to Growth to unlock this feature 🚀');
+        return;
+      }
       const selectedIds = Array.from(salesTxnSelectedInvoiceIds).filter((invoiceId) => {
         const invoice = (state.invoices || []).find((item) => String(item.id || '') === invoiceId);
         return invoice && getInvoiceComputedState(invoice).balance > 0;
@@ -47109,6 +47322,7 @@
         const computed = getInvoiceComputedState(invoice);
         const businessType = getInvoiceBusinessType(invoice);
         const paymentEntries = getInvoicePaymentEntries(invoice.id);
+        const remindersEnabled = hasPlanFeatureAccess('reminders');
         const gstAmount = getInvoiceTaxAmount(invoice);
         const gstRate = Number(invoice.rate) || 0;
         const isNonGstInvoice = String(invoice.type || 'gst').toLowerCase() === 'non-gst';
@@ -47116,7 +47330,8 @@
         const dueDateLabel = formatInvoiceDateLabel(computed.dueDate);
         const selected = salesTxnSelectedInvoiceIds.has(String(invoice.id || ''));
         const nonGstReason = getInvoiceNonGstReason(invoice);
-        const showReminderActions = computed.balance > 0 && computed.key !== 'cancelled';
+        const showReminderActions = remindersEnabled && computed.balance > 0 && computed.key !== 'cancelled';
+        const showReminderLock = !remindersEnabled && computed.balance > 0 && computed.key !== 'cancelled';
         const primaryActionLabel = computed.key === 'paid' ? 'View Payment' : 'Record Payment';
         const primaryActionMode = computed.key === 'paid' ? 'view' : 'record';
         const invoiceId = String(invoice.id || '');
@@ -47157,10 +47372,11 @@
               <div class="sales-txn-actions">
                 ${canPay ? `<button class="st-btn primary" type="button" data-sales-txn-pay="${escapeDashboardText(invoiceId)}" data-sales-txn-pay-mode="${primaryActionMode}">${primaryActionLabel}</button>` : ''}
                 <div class="sales-txn-action-stack">
-                  ${(showReminderActions || canExp || canInv) ? `<button class="sales-txn-menu-toggle" type="button" data-sales-txn-menu-toggle="${escapeDashboardText(invoiceId)}" aria-label="More actions">⋮</button>` : ''}
+                  ${(showReminderActions || showReminderLock || canExp || canInv) ? `<button class="sales-txn-menu-toggle" type="button" data-sales-txn-menu-toggle="${escapeDashboardText(invoiceId)}" aria-label="More actions">⋮</button>` : ''}
                   <div class="sales-txn-row-menu ${menuOpen ? 'open' : ''}">
                     ${showReminderActions ? `<button type="button" data-sales-txn-menu-whatsapp="${escapeDashboardText(invoiceId)}">WhatsApp reminder</button>` : ''}
                     ${showReminderActions ? `<button type="button" data-sales-txn-menu-email="${escapeDashboardText(invoiceId)}">Email reminder</button>` : ''}
+                    ${showReminderLock ? `<button type="button" data-reminder-upgrade-lock="1">🔒 Reminders (Growth+)</button>` : ''}
                     ${canInv ? `<button type="button" data-sales-txn-edit="${escapeDashboardText(invoiceId)}">Edit</button>` : ''}
                     ${canInv ? `<button type="button" data-sales-txn-delete="${escapeDashboardText(invoiceId)}">Delete</button>` : ''}
                     ${canExp ? `<button type="button" data-sales-txn-export="${escapeDashboardText(invoiceId)}">Export</button>` : ''}
@@ -47254,6 +47470,9 @@
       });
       salesTxnTableBody.querySelectorAll('[data-sales-txn-menu-email]').forEach((button) => {
         button.addEventListener('click', () => openDashboardReminder('email', button.dataset.salesTxnMenuEmail || ''));
+      });
+      salesTxnTableBody.querySelectorAll('[data-reminder-upgrade-lock]').forEach((button) => {
+        button.addEventListener('click', () => openGrowthUpgradeCta());
       });
       salesTxnTableBody.querySelectorAll('[data-sales-txn-menu-toggle]').forEach((button) => {
         button.addEventListener('click', (event) => {
@@ -47361,6 +47580,10 @@
     }
 
     function openQuotationReminder(channel, quotationId) {
+      if (!hasPlanFeatureAccess('reminders')) {
+        alert('Upgrade to Growth to unlock this feature 🚀');
+        return;
+      }
       const quotation = (state.quotations || []).find((item) => item.id === quotationId);
       if (!quotation) return;
       const mode = String(channel || 'reminder').toLowerCase();
@@ -47739,7 +47962,7 @@
         return;
       }
       if (!canCreateInvoice(getBusinessForInvoiceLimit())) {
-        alert('Invoice limit reached. Upgrade your plan.');
+        alert('Starter plan allows up to 50 invoices/month. Upgrade to Growth to unlock this feature 🚀');
         return;
       }
       showScreen('invoices', 'Invoices');
@@ -53499,10 +53722,11 @@
         if (typeof window.incrementBusinessInvoiceCount === 'function') {
           await window.incrementBusinessInvoiceCount(1);
         } else {
-          window.businessData = {
-            ...(window.businessData || {}),
-            invoice_count: Number(window.businessData?.invoice_count || 0) + 1
-          };
+          const currentUser = getUserDataSnapshot() || {};
+          syncGlobalBusinessData({
+            ...currentUser,
+            invoice_count: Number(currentUser.invoice_count || 0) + 1
+          });
         }
       } catch (_) {}
 
@@ -54838,7 +55062,7 @@
       if (!isEditing) {
         const allowed = await enforceInvoiceLimitOrAlert();
         if (!allowed) {
-          setInvoiceUiNote('Invoice limit reached. Upgrade your plan.', 'warning');
+          setInvoiceUiNote('Starter plan allows up to 50 invoices/month. Upgrade to Growth to unlock this feature 🚀', 'warning');
           return;
         }
       }
@@ -55006,8 +55230,8 @@
       } else {
         const latestBusinessForFinalCheck = await refreshBusinessForInvoiceLimit();
         if (!canCreateInvoice(latestBusinessForFinalCheck)) {
-          setInvoiceUiNote('Invoice limit reached. Upgrade your plan.', 'warning');
-          alert('Invoice limit reached. Upgrade your plan.');
+          setInvoiceUiNote('Starter plan allows up to 50 invoices/month. Upgrade to Growth to unlock this feature 🚀', 'warning');
+          alert('Starter plan allows up to 50 invoices/month. Upgrade to Growth to unlock this feature 🚀');
           return;
         }
         state.invoices.push(invoice);
@@ -55015,10 +55239,11 @@
           if (typeof window.incrementBusinessInvoiceCount === 'function') {
             await window.incrementBusinessInvoiceCount(1);
           } else {
-            window.businessData = {
-              ...(window.businessData || {}),
-              invoice_count: Number(window.businessData?.invoice_count || 0) + 1
-            };
+            const currentUser = getUserDataSnapshot() || {};
+            syncGlobalBusinessData({
+              ...currentUser,
+              invoice_count: Number(currentUser.invoice_count || 0) + 1
+            });
           }
         } catch (_) {}
       }
@@ -55251,32 +55476,20 @@
     } catch (_) {}
 
     function loadProfilePlan() {
-      const business = window.businessData && typeof window.businessData === 'object' ? window.businessData : {};
-      function getDaysLeft(endDate) {
-        if (!endDate) return null;
+      const businessData = getUserDataSnapshot() || {};
+      function getDaysLeft(date) {
+        if (!date || isNaN(date)) return null;
         const now = new Date();
-        const end = new Date(endDate);
-        if (!Number.isFinite(end.getTime())) return null;
-        const diff = end - now;
+        const diff = date - now;
         return Math.ceil(diff / (1000 * 60 * 60 * 24));
-      }
-      function formatDate(dateString) {
-        if (!dateString) return '—';
-        const date = new Date(dateString);
-        if (!Number.isFinite(date.getTime())) return '—';
-        return date.toLocaleDateString('en-IN', {
-          day: 'numeric',
-          month: 'short',
-          year: 'numeric'
-        });
       }
       const titleCase = (value) => String(value || '')
         .trim()
         .toLowerCase()
         .replace(/\b\w/g, (ch) => ch.toUpperCase());
       const rawPlan = String(
-        business.plan_type
-        || business.current_plan
+        businessData.plan_type
+        || businessData.current_plan
         || localStorage.getItem('metrox_plan')
         || ''
       ).trim().toLowerCase();
@@ -55284,11 +55497,11 @@
       const planLabelMap = { trial: 'Trial', starter: 'Starter', growth: 'Growth', pro: 'Pro' };
       const plan = planKey ? (planLabelMap[planKey] || titleCase(planKey)) : '—';
       const rawStatus = String(
-        business.plan_status
-        || business.subscription_status
+        businessData.plan_status
+        || businessData.subscription_status
         || ''
       ).trim().toLowerCase();
-      const access = checkUserAccess(business);
+      const access = checkUserAccess(businessData);
       const status = rawStatus
         ? titleCase(rawStatus.replace(/_/g, ' '))
         : (
@@ -55298,15 +55511,36 @@
               ? 'Trial'
               : 'Expired'
         );
-      const endDate = business.subscription_end_date || business.trial_ends_at;
+      const endDateRaw = businessData.subscription_end_date || businessData.trial_ends_at;
+      let endDate = null;
+      if (typeof endDateRaw?.toDate === 'function') {
+        endDate = endDateRaw.toDate();
+      } else if (endDateRaw?.seconds) {
+        endDate = new Date(endDateRaw.seconds * 1000);
+      } else if (endDateRaw) {
+        endDate = new Date(endDateRaw);
+      }
+      console.log("END DATE:", endDate);
       const daysLeft = getDaysLeft(endDate);
-      const renewal = formatDate(endDate);
+      const renewal = endDate && !isNaN(endDate)
+        ? endDate.toLocaleDateString('en-IN', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+          })
+        : '—';
       const accountPlanEl = document.getElementById('settings-account-plan');
       const accountStatusEl = document.getElementById('settings-account-status');
+      const daysLeftEl = document.getElementById('daysLeft');
+      const nextRenewalEl = document.getElementById('nextRenewal');
       const accountTrialEl = document.getElementById('settings-account-trial-days');
       const accountRenewalEl = document.getElementById('settings-account-renewal');
+      console.log("BUSINESS DATA:", businessData);
+      console.log(businessData);
       if (accountPlanEl) accountPlanEl.textContent = plan;
       if (accountStatusEl) accountStatusEl.textContent = status;
+      if (daysLeftEl) daysLeftEl.innerText = daysLeft ? `${daysLeft} days left` : '—';
+      if (nextRenewalEl) nextRenewalEl.innerText = renewal;
       if (accountTrialEl) accountTrialEl.textContent = daysLeft ? `${daysLeft} days left` : '—';
       if (accountRenewalEl) accountRenewalEl.textContent = renewal;
     }
@@ -56080,6 +56314,7 @@
     import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp, increment, collection, getDocs, getDocsFromServer, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+    import { getUserData, setUserData } from "../js/userState.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyA5vhi43CcL_ff_NZLIN3BUxa0CAYOvwh8",
@@ -56094,7 +56329,7 @@
     const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const LOGIN_PAGE_URL = '/pages/login.html';
+    const LOGIN_PAGE_URL = '../pages/login.html';
     const STORAGE_KEY = 'metrox_taxinvoo_demo_state';
     const BACKUP_KEY = 'metrox_taxinvoo_demo_state_backup';
     const LAST_GOOD_KEY = 'metrox_taxinvoo_last_good_state';
@@ -56892,22 +57127,47 @@
 
     function checkUserAccess(user) {
       if (!user || typeof user !== 'object') return 'expired';
+      const parseDateValue = (value) => {
+        if (!value) return null;
+        if (value instanceof Date) {
+          return Number.isFinite(value.getTime()) ? value : null;
+        }
+        if (typeof value?.toDate === 'function') {
+          const parsed = value.toDate();
+          return parsed instanceof Date && Number.isFinite(parsed.getTime()) ? parsed : null;
+        }
+        if (typeof value === 'object' && Number.isFinite(Number(value.seconds))) {
+          const parsed = new Date(Number(value.seconds) * 1000);
+          return Number.isFinite(parsed.getTime()) ? parsed : null;
+        }
+        const parsed = new Date(value);
+        return Number.isFinite(parsed.getTime()) ? parsed : null;
+      };
       const planType = normalizePlanKey(user.plan_type || user.current_plan || 'trial');
       const planStatus = String(user.plan_status || user.subscription_status || 'active').trim().toLowerCase();
+      const now = new Date();
+      const paidPlans = new Set(['starter', 'growth', 'pro']);
+      const activeStatuses = new Set(['active', 'trial', 'trial_active', 'grace', 'paid', 'enabled', 'ok', 'current']);
 
       // Priority 1: paid plans with active status.
-      if ((planType === 'growth' || planType === 'pro' || planType === 'starter') && planStatus === 'active') {
-        return 'full_access';
+      if (paidPlans.has(planType)) {
+        if (!planStatus || activeStatuses.has(planStatus)) return 'full_access';
+        const paidEnd = parseDateValue(
+          user.subscription_end_date
+          || user.current_period_end
+          || user.next_billing_date
+          || user.plan_expires_at
+          || null
+        );
+        if (paidEnd && now <= paidEnd) return 'full_access';
       }
 
       // Priority 2: trial users.
-      const trialEndRaw = user.trial_ends_at || null;
-      const trialEnd = typeof trialEndRaw?.toDate === 'function'
-        ? trialEndRaw.toDate()
-        : new Date(trialEndRaw);
-      if (trialEnd instanceof Date && Number.isFinite(trialEnd.getTime()) && new Date() <= trialEnd) {
+      const trialEnd = parseDateValue(user.trial_ends_at || user.subscription_end_date || null);
+      if (trialEnd && now <= trialEnd) {
         return 'trial_active';
       }
+      if (planType === 'trial' && (!planStatus || activeStatuses.has(planStatus))) return 'trial_active';
 
       // Priority 3: expired.
       return 'expired';
@@ -56925,11 +57185,25 @@
         snap = await getDocs(businessRef);
       }
       if (!snap || snap.empty) return null;
-      const businessDoc = snap.docs.find((row) => row.id === expectedBusinessId) || snap.docs[0];
-      const businessData = { ...(businessDoc.data() || {}), business_id: businessDoc.id };
+
+      const docs = snap.docs || [];
+      const preferredDoc = expectedBusinessId
+        ? docs.find((row) => row.id === expectedBusinessId) || null
+        : null;
+      const paidActiveDoc = docs.find((row) => checkUserAccess(row.data() || {}) === 'full_access') || null;
+
+      let businessDoc = preferredDoc || docs[0];
+      if (paidActiveDoc && checkUserAccess(businessDoc?.data?.() || {}) !== 'full_access') {
+        businessDoc = paidActiveDoc;
+      }
+      if (!businessDoc) return null;
+
+      const businessDocId = businessDoc.id;
+      const businessDocRef = businessDoc.ref;
+      const businessData = { ...(businessDoc.data() || {}), business_id: businessDocId };
       if (!Number.isFinite(Number(businessData.invoice_count))) {
         try {
-          await setDoc(doc(db, 'users', ownerUid, 'businesses', businessDoc.id), {
+          await setDoc(doc(db, 'users', ownerUid, 'businesses', businessDocId), {
             invoice_count: 0,
             updated_at: serverTimestamp()
           }, { merge: true });
@@ -56939,33 +57213,60 @@
       const plan = normalizePlanKey(businessData.plan_type || 'starter');
       const features = PLAN_FEATURES[plan] || PLAN_FEATURES.starter;
       window.businessData = businessData;
+      setUserData(businessData);
       window.APP_PLAN = plan;
       window.APP_FEATURES = features;
-      window.currentBusinessRef = businessDoc.ref;
+      window.currentBusinessRef = businessDocRef;
+      console.log('USER DATA LOADED:', businessData);
       try {
         localStorage.setItem('metrox_plan', plan);
+        localStorage.setItem('activeBusinessId', businessDocId);
       } catch (_) {}
+
+      if (auth.currentUser?.uid && businessDocId && businessDocId !== expectedBusinessId) {
+        const userRef = doc(db, 'users', auth.currentUser.uid);
+        try {
+          await updateDoc(userRef, {
+            business_id: businessDocId,
+            updated_at: serverTimestamp()
+          });
+        } catch (_) {
+          await setDoc(userRef, {
+            business_id: businessDocId,
+            updated_at: serverTimestamp()
+          }, { merge: true });
+        }
+      }
+
       try {
         if (typeof loadProfilePlan === 'function') loadProfilePlan();
       } catch (_) {}
       const hasAccess = checkAccess(businessData);
-      window.APP_ACCESS = hasAccess;
+      const host = String(window.location.hostname || '').toLowerCase();
+      const isLocalDevHost = ['localhost', '127.0.0.1', '::1'].includes(host)
+        || host.endsWith('.local')
+        || window.location.protocol === 'file:'
+        || window.location.protocol === 'http:';
+      window.APP_ACCESS = hasAccess || isLocalDevHost;
+      console.log("BUSINESS ID USED:", businessDocId);
       console.log('🔥 CORRECT BUSINESS:', businessData);
-      if (!hasAccess) showExpiredBanner();
-      return { businessId: businessDoc.id, businessData };
+      console.log("BUSINESS DATA:", businessData);
+      console.log(businessData);
+      if (!hasAccess && !isLocalDevHost) showExpiredBanner();
+      return { businessId: businessDocId, businessData };
     }
 
     window.fetchLatestBusinessData = async function fetchLatestBusinessData() {
       const user = auth.currentUser;
-      if (!user) return window.businessData || null;
+      if (!user) return getUserData() || window.businessData || null;
       try {
         const userSnap = await getDoc(doc(db, 'users', user.uid));
-        if (!userSnap.exists()) return window.businessData || null;
+        if (!userSnap.exists()) return getUserData() || window.businessData || null;
         const userData = userSnap.data() || {};
         const loaded = await loadBusiness(userData);
-        return loaded?.businessData || window.businessData || null;
+        return loaded?.businessData || getUserData() || window.businessData || null;
       } catch (_) {
-        return window.businessData || null;
+        return getUserData() || window.businessData || null;
       }
     };
 
@@ -56977,7 +57278,8 @@
       if (!userSnap.exists()) return false;
       const userData = userSnap.data() || {};
       const ownerUid = String(userData.business_owner_uid || user.uid).trim();
-      const businessId = String(userData.business_id || window.businessData?.business_id || '').trim();
+      const stateUser = getUserData() || {};
+      const businessId = String(userData.business_id || stateUser.business_id || window.businessData?.business_id || '').trim();
       if (!businessId || !ownerUid) return false;
       const businessRef = doc(db, 'users', ownerUid, 'businesses', businessId);
       try {
@@ -56991,110 +57293,71 @@
           updated_at: serverTimestamp()
         }, { merge: true });
       }
-      window.businessData = {
+      const updatedBusinessData = {
+        ...stateUser,
         ...(window.businessData || {}),
         business_id: businessId,
-        invoice_count: Number(window.businessData?.invoice_count || 0) + safeStep
+        invoice_count: Number(stateUser.invoice_count ?? window.businessData?.invoice_count ?? 0) + safeStep
       };
+      window.businessData = updatedBusinessData;
+      setUserData(updatedBusinessData);
       return true;
     };
 
-    window.updateUserPlan = async function updateUserPlan(plan, paymentResponse = null) {
+    window.updateUserPlan = async function updateUserPlan() {
       try {
         const user = auth.currentUser;
         if (!user) {
           alert('User not logged in');
           return false;
         }
-        const now = new Date();
-        const nextMonth = new Date(now);
-        nextMonth.setMonth(nextMonth.getMonth() + 1);
-        const safePlan = normalizePlanKey(plan || 'starter');
-        const paymentId = String(paymentResponse?.razorpay_payment_id || '').trim();
-        const userRef = doc(db, 'users', user.uid);
-        const userPatch = {
-          plan: safePlan,
-          plan_type: safePlan,
-          plan_status: 'active',
-          subscription_status: 'active',
-          subscription_start_date: now.toISOString(),
-          subscription_end_date: nextMonth.toISOString(),
-          billing_cycle: 'monthly',
-          trial_ends_at: null,
-          isTrialActive: false,
-          updatedAt: serverTimestamp(),
-          updated_at: serverTimestamp()
-        };
-        if (paymentId) userPatch.paymentId = paymentId;
-        try {
-          await updateDoc(userRef, userPatch);
-        } catch (_) {
-          await setDoc(userRef, userPatch, { merge: true });
+
+        const userSnap = await getDoc(doc(db, 'users', user.uid));
+        if (!userSnap.exists()) {
+          throw new Error('User document not found');
+        }
+        const userData = userSnap.data() || {};
+        const stateUser = getUserData() || {};
+        const businessId = String(userData.business_id || stateUser.business_id || window.businessData?.business_id || '').trim();
+        const ownerUid = String(userData.business_owner_uid || user.uid).trim();
+        if (!businessId || !ownerUid) {
+          throw new Error('Business reference missing');
         }
 
-        let businessRef = window.currentBusinessRef || null;
-        if (!businessRef) {
-          if (typeof window.fetchLatestBusinessData === 'function') {
-            await window.fetchLatestBusinessData();
-            businessRef = window.currentBusinessRef || null;
-          }
-        }
-        if (!businessRef) throw new Error('Business reference missing');
-        const businessPatch = {
-          plan_type: safePlan,
-          plan_status: "active",
-          subscription_status: 'active',
-          subscription_start_date: now.toISOString(),
-          subscription_end_date: nextMonth.toISOString(),
-          billing_cycle: 'monthly',
-          next_billing_date: nextMonth.toISOString(),
-          current_period_end: nextMonth.toISOString(),
-          is_active: true,
-          trial_starts_at: null,
-          trial_ends_at: null,
-          updated_at: serverTimestamp()
-        };
-        if (paymentId) businessPatch.last_payment_id = paymentId;
-        await updateDoc(businessRef, businessPatch);
-        window.businessData = {
+        const docRef = doc(db, 'users', ownerUid, 'businesses', businessId);
+        const start = new Date();
+        const end = new Date();
+        end.setDate(start.getDate() + 30);
+        await updateDoc(docRef, {
+          plan_type: "growth",
+          subscription_status: "active",
+          subscription_start_date: start.toISOString(),
+          subscription_end_date: end.toISOString()
+        });
+
+        const updatedBusinessData = {
+          ...stateUser,
           ...(window.businessData || {}),
-          plan_type: safePlan,
-          plan_status: 'active',
+          plan_type: 'growth',
           subscription_status: 'active',
-          subscription_start_date: now.toISOString(),
-          subscription_end_date: nextMonth.toISOString(),
-          billing_cycle: 'monthly',
-          next_billing_date: nextMonth.toISOString(),
-          current_period_end: nextMonth.toISOString(),
-          is_active: true,
-          trial_starts_at: null,
-          trial_ends_at: null
+          subscription_start_date: start.toISOString(),
+          subscription_end_date: end.toISOString()
         };
-        window.APP_PLAN = safePlan;
-        window.APP_FEATURES = PLAN_FEATURES[safePlan] || PLAN_FEATURES.starter;
+        window.businessData = updatedBusinessData;
+        setUserData(updatedBusinessData);
         window.APP_ACCESS = true;
-        try {
-          localStorage.setItem('metrox_plan', safePlan);
-          localStorage.setItem('metrox_plan_status', 'active');
-          localStorage.setItem('metrox_trial_days_left', '0');
-          localStorage.setItem('metrox_next_billing', nextMonth.toISOString());
-        } catch (_) {}
-        try {
-          if (typeof loadProfilePlan === 'function') loadProfilePlan();
-        } catch (_) {}
-        alert('Payment successful! Plan activated 🚀');
-        window.location.href = '/app/index.html#/dashboard';
+
+        window.location.href = './index.html#/dashboard';
         return true;
       } catch (err) {
-        console.error('Plan update error:', err);
-        alert('Payment succeeded but plan sync failed. Please contact support with your payment ID.');
+        console.error('Subscription update error:', err);
+        alert('Payment succeeded but subscription update failed. Please contact support.');
         return false;
       }
     };
 
     window.openRazorpay = function openRazorpay(plan) {
       const safePlan = normalizePlanKey(plan || 'starter');
-      let selectedPlan = safePlan;
       const amountMap = {
         starter: 499,
         growth: 999,
@@ -57144,7 +57407,8 @@
               return;
             }
             console.log("Payment Success:", response);
-            await window.updateUserPlan(selectedPlan, response);
+            console.log("Payment success → updating subscription");
+            await window.updateUserPlan();
           } catch (err) {
             console.error("Payment update failed:", err);
             alert("Payment done but update failed. Contact support.");
@@ -57277,13 +57541,33 @@
           alert('Trial expired. Cannot submit.');
         });
       });
+      if (window.APP_ACCESS) {
+        document.querySelectorAll('button').forEach((btn) => {
+          if (btn.dataset.softLockStyled !== '1') return;
+          btn.style.opacity = '';
+          btn.style.cursor = '';
+          delete btn.dataset.softLockStyled;
+        });
+        document.querySelectorAll('input, select, textarea').forEach((el) => {
+          if (el.dataset.softLockManaged !== '1') return;
+          el.disabled = el.dataset.softLockPrevDisabled === '1';
+          delete el.dataset.softLockManaged;
+          delete el.dataset.softLockPrevDisabled;
+        });
+        return;
+      }
       if (!window.APP_ACCESS) {
         document.querySelectorAll('button').forEach((btn) => {
           if (isAllowedWhenLocked(btn)) return;
           btn.style.opacity = '0.5';
           btn.style.cursor = 'not-allowed';
+          btn.dataset.softLockStyled = '1';
         });
         document.querySelectorAll('input, select, textarea').forEach((el) => {
+          if (el.dataset.softLockManaged !== '1') {
+            el.dataset.softLockManaged = '1';
+            el.dataset.softLockPrevDisabled = el.disabled ? '1' : '0';
+          }
           el.disabled = true;
         });
       }
@@ -57308,6 +57592,7 @@
     onAuthStateChanged(auth, async (user) => {
       signedInEmail = user?.email || '';
       if (!user) {
+        setUserData(null);
         currentBusinessId = resolveRealtimeBusinessId();
         stopManageUsersRealtimeSync();
         localStorage.removeItem('metrox_access_profile');
@@ -57322,8 +57607,10 @@
       try {
         const userSnap = await getDoc(doc(db, 'users', user.uid));
         const userData = userSnap.exists() ? userSnap.data() : null;
+        console.log("FULL USER DATA:", userData);
         const businessId = String(userData?.business_id || resolveRealtimeBusinessId()).trim();
         if (!businessId) {
+          setUserData(null);
           currentBusinessId = null;
           try { if (typeof window.renderManageUsersPanel === 'function') window.renderManageUsersPanel(); } catch (_) {}
           return;
@@ -57341,7 +57628,9 @@
         startManageUsersRealtimeSync();
         const loadedBusiness = await loadBusiness(userData);
         const businessData = loadedBusiness?.businessData || null;
+        console.log("FULL BUSINESS DATA:", businessData);
         if (!businessData) {
+          setUserData(null);
           refreshUiAfterAuthSync();
           return;
         }

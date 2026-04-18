@@ -3,6 +3,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/fi
 import { doc, getDoc, collection, getDocs, getDocsFromServer, addDoc, updateDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 import { businessDocPath, businessStateDocPath, invoiceDocPath, invoicesColPath, ledgerColPath, paymentsColPath, userDocPath } from "./firestore-paths.js";
 import { checkAccess, getPlanFeatures, syncBusinessPlanStatus, TRIAL_EXPIRED_MESSAGE } from "./subscription.js";
+import { setUserData } from "./userState.js";
 
 const form = document.getElementById('payment-form');
 const invoiceSelect = document.getElementById('pay-invoice');
@@ -117,7 +118,10 @@ installGlobalAccessGuards();
 
 async function loadBusiness(businessIdValue) {
   const ownerUid = String(businessOwnerUid || auth.currentUser?.uid || '').trim();
-  if (!ownerUid) return null;
+  if (!ownerUid) {
+    setUserData(null);
+    return null;
+  }
   const expectedBusinessId = String(businessIdValue || '').trim();
   const ref = collection(db, 'users', ownerUid, 'businesses');
   let snap = null;
@@ -126,11 +130,15 @@ async function loadBusiness(businessIdValue) {
   } catch (_) {
     snap = await getDocs(ref);
   }
-  if (!snap || snap.empty) return null;
+  if (!snap || snap.empty) {
+    setUserData(null);
+    return null;
+  }
   const businessDoc = snap.docs.find((row) => row.id === expectedBusinessId) || snap.docs[0];
   const businessData = { ...(businessDoc.data() || {}), business_id: businessDoc.id };
   const features = getPlanFeatures(businessData.plan_type);
   window.businessData = businessData;
+  setUserData(businessData);
   window.APP_FEATURES = features;
   const hasAccess = checkAccess(businessData);
   window.APP_ACCESS = hasAccess;
@@ -218,6 +226,7 @@ function updateInvoiceSummary() {
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
+    setUserData(null);
     window.location.href = 'login.html';
     return;
   }
