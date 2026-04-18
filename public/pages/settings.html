@@ -4715,8 +4715,24 @@
       background: linear-gradient(180deg, #0a1021 0%, #0c1225 100%);
     }
 
+    body.settings-standalone .screen {
+      display: none !important;
+    }
+
     body.settings-standalone .screen#settings {
-      display: block;
+      display: block !important;
+    }
+
+    body.settings-standalone .screen#reports-shared {
+      display: none !important;
+    }
+
+    body.settings-standalone.shared-reports-mode .screen#settings {
+      display: none !important;
+    }
+
+    body.settings-standalone.shared-reports-mode .screen#reports-shared {
+      display: block !important;
     }
 
     body.settings-standalone .settings-shell {
@@ -17353,6 +17369,7 @@
     }
 
     function getCurrentPlanKey() {
+      if (DISABLE_PLAN_AND_ACCESS_GATES) return 'pro';
       const plan = (localStorage.getItem('metrox_plan') || 'trial').toLowerCase();
       if (plan.includes('premium')) return 'premium';
       if (plan.includes('growth') || plan.includes('pro')) return 'growth';
@@ -17387,7 +17404,11 @@
     const sharedPrintBtn = document.getElementById('shared-print-btn');
     const sharedDownloadPdfBtn = document.getElementById('shared-download-pdf-btn');
     const IS_SETTINGS_STANDALONE_PAGE = /\/settings\.html$/i.test(window.location.pathname);
+    const DISABLE_PLAN_AND_ACCESS_GATES = window.__metroxDisablePlanAndAccessGates !== false;
     const MAIN_APP_URL = '../app/index.html';
+    if (DISABLE_PLAN_AND_ACCESS_GATES) {
+      window.APP_ACCESS = true;
+    }
     if (IS_SETTINGS_STANDALONE_PAGE) {
       document.body.classList.add('settings-standalone');
     }
@@ -26756,7 +26777,86 @@
       if (netDetail) netDetail.style.color = netProfit >= 0 ? '#7ff0c8' : '#ff9b8f';
     }
 
+    function resolveUserAccessState(user) {
+      const safeUser = user && typeof user === 'object' ? user : {};
+      if (typeof window.checkUserAccess === 'function') {
+        try {
+          return window.checkUserAccess(safeUser);
+        } catch (_) {}
+      }
+      const normalizePlan = (value) => {
+        const raw = String(value || '').trim().toLowerCase();
+        if (raw === 'trial') return 'trial';
+        if (raw === 'starter' || raw === 'basic') return 'starter';
+        if (raw === 'growth') return 'growth';
+        if (raw === 'pro' || raw === 'premium') return 'pro';
+        return raw;
+      };
+      const parseDateValue = (value) => {
+        if (!value) return null;
+        if (value instanceof Date) return Number.isFinite(value.getTime()) ? value : null;
+        if (typeof value?.toDate === 'function') {
+          const parsed = value.toDate();
+          return parsed instanceof Date && Number.isFinite(parsed.getTime()) ? parsed : null;
+        }
+        if (value?.seconds) {
+          const parsed = new Date(Number(value.seconds) * 1000);
+          return Number.isFinite(parsed.getTime()) ? parsed : null;
+        }
+        const parsed = new Date(value);
+        return Number.isFinite(parsed.getTime()) ? parsed : null;
+      };
+      const planType = normalizePlan(safeUser.plan_type || safeUser.current_plan || '');
+      const planStatus = String(safeUser.plan_status || safeUser.subscription_status || 'active').trim().toLowerCase();
+      const activeStatuses = new Set(['active', 'trial', 'trial_active', 'grace', 'paid', 'enabled', 'ok', 'current']);
+      const paidPlans = new Set(['starter', 'growth', 'pro', 'premium']);
+      const now = new Date();
+      if (paidPlans.has(planType)) {
+        if (!planStatus || activeStatuses.has(planStatus)) return 'full_access';
+        const paidEnd = parseDateValue(
+          safeUser.subscription_end_date
+          || safeUser.current_period_end
+          || safeUser.next_billing_date
+          || safeUser.plan_expires_at
+          || null
+        );
+        if (paidEnd && now <= paidEnd) return 'full_access';
+      }
+      const trialEnd = parseDateValue(safeUser.trial_ends_at || safeUser.subscription_end_date || null);
+      if (trialEnd && now <= trialEnd) return 'trial_active';
+      if (planType === 'trial' && (!planStatus || activeStatuses.has(planStatus))) return 'trial_active';
+      return 'expired';
+    }
+
     function applyPlanGates() {
+      if (DISABLE_PLAN_AND_ACCESS_GATES) {
+        const invoiceNote = document.getElementById('invoice-plan-note');
+        const aiNote = document.getElementById('ai-plan-note');
+        if (invoiceNote) {
+          invoiceNote.textContent = '';
+          invoiceNote.style.display = 'none';
+        }
+        if (aiNote) {
+          aiNote.textContent = '';
+          aiNote.style.display = 'none';
+        }
+        document.querySelectorAll(
+          '#new-invoice, #generate-invoice-btn, #export-gst-pdf, #export-gst-excel, [data-export], [data-download], #parse-command, #sample-command, #ai-mic-btn, #ai-stop-btn'
+        ).forEach((el) => {
+          if (!el) return;
+          el.disabled = false;
+        });
+        const banner = document.getElementById('upgrade-banner');
+        if (banner) {
+          banner.classList.remove('urgent');
+          banner.style.display = 'none';
+        }
+        if (window.__trialBannerTick) {
+          clearInterval(window.__trialBannerTick);
+          window.__trialBannerTick = null;
+        }
+        return;
+      }
       const planKey = getCurrentPlanKey();
       const rules = PLAN_RULES[planKey] || PLAN_RULES.trial;
       const invoiceCount = state.invoices.length;
@@ -26795,7 +26895,7 @@
       const banner = document.getElementById('upgrade-banner');
       const bannerMsg = document.getElementById('upgrade-message');
       const bannerCta = document.getElementById('upgrade-cta');
-      const access = checkUserAccess(window.businessData || {});
+      const access = resolveUserAccessState(window.businessData || {});
       const trialEndRaw = String(window.businessData?.trial_ends_at || '').trim();
       const trialEndDate = trialEndRaw ? new Date(trialEndRaw) : null;
       const formatTrialCountdown = (ms) => {
@@ -31021,7 +31121,10 @@
       && state.invoices.length === 0
       && !hasMinimumProfile;
     if (!window.location.hash) {
-      setRouteHash(shouldStartOnboarding ? 'get-started' : 'dashboard', currentSettingsPage);
+      setRouteHash(
+        IS_SETTINGS_STANDALONE_PAGE ? 'settings' : (shouldStartOnboarding ? 'get-started' : 'dashboard'),
+        currentSettingsPage
+      );
     }
     applyRouteFromHash();
     if (!IS_SETTINGS_STANDALONE_PAGE) {
@@ -31111,7 +31214,7 @@
         || businessData.subscription_status
         || ''
       ).trim().toLowerCase();
-      const access = checkUserAccess(businessData);
+      const access = resolveUserAccessState(businessData);
       const status = rawStatus
         ? titleCase(rawStatus.replace(/_/g, ' '))
         : (
@@ -34947,10 +35050,12 @@
     }
 
     function checkAccess(business) {
+      if (DISABLE_PLAN_AND_ACCESS_GATES) return true;
       return checkUserAccess(business) !== 'expired';
     }
 
     function checkUserAccess(user) {
+      if (DISABLE_PLAN_AND_ACCESS_GATES) return 'full_access';
       if (!user || typeof user !== 'object') return 'expired';
       const planType = String(user.plan_type || user.current_plan || '').trim().toLowerCase();
       const planStatus = String(user.plan_status || user.subscription_status || 'active').trim().toLowerCase();
@@ -35060,9 +35165,12 @@
       }
     }
 
-    window.APP_ACCESS = typeof window.APP_ACCESS === 'boolean' ? window.APP_ACCESS : true;
+    window.APP_ACCESS = DISABLE_PLAN_AND_ACCESS_GATES
+      ? true
+      : (typeof window.APP_ACCESS === 'boolean' ? window.APP_ACCESS : true);
 
     function installGlobalAccessGuards() {
+      if (DISABLE_PLAN_AND_ACCESS_GATES) return;
       if (window.__appAccessGuardsInstalled) return;
       window.__appAccessGuardsInstalled = true;
 
@@ -35141,6 +35249,7 @@
     }
 
     function blockIfNoAccess(e) {
+      if (DISABLE_PLAN_AND_ACCESS_GATES) return true;
       if (window.APP_ACCESS) return true;
       if (isAllowedWhenLocked(e?.target)) return true;
       e.preventDefault();
@@ -35151,6 +35260,18 @@
     }
 
     function applySoftLockGuards() {
+      if (DISABLE_PLAN_AND_ACCESS_GATES) {
+        window.APP_ACCESS = true;
+        document.querySelectorAll('button').forEach((btn) => {
+          btn.style.opacity = '';
+          btn.style.cursor = '';
+          btn.disabled = false;
+        });
+        document.querySelectorAll('input, select, textarea').forEach((el) => {
+          el.disabled = false;
+        });
+        return;
+      }
       document.querySelectorAll("button, a[data-action='create'], a[data-action='edit']").forEach((el) => {
         if (el.dataset.softLockBound === '1') return;
         el.dataset.softLockBound = '1';

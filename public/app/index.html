@@ -4,11 +4,28 @@
   <link rel="stylesheet" href="../assets/poppins.css" />
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>Metrox TaxInvoo — App Shell</title>
   <meta name="description" content="Metrox TaxInvoo app shell with navigation, GST calculator, and invoice flow." />
   <script>
     (function () {
       try {
+        window.__metroxDisableAuthBootstrap = true;
+        window.__metroxDisablePlanAndAccessGates = true;
+        var params = new URLSearchParams(window.location.search || '');
+        if (params.get('safe_boot') === '1') {
+          Object.keys(localStorage).forEach(function (key) {
+            if (
+              key.indexOf('metrox_') === 0
+              || key.indexOf('taxinvoo') !== -1
+              || key.indexOf('Metrox TaxInvoo') !== -1
+            ) {
+              localStorage.removeItem(key);
+            }
+          });
+        }
         var isLight = localStorage.getItem('Metrox TaxInvoo_theme') === 'light';
         document.documentElement.classList.toggle('theme-light', isLight);
         document.documentElement.style.colorScheme = isLight ? 'light' : 'dark';
@@ -16,7 +33,7 @@
     })();
   </script>
   <style id="metrox-auth-gate">
-    html body { display: none !important; }
+    html body { display: block !important; }
   </style>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
@@ -22125,16 +22142,18 @@
       if (gateStyle) gateStyle.remove();
     }
 
-    onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        window.location.replace('../pages/login.html');
-        return;
-      }
+    const disableAuthBootstrap = window.__metroxDisableAuthBootstrap === true;
+    if (disableAuthBootstrap) {
       window.__metroxAuthGuardPassed = true;
       releaseAuthGate();
-    }, () => {
-      window.location.replace('../pages/login.html');
-    });
+    } else {
+      onAuthStateChanged(auth, (user) => {
+        window.__metroxAuthGuardPassed = !!user;
+        releaseAuthGate();
+      }, () => {
+        releaseAuthGate();
+      });
+    }
   </script>
   <script>
     (function () {
@@ -27015,6 +27034,7 @@
       wireframes: 'owner_only'
     };
     let currentAccess = { role: 'owner', permissions: { ...OWNER_PERMISSIONS } };
+    const DISABLE_PLAN_AND_ACCESS_GATES = window.__metroxDisablePlanAndAccessGates !== false;
 
     function hasPermission(key) {
       // Local fail-safe: keep billing actions usable even if role cache is stale/corrupted.
@@ -27049,6 +27069,7 @@
     }
 
     function getCurrentPlanKey() {
+      if (DISABLE_PLAN_AND_ACCESS_GATES) return 'pro';
       const user = getUserDataSnapshot();
       return normalizePlanKey(user?.plan_type || user?.current_plan || window.APP_PLAN || localStorage.getItem('metrox_plan') || 'starter');
     }
@@ -27059,6 +27080,7 @@
     }
 
     function hasPlanFeatureAccess(feature) {
+      if (DISABLE_PLAN_AND_ACCESS_GATES) return true;
       const safeFeature = String(feature || '').trim().toLowerCase();
       const planKey = getPlanKeyForAccessCheck();
       if (typeof window.hasAccess === 'function') {
@@ -27101,6 +27123,7 @@
     const screenIds = Array.from(screens).map((screen) => screen.id);
     const title = document.getElementById('screen-title');
     const IS_SETTINGS_STANDALONE_PAGE = /\/settings\.html$/i.test(window.location.pathname);
+    const USE_STANDALONE_SETTINGS_PAGE = true;
     const MAIN_APP_URL = 'index.html';
     const topCompanyName = document.getElementById('top-company-name');
     const topCompanyLogo = document.getElementById('top-company-logo');
@@ -28850,6 +28873,11 @@
       'purchase-orders'
     ]);
 
+    function openStandaloneSettingsPage(settingsPage = 'account') {
+      const safePage = String(settingsPage || 'account').trim().toLowerCase() || 'account';
+      window.location.href = `../pages/settings.html#/settings/${encodeURIComponent(safePage)}`;
+    }
+
     function syncSidebarActiveState(targetId) {
       const effectiveNavScreen = PURCHASES_SCREEN_IDS.has(targetId) ? PURCHASES_PARENT_SCREEN_ID : targetId;
       navItems.forEach((item) => {
@@ -28881,6 +28909,10 @@
       if (targetId === 'report-detail' && !hasPlanFeatureAccess('reports')) {
         alert('Upgrade to Growth to unlock this feature 🚀');
         showScreen('reports', 'Reports');
+        return;
+      }
+      if (targetId === 'settings' && USE_STANDALONE_SETTINGS_PAGE && !IS_SETTINGS_STANDALONE_PAGE) {
+        openStandaloneSettingsPage(settingsPage || currentSettingsPage || 'account');
         return;
       }
       syncSidebarActiveState(targetId);
@@ -28972,8 +29004,8 @@
         const targetScreen = item.dataset.screen;
         if (!targetScreen) return;
         if (checkRouteAccess(targetScreen)) return;
-        if (!IS_SETTINGS_STANDALONE_PAGE && targetScreen === 'settings') {
-          window.location.href = '../pages/settings.html#/settings/account';
+        if (!IS_SETTINGS_STANDALONE_PAGE && targetScreen === 'settings' && USE_STANDALONE_SETTINGS_PAGE) {
+          openStandaloneSettingsPage(currentSettingsPage || 'account');
           return;
         }
         if (IS_SETTINGS_STANDALONE_PAGE && targetScreen !== 'settings') {
@@ -46031,6 +46063,7 @@
     }
 
     function canCreateInvoice(business) {
+      if (DISABLE_PLAN_AND_ACCESS_GATES) return true;
       if (!hasPlanFeatureAccess('basic_invoice')) return false;
       if (hasPlanFeatureAccess('unlimited_invoice')) return true;
       const count = Number(business?.invoice_count || 0);
@@ -46051,6 +46084,7 @@
     }
 
     async function enforceInvoiceLimitOrAlert() {
+      if (DISABLE_PLAN_AND_ACCESS_GATES) return true;
       const business = await refreshBusinessForInvoiceLimit();
       if (canCreateInvoice(business)) return true;
       const message = 'Starter plan allows up to 50 invoices/month. Upgrade to Growth to unlock this feature 🚀';
@@ -46060,6 +46094,7 @@
     }
 
     function blockIfNoFeature(feature) {
+      if (DISABLE_PLAN_AND_ACCESS_GATES) return false;
       const mappedFeature = {
         gst_reports: 'reports',
         analytics: 'analytics',
@@ -46137,7 +46172,52 @@
       setGstReportsVisibility(true);
     }
 
+    function resolveUserAccessState(user) {
+      if (DISABLE_PLAN_AND_ACCESS_GATES) return 'full_access';
+      if (typeof window.checkUserAccess === 'function') {
+        try {
+          return window.checkUserAccess(user);
+        } catch (_) {}
+      }
+      const safeUser = user && typeof user === 'object' ? user : {};
+      const planType = normalizePlanKey(safeUser.plan_type || safeUser.current_plan || getCurrentPlanKey() || 'trial');
+      const planStatus = String(safeUser.plan_status || safeUser.subscription_status || 'active').trim().toLowerCase();
+      const activeStatuses = new Set(['active', 'trial', 'trial_active', 'grace', 'paid', 'enabled', 'ok', 'current']);
+      const paidPlans = new Set(['starter', 'growth', 'pro']);
+      const parseDateValue = (value) => {
+        if (!value) return null;
+        if (value instanceof Date) return Number.isFinite(value.getTime()) ? value : null;
+        if (typeof value?.toDate === 'function') {
+          const parsed = value.toDate();
+          return parsed instanceof Date && Number.isFinite(parsed.getTime()) ? parsed : null;
+        }
+        if (typeof value === 'object' && Number.isFinite(Number(value.seconds))) {
+          const parsed = new Date(Number(value.seconds) * 1000);
+          return Number.isFinite(parsed.getTime()) ? parsed : null;
+        }
+        const parsed = new Date(value);
+        return Number.isFinite(parsed.getTime()) ? parsed : null;
+      };
+      const now = new Date();
+      if (paidPlans.has(planType)) {
+        if (!planStatus || activeStatuses.has(planStatus)) return 'full_access';
+        const paidEnd = parseDateValue(
+          safeUser.subscription_end_date
+          || safeUser.current_period_end
+          || safeUser.next_billing_date
+          || safeUser.plan_expires_at
+          || null
+        );
+        if (paidEnd && now <= paidEnd) return 'full_access';
+      }
+      const trialEnd = parseDateValue(safeUser.trial_ends_at || safeUser.subscription_end_date || null);
+      if (trialEnd && now <= trialEnd) return 'trial_active';
+      if (planType === 'trial' && (!planStatus || activeStatuses.has(planStatus))) return 'trial_active';
+      return 'expired';
+    }
+
     function applyPlanGates() {
+      try {
       const planKey = getCurrentPlanKey();
       const features = getCurrentPlanFeatures();
       window.APP_PLAN = planKey;
@@ -46195,7 +46275,7 @@
       const bannerMsg = document.getElementById('upgrade-message');
       const bannerCta = document.getElementById('upgrade-cta');
       const user = getUserDataSnapshot() || {};
-      const access = checkUserAccess(user);
+      const access = resolveUserAccessState(user);
       const trialEndRaw = String(user.trial_ends_at || '').trim();
       const trialEndDate = trialEndRaw ? new Date(trialEndRaw) : null;
       const formatTrialCountdown = (ms) => {
@@ -46286,6 +46366,9 @@
         bannerCta.onclick = () => {
           window.openRazorpay('growth');
         };
+      }
+      } catch (err) {
+        console.warn('applyPlanGates failed:', err);
       }
     }
 
@@ -55501,7 +55584,7 @@
         || businessData.subscription_status
         || ''
       ).trim().toLowerCase();
-      const access = checkUserAccess(businessData);
+      const access = resolveUserAccessState(businessData);
       const status = rawStatus
         ? titleCase(rawStatus.replace(/_/g, ' '))
         : (
@@ -56329,6 +56412,7 @@
     const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+    const DISABLE_PLAN_AND_ACCESS_GATES = window.__metroxDisablePlanAndAccessGates !== false;
     const LOGIN_PAGE_URL = '../pages/login.html';
     const STORAGE_KEY = 'metrox_taxinvoo_demo_state';
     const BACKUP_KEY = 'metrox_taxinvoo_demo_state_backup';
@@ -57126,6 +57210,7 @@
     }
 
     function checkUserAccess(user) {
+      if (DISABLE_PLAN_AND_ACCESS_GATES) return 'full_access';
       if (!user || typeof user !== 'object') return 'expired';
       const parseDateValue = (value) => {
         if (!value) return null;
@@ -57436,9 +57521,12 @@
       }
     }
 
-    window.APP_ACCESS = typeof window.APP_ACCESS === 'boolean' ? window.APP_ACCESS : true;
+    window.APP_ACCESS = DISABLE_PLAN_AND_ACCESS_GATES
+      ? true
+      : (typeof window.APP_ACCESS === 'boolean' ? window.APP_ACCESS : true);
 
     function installGlobalAccessGuards() {
+      if (DISABLE_PLAN_AND_ACCESS_GATES) return;
       if (window.__appAccessGuardsInstalled) return;
       window.__appAccessGuardsInstalled = true;
 
@@ -57527,6 +57615,24 @@
     }
 
     function applySoftLockGuards() {
+      if (DISABLE_PLAN_AND_ACCESS_GATES) {
+        window.APP_ACCESS = true;
+        document.querySelectorAll('button').forEach((btn) => {
+          if (btn.dataset.softLockStyled === '1') {
+            btn.style.opacity = '';
+            btn.style.cursor = '';
+            delete btn.dataset.softLockStyled;
+          }
+        });
+        document.querySelectorAll('input, select, textarea').forEach((el) => {
+          if (el.dataset.softLockManaged === '1') {
+            el.disabled = el.dataset.softLockPrevDisabled === '1';
+            delete el.dataset.softLockManaged;
+            delete el.dataset.softLockPrevDisabled;
+          }
+        });
+        return;
+      }
       document.querySelectorAll("button, a[data-action='create'], a[data-action='edit']").forEach((el) => {
         if (el.dataset.softLockBound === '1') return;
         el.dataset.softLockBound = '1';
@@ -57592,6 +57698,7 @@
     onAuthStateChanged(auth, async (user) => {
       signedInEmail = user?.email || '';
       if (!user) {
+        releaseAuthGate();
         setUserData(null);
         currentBusinessId = resolveRealtimeBusinessId();
         stopManageUsersRealtimeSync();
@@ -57600,6 +57707,13 @@
           window.setRoleAccess({ role: 'owner' });
         }
         try { if (typeof window.renderManageUsersPanel === 'function') window.renderManageUsersPanel(); } catch (_) {}
+        if (DISABLE_PLAN_AND_ACCESS_GATES) {
+          window.APP_ACCESS = true;
+          try { applyPlanGates(); } catch (_) {}
+          try { applySoftLockGuards(); } catch (_) {}
+          try { refreshUiAfterAuthSync(); } catch (_) {}
+          return;
+        }
         window.location.replace(LOGIN_PAGE_URL);
         return;
       }
