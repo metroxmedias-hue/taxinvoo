@@ -7404,9 +7404,43 @@
       gap: 10px;
       background: rgba(255,255,255,0.02);
     }
-    .settings-plan-current strong {
-      font-size: 34px;
-      line-height: 1;
+    .settings-plan-current > .muted {
+      font-size: 13px;
+      letter-spacing: 0.02em;
+      font-weight: 600;
+    }
+    .settings-plan-current > strong {
+      font-size: clamp(32px, 2.8vw, 40px);
+      line-height: 0.95;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      font-weight: 800;
+    }
+    .settings-plan-current .summary {
+      gap: 0;
+      padding: 10px 14px;
+      border-radius: 14px;
+      background: color-mix(in srgb, var(--panel) 72%, transparent);
+      border-color: color-mix(in srgb, var(--line) 84%, transparent);
+    }
+    .settings-plan-current .summary .row {
+      padding: 8px 0;
+      border-bottom: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+      align-items: baseline;
+    }
+    .settings-plan-current .summary .row span {
+      font-size: 14px;
+      font-weight: 500;
+      color: color-mix(in srgb, var(--muted) 86%, var(--ink) 14%);
+    }
+    .settings-plan-current .summary .row strong {
+      font-size: clamp(18px, 1.8vw, 24px);
+      line-height: 1.12;
+      letter-spacing: -0.01em;
+      font-weight: 750;
+      color: var(--ink);
+      text-align: right;
+      font-variant-numeric: tabular-nums;
     }
     .settings-plan-list {
       border: 1px solid var(--line);
@@ -20456,6 +20490,19 @@
     body.light .settings-plan-list .item {
       color: #475569;
     }
+    body.light .settings-plan-current .summary {
+      background: #f8fbff;
+      border-color: rgba(15,23,42,0.12);
+    }
+    body.light .settings-plan-current .summary .row {
+      border-bottom-color: rgba(15,23,42,0.08);
+    }
+    body.light .settings-plan-current .summary .row span {
+      color: #64748b;
+    }
+    body.light .settings-plan-current .summary .row strong {
+      color: #1f2937;
+    }
 
     body.light .settings-billing-title,
     body.light .settings-billing-plan,
@@ -21578,6 +21625,8 @@
       .business-create-grid { grid-template-columns: 1fr; }
       .settings-account-grid { grid-template-columns: 1fr; }
       .settings-plan-wrap { grid-template-columns: 1fr; }
+      .settings-plan-current > strong { font-size: 34px; }
+      .settings-plan-current .summary .row strong { font-size: clamp(18px, 5.4vw, 24px); }
       .txn-metrics { grid-template-columns: 1fr; }
       .txn-toolbar { grid-template-columns: 1fr; }
       .st-sales-title { font-size: 22px; }
