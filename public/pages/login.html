@@ -712,7 +712,7 @@
     const signupHint = document.getElementById('signup-hint');
     const domainWarning = document.getElementById('domain-warning');
     let verifyPollTimer = null;
-    const DOMAIN_BLOCK_MESSAGE = "This domain is not authorized for login. Please use the official TaxInvoo website.";
+    const DOMAIN_BLOCK_MESSAGE = "This domain is not authorized for login. Use the official TaxInvoo website, or use http://localhost:5501 locally instead of 127.0.0.1.";
     const SIGNUP_SPAM_ERROR = "Too many signup attempts. Please try again later.";
     const SIGNUP_GUARD_STORAGE_KEY = 'metrox_signup_guard_v1';
     const SIGNUP_MIN_INTERVAL_MS = 6000;
@@ -951,7 +951,7 @@
       return null;
     }
 
-    const DASHBOARD_URL = '/app/index.html#/dashboard';
+    const DASHBOARD_URL = '../app/index.html#/dashboard';
 
     async function routeAfterAuth(user) {
       if (!user) return;
@@ -1097,10 +1097,10 @@
         e.preventDefault();
         const user = await getCurrentUserForGuard();
         if (user) {
-          window.location.replace('/app/index.html#/dashboard');
+          window.location.replace(DASHBOARD_URL);
           return;
         }
-        window.location.replace('/pages/login.html?view=login');
+        window.location.replace('login.html?view=login');
       });
     }
 
@@ -1281,7 +1281,7 @@
       const password = document.getElementById('login-password').value;
       try {
         await signInWithEmailAndPassword(auth, email, password);
-        window.location.replace('/app/index.html#/dashboard');
+        window.location.replace(DASHBOARD_URL);
       } catch (err) {
         const message = await resolveLoginErrorMessage(email, err);
         setError(document.getElementById('login-error'), message);
@@ -1402,37 +1402,37 @@
       }
     });
 
-    const googleLoginBtnLegacy = document.getElementById('google-login');
-    if (googleLoginBtnLegacy) {
-      googleLoginBtnLegacy.addEventListener('click', async () => {
-        if (!assertAuthorizedDomain()) return;
-        setError(document.getElementById('login-error'), '');
-        try {
-          const cred = await signInWithPopup(auth, provider);
-          if (cred?.user?.uid) {
-            console.log('AUTH OK:', cred.user.uid);
-            await routeAfterAuth(cred.user);
-          }
-        } catch (err) {
-          setError(document.getElementById('login-error'), formatAuthError(err, 'Google login failed.'));
+    async function handleGoogleAuth(errorEl, btn) {
+      if (!assertAuthorizedDomain()) return;
+      setError(errorEl, '');
+      const idleText = btn?.textContent || 'Continue with Google (1-click signup)';
+      try {
+        setBusy(btn, true, 'Opening Google...', idleText);
+        const cred = await signInWithPopup(auth, provider);
+        if (cred?.user?.uid) {
+          console.log('AUTH OK:', cred.user.uid);
+          await routeAfterAuth(cred.user);
         }
+      } catch (err) {
+        setError(errorEl, formatAuthError(err, 'Google login failed.'));
+      } finally {
+        setBusy(btn, false, 'Opening Google...', idleText);
+      }
+    }
+
+    const googleLoginBtn = document.getElementById('googleLoginBtn') || document.getElementById('google-login');
+    if (googleLoginBtn) {
+      googleLoginBtn.addEventListener('click', async () => {
+        if (!assertAuthorizedDomain()) return;
+        await handleGoogleAuth(document.getElementById('login-error'), googleLoginBtn);
       });
     }
 
-    const googleSignupBtnLegacy = document.getElementById('google-signup');
-    if (googleSignupBtnLegacy && !document.getElementById('googleLoginBtn')) {
-      googleSignupBtnLegacy.addEventListener('click', async () => {
+    const googleSignupBtn = document.getElementById('google-signup');
+    if (googleSignupBtn) {
+      googleSignupBtn.addEventListener('click', async () => {
         if (!assertAuthorizedDomain()) return;
-        setError(document.getElementById('signup-error'), '');
-        try {
-          const cred = await signInWithPopup(auth, provider);
-          if (cred?.user?.uid) {
-            console.log('AUTH OK:', cred.user.uid);
-            await routeAfterAuth(cred.user);
-          }
-        } catch (err) {
-          setError(document.getElementById('signup-error'), formatAuthError(err, 'Google signup failed.'));
-        }
+        await handleGoogleAuth(document.getElementById('signup-error'), googleSignupBtn);
       });
     }
 
@@ -1448,7 +1448,7 @@
         return;
       }
       if (window.location.pathname.includes('login')) {
-        window.location.replace('/app/index.html#/dashboard');
+        window.location.replace(DASHBOARD_URL);
         return;
       }
       if (user.emailVerified) {
@@ -1458,7 +1458,6 @@
       window.location.href = 'verify-email.html';
     });
   </script>
-  <script type="module" src="../js/auth.js"></script>
   <script>
     (function () {
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;

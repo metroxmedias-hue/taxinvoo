@@ -198,6 +198,46 @@
             <span class="helper">Use Cancelled only for voided notes.</span>
           </label>
         </div>
+        <div class="grid-2">
+          <label>Settlement handling
+            <select id="settlement-type">
+              <option value="credit">Keep as customer credit</option>
+              <option value="refund">Refund to customer</option>
+              <option value="adjusted">Adjust in next invoice</option>
+            </select>
+            <span class="helper">Choose how this credit note is settled.</span>
+          </label>
+          <label id="refund-status-wrap">Refund settlement
+            <select id="refund-settlement-status">
+              <option value="pending">Pending</option>
+              <option value="refunded">Refunded</option>
+            </select>
+            <span class="helper">Mark refunded only when payment is actually made.</span>
+          </label>
+        </div>
+        <div id="refund-settlement-section" style="display:none;">
+          <div class="grid-2">
+            <label>Refund paid date
+              <input type="date" id="refund-paid-date" />
+            </label>
+            <label>Refund payment mode
+              <select id="refund-payment-mode">
+                <option value="cash">Cash</option>
+                <option value="bank">Bank</option>
+              </select>
+            </label>
+          </div>
+          <div class="grid-2">
+            <label id="refund-bank-wrap">Refund bank account
+              <select id="refund-bank-account">
+                <option value="">Auto (first bank account)</option>
+              </select>
+            </label>
+            <label>Reference
+              <input type="text" id="refund-reference" placeholder="UTR / voucher / note" />
+            </label>
+          </div>
+        </div>
       </section>
 
       <section class="form-section">
@@ -229,6 +269,7 @@
       const FOCUS_KEY = 'metrox_open_credit_note_form';
       const target = '../app/index.html#/sales-transactions';
       const fmt = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 });
+      const STORAGE_SAVE_ERROR_MESSAGE = 'Could not save changes because browser storage is full. Clear old data and try again.';
 
       const theme = localStorage.getItem('Metrox TaxInvoo_theme');
       if (theme === 'light') document.body.classList.add('light');
@@ -242,11 +283,21 @@
       const dateEl = document.getElementById('date');
       const reasonEl = document.getElementById('reason');
       const statusEl = document.getElementById('status');
+      const settlementTypeEl = document.getElementById('settlement-type');
+      const refundStatusWrapEl = document.getElementById('refund-status-wrap');
+      const refundSettlementStatusEl = document.getElementById('refund-settlement-status');
+      const refundSettlementSectionEl = document.getElementById('refund-settlement-section');
+      const refundPaidDateEl = document.getElementById('refund-paid-date');
+      const refundPaymentModeEl = document.getElementById('refund-payment-mode');
+      const refundBankWrapEl = document.getElementById('refund-bank-wrap');
+      const refundBankAccountEl = document.getElementById('refund-bank-account');
+      const refundReferenceEl = document.getElementById('refund-reference');
       const notesEl = document.getElementById('notes');
       const errorEl = document.getElementById('error');
       const saveBtn = document.getElementById('save-btn');
 
       dateEl.value = new Date().toISOString().slice(0, 10);
+      if (refundPaidDateEl) refundPaidDateEl.value = dateEl.value;
 
       function goBack() {
         try { localStorage.setItem(FOCUS_KEY, '1'); } catch (_) {}
@@ -284,20 +335,109 @@
         }
       }
 
+      function isQuotaError(err) {
+        return String(err?.name || '').toLowerCase() === 'quotaexceedederror'
+          || /quota/i.test(String(err?.message || ''));
+      }
+
       function saveState(next) {
         const payload = next && typeof next === 'object' ? next : {};
         payload._meta = { ...(payload._meta || {}), updated_at: new Date().toISOString() };
         const serialized = JSON.stringify(payload);
         const scoped = getScopedLocalStateKeys();
-        localStorage.setItem(scoped.primary, serialized);
-        localStorage.setItem(scoped.backup, serialized);
-        localStorage.setItem(scoped.lastGood, serialized);
+        const writeState = (writeLastGood = true) => {
+          localStorage.setItem(scoped.primary, serialized);
+          localStorage.setItem(scoped.backup, serialized);
+          if (writeLastGood) localStorage.setItem(scoped.lastGood, serialized);
+          else localStorage.removeItem(scoped.lastGood);
+        };
+
+        try {
+          writeState(true);
+          return true;
+        } catch (firstErr) {
+          if (!isQuotaError(firstErr)) {
+            console.error('Failed to save credit-note data.', firstErr);
+            return false;
+          }
+          try {
+            writeState(false);
+            return true;
+          } catch (secondErr) {
+            if (!isQuotaError(secondErr)) {
+              console.error('Failed to save credit-note data.', secondErr);
+              return false;
+            }
+            try {
+              localStorage.removeItem(scoped.backup);
+              localStorage.removeItem(scoped.lastGood);
+              localStorage.setItem(scoped.primary, serialized);
+              return true;
+            } catch (finalErr) {
+              console.warn('Browser storage is full. Latest credit-note changes remain only in this tab session.', finalErr);
+              return false;
+            }
+          }
+        }
       }
 
       const state = parseState();
       state.customers = state.customers && typeof state.customers === 'object' ? state.customers : {};
       state.invoices = Array.isArray(state.invoices) ? state.invoices : [];
+      state.salesReturns = Array.isArray(state.salesReturns) ? state.salesReturns : [];
       state.creditNotes = Array.isArray(state.creditNotes) ? state.creditNotes : [];
+      state.cashBank = state.cashBank && typeof state.cashBank === 'object' ? state.cashBank : {};
+      state.cashBank.accounts = Array.isArray(state.cashBank.accounts) ? state.cashBank.accounts : [];
+      state.cashBank.defaultBankAccountId = String(state.cashBank.defaultBankAccountId || '');
+
+      function normalizePaymentMode(value) {
+        const raw = String(value || '').trim().toLowerCase();
+        if (raw === 'bank' || raw === 'upi' || raw === 'card' || raw === 'cheque') return 'bank';
+        return 'cash';
+      }
+
+      function getDefaultBankAccountId() {
+        const fallbackId = String(state.cashBank.defaultBankAccountId || '').trim();
+        if (fallbackId && (state.cashBank.accounts || []).some((acc) => String(acc.id || '') === fallbackId)) {
+          return fallbackId;
+        }
+        return String(state.cashBank.accounts?.[0]?.id || '').trim();
+      }
+
+      function renderRefundBankAccounts() {
+        if (!refundBankAccountEl) return;
+        const options = ['<option value="">Auto (first bank account)</option>']
+          .concat((state.cashBank.accounts || []).map((acc) => {
+            const name = String(acc.accountName || acc.label || 'Bank Account');
+            const number = String(acc.accountNo || acc.accountNumber || acc.account || '').trim();
+            const tail = number ? ` • ${number.slice(-4).padStart(Math.min(4, number.length), '•')}` : '';
+            return `<option value="${String(acc.id || '')}">${name}${tail}</option>`;
+          }));
+        refundBankAccountEl.innerHTML = options.join('');
+      }
+
+      function isRefundSettlementSelected() {
+        return String(settlementTypeEl?.value || '').toLowerCase() === 'refund';
+      }
+
+      function syncRefundSettlementFields() {
+        if (String(statusEl?.value || '').toLowerCase() === 'adjusted' && settlementTypeEl && String(settlementTypeEl.value || '').toLowerCase() === 'refund') {
+          settlementTypeEl.value = 'adjusted';
+        }
+        const showRefund = isRefundSettlementSelected();
+        if (refundStatusWrapEl) refundStatusWrapEl.style.display = showRefund ? '' : 'none';
+        if (refundSettlementSectionEl) refundSettlementSectionEl.style.display = showRefund ? '' : 'none';
+        if (!showRefund) return;
+        const refundSettled = String(refundSettlementStatusEl?.value || '').toLowerCase() === 'refunded';
+        const showBank = normalizePaymentMode(refundPaymentModeEl?.value || 'cash') === 'bank';
+        if (refundBankWrapEl) refundBankWrapEl.style.display = showBank ? '' : 'none';
+        if (showBank && refundBankAccountEl && !String(refundBankAccountEl.value || '').trim()) {
+          refundBankAccountEl.value = getDefaultBankAccountId();
+        }
+        if (refundPaidDateEl && !refundPaidDateEl.value && refundSettled) {
+          refundPaidDateEl.value = dateEl.value || new Date().toISOString().slice(0, 10);
+        }
+      }
 
       const customers = Object.keys(state.customers)
         .filter((name) => !state.customers[name]?.deleted)
@@ -311,10 +451,39 @@
         return state.invoices.find((inv) => String(inv.id) === String(id));
       }
 
+      function normalizeAccountingStatus(value) {
+        return String(value || '').trim().toLowerCase();
+      }
+
+      function isLinkedSalesReturnCreditNote(note = {}) {
+        const linkedId = String(note?.linkedSalesReturnId || '').trim();
+        const sourceType = normalizeAccountingStatus(note?.sourceType || '');
+        if (linkedId || sourceType === 'sales_return') return true;
+        const creditId = String(note?.id || '').trim();
+        if (!creditId) return false;
+        return (state.salesReturns || []).some((entry) => {
+          const linkedCreditNo = String(entry?.creditNoteNumber || '').trim();
+          if (!linkedCreditNo || linkedCreditNo !== creditId) return false;
+          const sameInvoice = String(entry?.invoiceId || '').trim() === String(note?.invoiceId || '').trim();
+          const sameCustomer = String(entry?.customer || '').trim() === String(note?.customer || '').trim();
+          return sameInvoice || sameCustomer;
+        });
+      }
+
       function getCreditedAmount(invoiceId) {
-        return (state.creditNotes || [])
-          .filter((r) => String(r.invoiceId) === String(invoiceId) && String(r.status || '').toLowerCase() !== 'cancelled')
-          .reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+        const salesReturnTotal = (state.salesReturns || [])
+          .filter((entry) => String(entry?.invoiceId || '') === String(invoiceId))
+          .filter((entry) => {
+            const status = normalizeAccountingStatus(entry?.status || entry?.legacyStatus || '');
+            return status !== 'cancelled' && status !== 'draft';
+          })
+          .reduce((sum, entry) => sum + (Number(entry?.amount) || 0), 0);
+        const manualCreditTotal = (state.creditNotes || [])
+          .filter((entry) => String(entry?.invoiceId || '') === String(invoiceId))
+          .filter((entry) => !isLinkedSalesReturnCreditNote(entry))
+          .filter((entry) => normalizeAccountingStatus(entry?.status || '') !== 'cancelled')
+          .reduce((sum, entry) => sum + (Number(entry?.amount) || 0), 0);
+        return salesReturnTotal + manualCreditTotal;
       }
 
       function renderInvoiceOptions(customerName) {
@@ -327,6 +496,7 @@
       }
 
       function syncInvoiceSummary() {
+        syncRefundSettlementFields();
         const inv = getInvoiceById(invoiceEl.value);
         if (!inv) {
           invoiceTotalEl.textContent = 'INR 0';
@@ -366,7 +536,26 @@
       });
 
       amountEl.addEventListener('input', syncInvoiceSummary);
+      if (settlementTypeEl) {
+        settlementTypeEl.addEventListener('change', syncRefundSettlementFields);
+      }
+      if (statusEl) {
+        statusEl.addEventListener('change', () => {
+          if (String(statusEl.value || '').toLowerCase() === 'adjusted' && settlementTypeEl) {
+            settlementTypeEl.value = 'adjusted';
+          }
+          syncRefundSettlementFields();
+        });
+      }
+      if (refundSettlementStatusEl) {
+        refundSettlementStatusEl.addEventListener('change', syncRefundSettlementFields);
+      }
+      if (refundPaymentModeEl) {
+        refundPaymentModeEl.addEventListener('change', syncRefundSettlementFields);
+      }
 
+      renderRefundBankAccounts();
+      syncRefundSettlementFields();
       renderInvoiceOptions('');
       syncInvoiceSummary();
 
@@ -395,6 +584,21 @@
           errorEl.textContent = 'Credit amount cannot exceed max credit allowed.';
           return;
         }
+        const settlementType = String(settlementTypeEl?.value || 'credit').toLowerCase();
+        const refundSettlementStatus = settlementType === 'refund'
+          ? String(refundSettlementStatusEl?.value || 'pending').toLowerCase()
+          : 'pending';
+        const refundSettled = settlementType === 'refund' && refundSettlementStatus === 'refunded';
+        const refundPaymentMode = settlementType === 'refund'
+          ? normalizePaymentMode(refundPaymentModeEl?.value || 'cash')
+          : '';
+        const refundBankAccountId = (settlementType === 'refund' && refundPaymentMode === 'bank')
+          ? String(refundBankAccountEl?.value || getDefaultBankAccountId() || '').trim()
+          : '';
+        if (refundSettled && refundPaymentMode === 'bank' && !refundBankAccountId) {
+          errorEl.textContent = 'Please add/select a bank account from Cash & Bank.';
+          return;
+        }
 
         const payload = {
           id: `CN-${Date.now()}`,
@@ -404,12 +608,28 @@
           amount,
           reason: reasonEl.value || 'other',
           status: statusEl.value || 'Issued',
+          settlementType,
+          refundStatus: settlementType === 'refund'
+            ? (refundSettled ? 'refunded' : 'pending')
+            : (settlementType === 'adjusted' ? 'adjusted' : 'credit_pending'),
+          refundSettlementStatus: settlementType === 'refund' ? refundSettlementStatus : 'pending',
+          refundSettled,
+          refundPaidDate: refundSettled
+            ? String(refundPaidDateEl?.value || date || new Date().toISOString().slice(0, 10))
+            : '',
+          refundPaymentMode: settlementType === 'refund' ? refundPaymentMode : '',
+          refundBankAccountId,
+          refundReference: settlementType === 'refund' ? String(refundReferenceEl?.value || '').trim() : '',
+          refundAmount: refundSettled ? Number(amount.toFixed(2)) : 0,
           notes: String(notesEl.value || '').trim(),
           createdAt: new Date().toISOString()
         };
 
         state.creditNotes.push(payload);
-        saveState(state);
+        if (!saveState(state)) {
+          errorEl.textContent = STORAGE_SAVE_ERROR_MESSAGE;
+          return;
+        }
         goBack();
       });
     })();

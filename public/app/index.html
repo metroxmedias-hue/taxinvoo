@@ -463,7 +463,6 @@
       background: rgba(15, 23, 42, 0.1);
     }
 
-    .nav-item[data-screen="ledger"],
     .nav-item[data-screen="profit-loss"] {
       display: none !important;
     }
@@ -16364,6 +16363,18 @@
       font-size: 30px;
       font-weight: 600;
       background: linear-gradient(120deg, rgba(105, 114, 249, 0.14), rgba(60, 185, 220, 0.08));
+      cursor: pointer;
+      transition: border-color var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard), transform var(--motion-fast) var(--ease-standard);
+    }
+
+    .cb-balance-card:hover {
+      border-color: rgba(79, 163, 255, 0.35);
+      box-shadow: inset 0 0 0 1px rgba(79, 163, 255, 0.28);
+    }
+
+    .cb-balance-card.active {
+      border-color: rgba(79, 163, 255, 0.48);
+      box-shadow: inset 0 0 0 2px rgba(79, 163, 255, 0.36);
     }
 
     .cb-balance-meta {
@@ -22277,8 +22288,8 @@
         <div class="nav-item" data-screen="payments" id="nav-payments" hidden><span class="nav-item-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12h16"/><path d="M13 5l7 7-7 7"/></svg></span><span class="nav-item-label">Payments</span></div>
         <div class="nav-item" data-screen="customers"><span class="nav-item-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="10" r="2"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M14 20a4 4 0 0 1 7 0"/></svg></span><span class="nav-item-label">Customers</span></div>
         <div class="nav-item" data-screen="suppliers"><span class="nav-item-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V8l7-4 7 4v13"/><path d="M9 12h6"/><path d="M9 16h6"/></svg></span><span class="nav-item-label">Suppliers</span></div>
+        <div class="nav-item" data-screen="ledger"><span class="nav-item-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="M8 8h8"/><path d="M8 12h8"/><path d="M8 16h5"/></svg></span><span class="nav-item-label">Ledger</span></div>
         <div class="nav-item" data-screen="expenses"><span class="nav-item-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h12"/><path d="M8 3v6l-3 4a5 5 0 1 0 14 0l-3-4V3"/></svg></span><span class="nav-item-label">Expenses</span></div>
-        <div class="nav-item" data-screen="ledger" hidden><span class="nav-item-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="M8 8h8"/><path d="M8 12h8"/><path d="M8 16h5"/></svg></span><span class="nav-item-label">Ledger</span></div>
         <div class="nav-item" data-screen="profit-loss" hidden><span class="nav-item-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 18l5-6 4 3 7-9"/><path d="M4 20h16"/></svg></span><span class="nav-item-label">Profit & Loss</span></div>
         <div class="nav-item" data-screen="reports"><span class="nav-item-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19h16"/><rect x="6" y="10" width="3" height="6"/><rect x="11" y="7" width="3" height="9"/><rect x="16" y="4" width="3" height="12"/></svg></span><span class="nav-item-label">Reports</span></div>
         <div class="nav-item" data-screen="ai-coach"><span class="nav-item-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 1 6 6v3a4 4 0 0 1-4 4h-1l-2 3-2-3H8a4 4 0 0 1-4-4V9a6 6 0 0 1 6-6z"/><circle cx="9" cy="10" r="1"/><circle cx="15" cy="10" r="1"/></svg></span><span class="nav-item-label">AI Business Coach</span></div>
@@ -25028,7 +25039,14 @@
             </div>
             <div class="cb-grid">
               <aside class="cb-left">
-                <div class="cb-balance-card">
+                <div
+                  class="cb-balance-card active"
+                  id="cb-total-balance-card"
+                  data-cb-account-key="all"
+                  role="button"
+                  tabindex="0"
+                  aria-label="Show all cash and bank transactions"
+                >
                   <div class="cb-balance-meta">
                     <span>Total Balance</span>
                     <small>Cash + Bank Accounts</small>
@@ -27142,15 +27160,16 @@
       const safeFeature = String(feature || '').trim().toLowerCase();
       const planKey = getPlanKeyForAccessCheck();
       if (typeof window.hasAccess === 'function') {
-        return !!window.hasAccess(planKey, safeFeature);
+        return !!window.hasAccess(safeFeature, planKey) || !!window.hasAccess(planKey, safeFeature);
       }
       const features = PLAN_FEATURES[planKey] || PLAN_FEATURES.starter;
       if (safeFeature === 'basic_invoice' || safeFeature === 'client_management') return true;
       if (safeFeature === 'unlimited_invoice') return Number(features.invoice_limit) === -1;
       if (safeFeature === 'reports') return !!features.gst_reports;
       if (safeFeature === 'reminders') return features.reminders === true || features.reminders === 'automated';
-      if (safeFeature === 'analytics') return !!features.analytics;
-      if (safeFeature === 'multi_user') return !!features.team_access;
+      if (safeFeature === 'analytics' || safeFeature === 'advanced_analytics') return !!features.analytics;
+      if (safeFeature === 'advanced_reports' || safeFeature === 'audit_logs' || safeFeature === 'export_reports') return !!features.analytics;
+      if (safeFeature === 'multi_user' || safeFeature === 'team_access') return !!features.team_access;
       return false;
     }
 
@@ -27166,6 +27185,47 @@
     }
 
     function hasStrictReportsAccess() {
+      if (DISABLE_PLAN_AND_ACCESS_GATES) return true;
+      const user = getUserDataSnapshot() || {};
+      const rawStatus = String(user.plan_status || user.subscription_status || '').trim().toLowerCase();
+      const parseDateValue = (value) => {
+        if (!value) return null;
+        if (value instanceof Date) return Number.isFinite(value.getTime()) ? value : null;
+        if (typeof value?.toDate === 'function') {
+          const parsed = value.toDate();
+          return parsed instanceof Date && Number.isFinite(parsed.getTime()) ? parsed : null;
+        }
+        if (typeof value === 'object' && Number.isFinite(Number(value.seconds))) {
+          const parsed = new Date(Number(value.seconds) * 1000);
+          return Number.isFinite(parsed.getTime()) ? parsed : null;
+        }
+        const parsed = new Date(value);
+        return Number.isFinite(parsed.getTime()) ? parsed : null;
+      };
+      const paidEnd = parseDateValue(
+        user.subscription_end_date
+        || user.current_period_end
+        || user.next_billing_date
+        || user.plan_expires_at
+        || null
+      );
+      const now = new Date();
+      const explicitPaidExpiry = rawStatus === 'expired' && paidEnd && now > paidEnd;
+      const planCandidates = [
+        user.plan_type,
+        user.current_plan,
+        user.subscription?.plan,
+        window.businessData?.plan_type,
+        window.businessData?.current_plan,
+        localStorage.getItem('metrox_plan'),
+        window.APP_PLAN
+      ].map((value) => normalizePlanKey(value)).filter(Boolean);
+      const hasPaidReportsTier = planCandidates.some((plan) => plan === 'growth' || plan === 'pro');
+      if (hasPaidReportsTier && !explicitPaidExpiry) return true;
+
+      const accessState = resolveUserAccessState(user);
+      if (accessState === 'full_access') return true;
+
       const planKey = getPlanKeyForRestrictionGate();
       const accessModule = window.METROX_PLAN_ACCESS;
       if (typeof accessModule?.canAccessReports === 'function') {
@@ -27198,7 +27258,7 @@
     })();
 
     const navItems = document.querySelectorAll('.nav-item');
-    document.querySelectorAll('.nav-item[data-screen="ledger"], .nav-item[data-screen="profit-loss"]').forEach((item) => {
+    document.querySelectorAll('.nav-item[data-screen="profit-loss"]').forEach((item) => {
       item.hidden = true;
       item.style.display = 'none';
     });
@@ -27495,6 +27555,7 @@
     const INVOICE_FORM_FOCUS_KEY = 'metrox_open_invoice_form';
     const QUOTATION_FORM_FOCUS_KEY = 'metrox_open_quotation_form';
     const PAYMENT_IN_FORM_FOCUS_KEY = 'metrox_open_payment_in_form';
+    const PAYMENT_IN_GENERATION_CONTEXT_KEY = 'metrox_payment_in_generation_context_v1';
     const SALES_RETURN_FORM_FOCUS_KEY = 'metrox_open_sales_return_form';
     const CREDIT_NOTE_FORM_FOCUS_KEY = 'metrox_open_credit_note_form';
     const DELIVERY_CHALLAN_FORM_FOCUS_KEY = 'metrox_open_delivery_challan_form';
@@ -27524,18 +27585,72 @@
       });
     }
 
+    function forceInvoiceCreateMode(options = {}) {
+      const preserveValues = options.preserveValues === true;
+      const form = document.getElementById('invoice-form');
+      if (!form) return;
+      const wasEditing = !!form.dataset.editing;
+      if (wasEditing) delete form.dataset.editing;
+      const generateInvoiceBtn = document.getElementById('generate-invoice-btn');
+      if (generateInvoiceBtn) generateInvoiceBtn.textContent = 'Generate Invoice';
+
+      if (!wasEditing || preserveValues) {
+        if (typeof syncInvoiceIdInput === 'function') syncInvoiceIdInput(true);
+        return;
+      }
+
+      form.reset();
+      const customerSelectEl = document.getElementById('customer-select');
+      if (customerSelectEl) {
+        customerSelectEl.value = '';
+        customerSelectEl.dataset.currentValue = '';
+      }
+      const customerSearchInput = document.getElementById('customer-select-search');
+      if (customerSearchInput) customerSearchInput.value = '';
+      const invoiceTypeInput = form.querySelector('[name=\"invoiceType\"]');
+      if (invoiceTypeInput) invoiceTypeInput.value = 'gst';
+      const gstRateInput = form.querySelector('[name=\"gstRate\"]');
+      if (gstRateInput) gstRateInput.value = '18';
+      const nonGstReason = document.getElementById('invoice-non-gst-reason');
+      if (nonGstReason) nonGstReason.value = 'unregistered_customer';
+      const consigneeToggle = document.getElementById('consignee-different-toggle');
+      if (consigneeToggle) consigneeToggle.checked = false;
+      const lineItems = document.getElementById('line-items');
+      if (lineItems) lineItems.innerHTML = '';
+      const chargeLines = document.getElementById('charge-lines');
+      if (chargeLines) chargeLines.innerHTML = '';
+
+      if (typeof syncInvoiceComplianceVisibility === 'function') syncInvoiceComplianceVisibility();
+      if (typeof toggleInvoiceGstFields === 'function') toggleInvoiceGstFields();
+      if (typeof toggleConsigneeFields === 'function') toggleConsigneeFields();
+      if (typeof updateLineTotals === 'function') updateLineTotals();
+      if (typeof updateAdditionalChargesTotals === 'function') updateAdditionalChargesTotals();
+      if (typeof renderInvoiceBankSelect === 'function') renderInvoiceBankSelect();
+      if (typeof syncInvoiceDateDefaults === 'function') syncInvoiceDateDefaults({ forceDue: true });
+      if (typeof syncInvoiceIdInput === 'function') syncInvoiceIdInput(true);
+      if (typeof syncInvoiceCustomerSelectOptions === 'function') syncInvoiceCustomerSelectOptions();
+      if (typeof syncInvoiceCustomerSearchMeta === 'function') syncInvoiceCustomerSearchMeta();
+      if (typeof setInvoiceUiNote === 'function') setInvoiceUiNote('', 'info');
+    }
+
     function openInvoiceGenerationPage() {
       localStorage.setItem(INVOICE_FORM_FOCUS_KEY, '1');
       focusInvoiceFormInApp();
+      window.requestAnimationFrame(() => {
+        forceInvoiceCreateMode({ preserveValues: false });
+      });
     }
 
-    function handleCreateInvoiceAction() {
+    async function handleCreateInvoiceAction() {
       if (!hasPermission('manage_invoices')) {
         alert('You do not have access to create invoices.');
         return;
       }
-      if (!canCreateInvoice(getBusinessForInvoiceLimit())) {
-        alert('Starter plan allows up to 50 invoices/month. Upgrade to Growth to unlock this feature 🚀');
+      const business = await refreshBusinessForInvoiceLimit();
+      const userPlan = business.plan_type || 'starter';
+      const invoiceCount = business.invoice_count || 0;
+      if (normalizePlanKey(userPlan) === 'starter' && Number(invoiceCount) >= STARTER_INVOICE_LIMIT) {
+        showStarterInvoiceLimitBlock({ note: false, redirect: true });
         return;
       }
       try {
@@ -27661,6 +27776,17 @@
     }
 
     function openPaymentInGenerationPage() {
+      try {
+        const payload = {
+          businessId: String(activeBusinessProfileId || '').trim(),
+          createdAt: new Date().toISOString(),
+          customers: state.customers && typeof state.customers === 'object' ? state.customers : {},
+          invoices: Array.isArray(state.invoices) ? state.invoices : [],
+          payments: Array.isArray(state.payments) ? state.payments : [],
+          cashBank: state.cashBank && typeof state.cashBank === 'object' ? state.cashBank : {}
+        };
+        sessionStorage.setItem(PAYMENT_IN_GENERATION_CONTEXT_KEY, JSON.stringify(payload));
+      } catch (_) {}
       window.location.href = '../pages/payment-in-generation.html';
     }
 
@@ -27707,13 +27833,16 @@
       openEWayBillGenerationPage(challanId);
     }
 
-    function openInvoiceFromDeliveryChallan(challanId) {
+    async function openInvoiceFromDeliveryChallan(challanId) {
       if (!hasPermission('manage_invoices')) {
         alert('You do not have access to create invoices.');
         return;
       }
-      if (!canCreateInvoice(getBusinessForInvoiceLimit())) {
-        alert('Starter plan allows up to 50 invoices/month. Upgrade to Growth to unlock this feature 🚀');
+      const business = await refreshBusinessForInvoiceLimit();
+      const userPlan = business.plan_type || 'starter';
+      const invoiceCount = business.invoice_count || 0;
+      if (normalizePlanKey(userPlan) === 'starter' && Number(invoiceCount) >= STARTER_INVOICE_LIMIT) {
+        showStarterInvoiceLimitBlock({ note: false, redirect: true });
         return;
       }
       if (!challanId) return;
@@ -28390,13 +28519,95 @@
         theme: { ...baseCompany.theme, ...(companySource.theme || {}) },
         invoiceNumber: { ...baseCompany.invoiceNumber, ...(companySource.invoiceNumber || {}) }
       };
-      const name = String(source.name || mergedCompany.name || '').trim() || 'Untitled Business';
+      const name = String(source.name || mergedCompany.name || '').trim() || 'Business';
       return {
         id: String(source.id || makeBusinessId()),
         name,
         phone: String(source.phone || mergedCompany.phone || '').trim(),
         company: { ...mergedCompany, name }
       };
+    }
+
+    function isPlaceholderBusinessName(name = '') {
+      const normalized = String(name || '').trim().toLowerCase();
+      return !normalized || normalized === 'untitled business' || normalized === 'business' || normalized === 'your company';
+    }
+
+    function normalizeBusinessIdentityToken(value = '') {
+      return String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    }
+
+    function getBusinessProfileIdentityKey(profile = {}) {
+      const source = profile && typeof profile === 'object' ? profile : {};
+      const company = source.company && typeof source.company === 'object' ? source.company : {};
+      const name = normalizeBusinessIdentityToken(source.name || company.name || '');
+      const phone = normalizeBusinessIdentityToken(source.phone || company.phone || '');
+      const gstin = normalizeBusinessIdentityToken(company.gstin || '');
+      const safeName = isPlaceholderBusinessName(name) ? '' : name;
+      if (!safeName && !phone && !gstin) return '';
+      return `${safeName}|${phone}|${gstin}`;
+    }
+
+    function hasMeaningfulBusinessProfileData(profile = {}) {
+      const source = profile && typeof profile === 'object' ? profile : {};
+      const company = source.company && typeof source.company === 'object' ? source.company : {};
+      const name = String(source.name || company.name || '').trim();
+      if (name && !isPlaceholderBusinessName(name)) return true;
+      return [
+        source.phone,
+        company.phone,
+        company.gstin,
+        company.address,
+        company.email,
+        company.pan,
+        company.city,
+        company.state,
+        company.pincode
+      ].some((value) => String(value || '').trim());
+    }
+
+    function getBusinessProfileStoredRecordCount(profileId = '') {
+      const id = String(profileId || '').trim();
+      if (!id) return 0;
+      try {
+        const keys = getStateStorageKeys(id);
+        const primaryCount = countStoredRecords(parseStoredPayload(localStorage.getItem(keys.primary)));
+        const backupCount = countStoredRecords(parseStoredPayload(localStorage.getItem(keys.backup)));
+        const lastGoodCount = countStoredRecords(parseStoredPayload(localStorage.getItem(keys.lastGood)));
+        return Math.max(primaryCount, backupCount, lastGoodCount);
+      } catch (_) {
+        return 0;
+      }
+    }
+
+    function choosePreferredBusinessProfile(existing, candidate, preferredId = '') {
+      const safeExisting = existing && typeof existing === 'object' ? existing : null;
+      const safeCandidate = candidate && typeof candidate === 'object' ? candidate : null;
+      if (!safeExisting) return safeCandidate;
+      if (!safeCandidate) return safeExisting;
+      const preferred = String(preferredId || '').trim();
+      const getScore = (profile) => {
+        const source = profile && typeof profile === 'object' ? profile : {};
+        const company = source.company && typeof source.company === 'object' ? source.company : {};
+        const id = String(source.id || '').trim();
+        const name = String(source.name || company.name || '').trim();
+        const phone = String(source.phone || company.phone || '').trim();
+        const gstin = String(company.gstin || '').trim();
+        const address = String(company.address || '').trim();
+        const email = String(company.email || '').trim();
+        let score = 0;
+        if (preferred && id === preferred) score += 200000;
+        if (name && !isPlaceholderBusinessName(name)) score += 20000;
+        if (gstin) score += 8000;
+        if (phone) score += 4000;
+        if (address) score += 1500;
+        if (email) score += 1000;
+        score += Math.min(900, getBusinessProfileStoredRecordCount(id));
+        return score;
+      };
+      const candidateScore = getScore(safeCandidate);
+      const existingScore = getScore(safeExisting);
+      return candidateScore >= existingScore ? safeCandidate : safeExisting;
     }
 
     function compactBusinessCompanyForProfile(companyLike) {
@@ -28450,7 +28661,7 @@
         const safe = row && typeof row === 'object' ? row : {};
         return {
           id: String(safe.id || makeBusinessId()),
-          name: String(safe.name || safe.company?.name || '').trim() || 'Untitled Business',
+          name: String(safe.name || safe.company?.name || '').trim() || 'Business',
           phone: String(safe.phone || safe.company?.phone || '').trim(),
           company: compactBusinessCompanyForProfile(safe.company || {})
         };
@@ -28458,19 +28669,70 @@
     }
 
     function normalizeBusinessProfiles(list) {
+      const activeFromStorage = String(localStorage.getItem(ACTIVE_BUSINESS_PROFILE_KEY) || '').trim();
+      const preferredActiveId = String(activeBusinessProfileId || activeFromStorage || '').trim();
+      const hasStateSeed = hasMeaningfulBusinessProfileData({ company: state.company });
+      const fallbackSeedId = preferredActiveId || makeBusinessId();
       if (!Array.isArray(list) || !list.length) {
-        return [sanitizeBusinessProfile({ company: state.company })];
+        if (!preferredActiveId && !hasStateSeed) return [];
+        return [sanitizeBusinessProfile({ id: fallbackSeedId, company: state.company })];
       }
-      const out = [];
+      const byId = new Map();
       list.forEach((row) => {
         const profile = sanitizeBusinessProfile(row);
-        if (!out.some((x) => x.id === profile.id)) out.push(profile);
+        const existing = byId.get(profile.id);
+        byId.set(profile.id, choosePreferredBusinessProfile(existing, profile, preferredActiveId));
       });
-      return out.length ? out : [sanitizeBusinessProfile({ company: state.company })];
+
+      const byIdentity = new Map();
+      const withoutIdentity = [];
+      Array.from(byId.values()).forEach((profile) => {
+        const key = getBusinessProfileIdentityKey(profile);
+        if (!key) {
+          withoutIdentity.push(profile);
+          return;
+        }
+        const existing = byIdentity.get(key);
+        byIdentity.set(key, choosePreferredBusinessProfile(existing, profile, preferredActiveId));
+      });
+
+      let out = [...byIdentity.values(), ...withoutIdentity];
+      if (out.length > 1 && out.some((profile) => hasMeaningfulBusinessProfileData(profile))) {
+        out = out.filter((profile) => {
+          if (!profile) return false;
+          const id = String(profile.id || '').trim();
+          if (preferredActiveId && id === preferredActiveId) return true;
+          if (hasMeaningfulBusinessProfileData(profile)) return true;
+          return getBusinessProfileStoredRecordCount(id) > 0;
+        });
+      }
+      if (!out.length) {
+        if (!preferredActiveId && !hasStateSeed) return [];
+        return [sanitizeBusinessProfile({ id: fallbackSeedId, company: state.company })];
+      }
+      out.sort((a, b) => {
+        const aId = String(a?.id || '').trim();
+        const bId = String(b?.id || '').trim();
+        if (preferredActiveId && aId === preferredActiveId) return -1;
+        if (preferredActiveId && bId === preferredActiveId) return 1;
+        return 0;
+      });
+      return out;
     }
 
     function persistBusinessProfiles() {
-      const compact = compactBusinessProfilesForStorage(businessProfiles);
+      const compact = compactBusinessProfilesForStorage(normalizeBusinessProfiles(businessProfiles));
+      if (!compact.length) {
+        businessProfiles = [];
+        activeBusinessProfileId = '';
+        try { localStorage.removeItem(BUSINESS_PROFILES_KEY); } catch (_) {}
+        try { localStorage.removeItem(ACTIVE_BUSINESS_PROFILE_KEY); } catch (_) {}
+        return;
+      }
+      if (!activeBusinessProfileId || !compact.some((row) => row.id === activeBusinessProfileId)) {
+        activeBusinessProfileId = String(compact[0].id || '').trim();
+      }
+      businessProfiles = compact.map((row) => sanitizeBusinessProfile(row));
       try {
         localStorage.removeItem(BUSINESS_PROFILES_KEY);
         localStorage.setItem(BUSINESS_PROFILES_KEY, JSON.stringify(compact));
@@ -28489,14 +28751,18 @@
     function syncActiveBusinessProfileFromState() {
       const stateName = String(state.company?.name || '').trim();
       if (!businessProfiles.length) {
-        businessProfiles = [sanitizeBusinessProfile({ id: activeBusinessProfileId || makeBusinessId(), company: state.company })];
+        const seedId = String(activeBusinessProfileId || localStorage.getItem(ACTIVE_BUSINESS_PROFILE_KEY) || '').trim();
+        const hasStateSeed = hasMeaningfulBusinessProfileData({ company: state.company });
+        if (!seedId && !hasStateSeed) return;
+        businessProfiles = [sanitizeBusinessProfile({ id: seedId || makeBusinessId(), company: state.company })];
+        if (!activeBusinessProfileId) activeBusinessProfileId = businessProfiles[0].id;
       }
       let profile = businessProfiles.find((row) => row.id === activeBusinessProfileId);
       if (!profile) {
         profile = businessProfiles[0];
         activeBusinessProfileId = profile.id;
       }
-      const lockedName = String(profile.name || '').trim() || String(profile.company?.name || '').trim() || stateName || 'Untitled Business';
+      const lockedName = String(profile.name || '').trim() || String(profile.company?.name || '').trim() || stateName || 'Business';
       profile.name = lockedName;
       profile.phone = String(state.company?.phone || '').trim();
       profile.company = compactBusinessCompanyForProfile(state.company);
@@ -28651,6 +28917,11 @@
     function loadBusinessProfiles() {
       const savedProfiles = cloneObject(parseStoredPayload(localStorage.getItem(BUSINESS_PROFILES_KEY)), []);
       businessProfiles = normalizeBusinessProfiles(savedProfiles);
+      if (!businessProfiles.length) {
+        activeBusinessProfileId = '';
+        persistBusinessProfiles();
+        return;
+      }
       const savedActiveId = String(localStorage.getItem(ACTIVE_BUSINESS_PROFILE_KEY) || '').trim();
       activeBusinessProfileId = savedActiveId && businessProfiles.some((row) => row.id === savedActiveId)
         ? savedActiveId
@@ -31494,6 +31765,24 @@
       return getItemCatalogEntries().filter((entry) => normalizeCatalogType(entry.type) === 'product');
     }
 
+    function buildCatalogNextState(entries = [], candidate = null) {
+      const normalizedExisting = Array.isArray(entries) ? entries.map(normalizeServiceCatalogEntry).filter(Boolean) : [];
+      const normalizedCandidate = normalizeServiceCatalogEntry(candidate);
+      if (!normalizedCandidate) return normalizedExisting;
+      const nameKey = String(normalizedCandidate.name || '').trim().toLowerCase();
+      const idKey = String(normalizedCandidate.id || '').trim();
+      const next = normalizedExisting.filter((row) => {
+        if (!row) return false;
+        const rowId = String(row.id || '').trim();
+        const rowName = String(row.name || '').trim().toLowerCase();
+        if (idKey && rowId && rowId === idKey) return false;
+        if (nameKey && rowName && rowName === nameKey) return false;
+        return true;
+      });
+      next.unshift(normalizedCandidate);
+      return next;
+    }
+
     function isInventoryProductEntry(entry) {
       return normalizeCatalogType(entry?.type) === 'product' && String(entry?.productType || 'inventory').toLowerCase() !== 'service';
     }
@@ -31551,8 +31840,20 @@
       let changed = false;
 
       incoming.forEach((entry) => {
+        const entryType = normalizeCatalogType(entry.type);
+        const entryName = String(entry.name || '').trim().toLowerCase();
+        for (let i = merged.length - 1; i >= 0; i -= 1) {
+          const row = merged[i];
+          if (!row) continue;
+          const rowName = String(row.name || '').trim().toLowerCase();
+          const rowType = normalizeCatalogType(row.type);
+          if (!rowName || rowName !== entryName) continue;
+          if (rowType === entryType) continue;
+          merged.splice(i, 1);
+          changed = true;
+        }
         const index = merged.findIndex((row) => (
-          normalizeCatalogType(row.type) === normalizeCatalogType(entry.type)
+          normalizeCatalogType(row.type) === entryType
           && String(row.name || '').trim().toLowerCase() === String(entry.name || '').trim().toLowerCase()
         ));
         if (index === -1) {
@@ -31608,6 +31909,9 @@
           String(entry?.name || '').trim().toLowerCase() === itemName
         );
         if (existing) return normalizeCatalogType(existing.type);
+      }
+      if (String(state.company?.type || '').trim().toLowerCase() === 'services') {
+        return 'service';
       }
       return 'product';
     }
@@ -31915,9 +32219,7 @@
       nextEntry.pricingModel = pricingModel;
       nextEntry.hourlyRate = pricingModel === 'hourly' ? hourlyRate : 0;
       nextEntry.customerPricing = normalizeCustomerPricingMap(servicePricingRulesDraft);
-      const removeIndex = index >= 0 ? index : fallbackIndex;
-      const next = existing.filter((_, i) => i !== removeIndex);
-      next.unshift(nextEntry);
+      const next = buildCatalogNextState(existing, nextEntry);
       state.serviceCatalog = next;
       saveState();
       clearServiceCatalogForm();
@@ -31976,8 +32278,7 @@
       entry.name = name;
       entry.price = price;
       entry.customerPricing = normalizeCustomerPricingMap(entry.customerPricing);
-      const next = existing.filter((_, i) => i !== index);
-      next.unshift(entry);
+      const next = buildCatalogNextState(existing, entry);
       state.serviceCatalog = next;
       saveState();
       setServiceQuickAddModalOpen(false);
@@ -32136,9 +32437,7 @@
       nextEntry.openingStock = productType === 'service' ? 0 : openingStock;
       nextEntry.minimumStock = productType === 'service' ? 0 : minimumStock;
       nextEntry.customerPricing = normalizeCustomerPricingMap(productPricingRulesDraft);
-      const removeIndex = index >= 0 ? index : fallbackIndex;
-      const next = existing.filter((_, i) => i !== removeIndex);
-      next.unshift(nextEntry);
+      const next = buildCatalogNextState(existing, nextEntry);
       state.serviceCatalog = next;
       saveState();
       clearProductCatalogForm();
@@ -32199,8 +32498,7 @@
       entry.openingStock = Math.max(0, Number(entry.openingStock) || 0);
       entry.minimumStock = Math.max(0, Number(entry.minimumStock) || 0);
       entry.customerPricing = normalizeCustomerPricingMap(entry.customerPricing);
-      const next = existing.filter((_, i) => i !== index);
-      next.unshift(entry);
+      const next = buildCatalogNextState(existing, entry);
       state.serviceCatalog = next;
       saveState();
       setQuickAddModalOpen(false);
@@ -32578,6 +32876,7 @@
     }
 
     const cbTotalBalanceEl = document.getElementById('cb-total-balance');
+    const cbTotalBalanceCard = document.getElementById('cb-total-balance-card');
     const cbCashBalanceEl = document.getElementById('cb-cash-balance');
     const cbUnlinkedBalanceEl = document.getElementById('cb-unlinked-balance');
     const cbAccountListEl = document.getElementById('cb-account-list');
@@ -32902,6 +33201,80 @@
         }
         return null;
       };
+      const postCashBankFlow = ({
+        direction = 'in',
+        amount = 0,
+        date = '',
+        mode = 'cash',
+        bankAccountId = '',
+        accountName = '',
+        particular = '',
+        source = '-',
+        linkedEntity = '',
+        reference = '',
+        tag = 'Manual Entry'
+      } = {}) => {
+        const safeAmount = Number(amount) || 0;
+        if (safeAmount <= 0) return;
+        const normalizedMode = normalizePaymentMode(mode);
+        const flowType = direction === 'out' ? 'out' : 'in';
+        if (normalizedMode === 'cash') {
+          cashBalance += flowType === 'in' ? safeAmount : -safeAmount;
+          pushTxn({
+            date,
+            particular: particular || 'Cash entry',
+            source: source || '-',
+            mode: 'Cash',
+            accountKey: 'cash',
+            accountLabel: 'Cash in hand',
+            inAmount: flowType === 'in' ? safeAmount : 0,
+            outAmount: flowType === 'out' ? safeAmount : 0,
+            linkedEntity: linkedEntity || '',
+            reference: reference || '',
+            tag,
+            txnType: flowType
+          });
+          return;
+        }
+        const bank = chooseBankAccount({
+          bankAccountId,
+          accountId: bankAccountId,
+          accountName
+        });
+        if (bank) {
+          bank.balance += flowType === 'in' ? safeAmount : -safeAmount;
+          pushTxn({
+            date,
+            particular: particular || 'Bank entry',
+            source: source || '-',
+            mode: 'Bank',
+            accountKey: `bank:${bank.id}`,
+            accountLabel: bank.accountName || 'Bank Account',
+            inAmount: flowType === 'in' ? safeAmount : 0,
+            outAmount: flowType === 'out' ? safeAmount : 0,
+            linkedEntity: linkedEntity || '',
+            reference: reference || '',
+            tag,
+            txnType: flowType
+          });
+          return;
+        }
+        unlinkedBalance += flowType === 'in' ? safeAmount : -safeAmount;
+        pushTxn({
+          date,
+          particular: particular || 'Unlinked entry',
+          source: source || '-',
+          mode: 'Unlinked',
+          accountKey: 'unlinked',
+          accountLabel: 'Unlinked',
+          inAmount: flowType === 'in' ? safeAmount : 0,
+          outAmount: flowType === 'out' ? safeAmount : 0,
+          linkedEntity: linkedEntity || '',
+          reference: reference || '',
+          tag,
+          txnType: flowType
+        });
+      };
 
       (state.payments || []).forEach((p) => {
         const amount = Number(p.amount) || 0;
@@ -33026,6 +33399,80 @@
             txnType: 'out'
           });
         }
+      });
+
+      (state.salesReturns || []).forEach((entry) => {
+        const settlement = getSalesReturnRefundSettlement(entry);
+        if (!settlement) return;
+        const invoiceRef = entry?.invoiceId ? `Inv ${entry.invoiceId}` : '';
+        postCashBankFlow({
+          direction: 'out',
+          amount: settlement.amount,
+          date: settlement.date || getLedgerDateValue(entry?.date || entry?.createdAt || ''),
+          mode: settlement.mode,
+          bankAccountId: settlement.bankAccountId,
+          particular: `Sales Return Refund • ${entry?.customer || '-'}`,
+          source: formatSourceLabel(invoiceRef, entry?.id || ''),
+          linkedEntity: 'Sales Return',
+          reference: settlement.reference || entry?.id || '',
+          tag: 'Customer Refund'
+        });
+      });
+
+      (state.creditNotes || []).forEach((entry) => {
+        if (isLinkedSalesReturnCreditNote(entry)) return;
+        const settlement = getCreditNoteRefundSettlement(entry);
+        if (!settlement) return;
+        const invoiceRef = entry?.invoiceId ? `Inv ${entry.invoiceId}` : '';
+        postCashBankFlow({
+          direction: 'out',
+          amount: settlement.amount,
+          date: settlement.date || getLedgerDateValue(entry?.date || entry?.createdAt || ''),
+          mode: settlement.mode,
+          bankAccountId: settlement.bankAccountId,
+          particular: `Credit Note Refund • ${entry?.customer || '-'}`,
+          source: formatSourceLabel(invoiceRef, entry?.id || ''),
+          linkedEntity: 'Credit Note',
+          reference: settlement.reference || entry?.id || '',
+          tag: 'Customer Refund'
+        });
+      });
+
+      (state.purchaseReturns || []).forEach((entry) => {
+        const settlement = getPurchaseReturnRefundSettlement(entry);
+        if (!settlement) return;
+        const purchaseRef = entry?.purchaseId ? `Bill ${entry.purchaseId}` : '';
+        postCashBankFlow({
+          direction: 'in',
+          amount: settlement.amount,
+          date: settlement.date || getLedgerDateValue(entry?.date || entry?.createdAt || ''),
+          mode: settlement.mode,
+          bankAccountId: settlement.bankAccountId,
+          particular: `Purchase Return Refund • ${entry?.supplier || '-'}`,
+          source: formatSourceLabel(purchaseRef, entry?.id || ''),
+          linkedEntity: 'Purchase Return',
+          reference: settlement.reference || entry?.id || '',
+          tag: 'Supplier Refund'
+        });
+      });
+
+      (state.debitNotes || []).forEach((entry) => {
+        if (isLinkedPurchaseReturnDebitNote(entry)) return;
+        const settlement = getDebitNoteRefundSettlement(entry);
+        if (!settlement) return;
+        const purchaseRef = entry?.purchaseId ? `Bill ${entry.purchaseId}` : '';
+        postCashBankFlow({
+          direction: 'in',
+          amount: settlement.amount,
+          date: settlement.date || getLedgerDateValue(entry?.date || entry?.createdAt || ''),
+          mode: settlement.mode,
+          bankAccountId: settlement.bankAccountId,
+          particular: `Debit Note Refund • ${entry?.supplier || '-'}`,
+          source: formatSourceLabel(purchaseRef, entry?.id || ''),
+          linkedEntity: 'Debit Note',
+          reference: settlement.reference || entry?.id || '',
+          tag: 'Supplier Refund'
+        });
       });
 
       (state.expenses || []).forEach((e) => {
@@ -33261,6 +33708,7 @@
       }
       if (cbCashAccountRow) cbCashAccountRow.classList.toggle('active', activeAccountKey === 'cash');
       if (cbUnlinkedAccountRow) cbUnlinkedAccountRow.classList.toggle('active', activeAccountKey === 'unlinked');
+      if (cbTotalBalanceCard) cbTotalBalanceCard.classList.toggle('active', activeAccountKey === 'all');
 
       const isLedgerView = activeAccountKey !== 'all';
       if (cbViewTitle) cbViewTitle.textContent = isLedgerView ? `Ledger View • ${activeAccount?.label || 'Account'}` : 'Transactions';
@@ -33352,6 +33800,7 @@
       };
       bindRow(cbCashAccountRow);
       bindRow(cbUnlinkedAccountRow);
+      bindRow(cbTotalBalanceCard);
       if (cbAccountListEl) {
         cbAccountListEl.querySelectorAll('[data-cb-account-key]').forEach((node) => bindRow(node));
       }
@@ -33516,16 +33965,43 @@
       if (cbExportError) cbExportError.textContent = '';
     }
 
-    function filterCashBankTransactionsForExport(transactions, options = {}) {
+    function getCashBankClosingBalanceForExport(accountKey, ledger) {
+      const key = String(accountKey || 'all');
+      if (key === 'cash') return Number(ledger?.cashBalance) || 0;
+      if (key === 'unlinked') return Number(ledger?.unlinkedBalance) || 0;
+      if (key === 'all') return Number(ledger?.totalBalance) || 0;
+      if (key.startsWith('bank:')) {
+        const accountId = key.slice(5);
+        const account = (ledger?.accounts || []).find((acc) => String(acc.id || '') === accountId);
+        return Number(account?.balance) || 0;
+      }
+      return Number(ledger?.totalBalance) || 0;
+    }
+
+    function filterCashBankTransactionsForExport(transactions, options = {}, ledger = null) {
       const account = String(options.account || 'all');
       const direction = String(options.direction || 'all');
       const mode = String(options.mode || 'all').toLowerCase();
-      return (transactions || []).filter((t) => {
+      const periodValue = String(options.period || cbPeriodFilter?.value || '30');
+      const activeLedger = ledger || getCashBankLedger(periodValue);
+      const txForAccount = (transactions || [])
+        .filter((t) => account === 'all' || String(t.accountKey || '') === account)
+        .slice()
+        .sort((a, b) => (parseCashBankDate(a.date)?.getTime() || 0) - (parseCashBankDate(b.date)?.getTime() || 0));
+      const accountClosing = getCashBankClosingBalanceForExport(account, activeLedger);
+      const accountNet = txForAccount.reduce((sum, t) => sum + (Number(t.inAmount) || 0) - (Number(t.outAmount) || 0), 0);
+      let runningBalance = accountClosing - accountNet;
+      const withRunning = txForAccount.map((t) => {
+        const inAmount = Number(t.inAmount) || 0;
+        const outAmount = Number(t.outAmount) || 0;
+        runningBalance += inAmount - outAmount;
+        return { ...t, runningBalance };
+      });
+      return withRunning.filter((t) => {
         const inAmount = Number(t.inAmount) || 0;
         const outAmount = Number(t.outAmount) || 0;
         if (direction === 'in' && inAmount <= 0) return false;
         if (direction === 'out' && outAmount <= 0) return false;
-        if (account !== 'all' && String(t.accountKey || '') !== account) return false;
         const tMode = String(t.mode || '').toLowerCase();
         if (mode === 'cash' && tMode !== 'cash') return false;
         if (mode === 'bank' && tMode !== 'bank') return false;
@@ -33620,14 +34096,24 @@
     function exportCashBankPdf(rows, options = {}, ledger = null) {
       ensureCashBankState();
       const periodValue = String(options.period || cbPeriodFilter?.value || '30');
+      const activeLedger = ledger || getCashBankLedger(periodValue);
       const accountLabelMap = Object.fromEntries(getCashBankExportAccountOptions().map((x) => [x.value, x.label]));
+      const chronologicalRows = rows.slice().sort((a, b) => (parseCashBankDate(a.date)?.getTime() || 0) - (parseCashBankDate(b.date)?.getTime() || 0));
+      const firstRow = chronologicalRows[0] || null;
+      const lastRow = chronologicalRows[chronologicalRows.length - 1] || null;
+      const firstDelta = firstRow ? ((Number(firstRow.inAmount) || 0) - (Number(firstRow.outAmount) || 0)) : 0;
+      const openingBalance = firstRow ? (Number(firstRow.runningBalance) - firstDelta) : getCashBankClosingBalanceForExport(String(options.account || 'all'), activeLedger);
+      const closingBalance = lastRow ? Number(lastRow.runningBalance) : openingBalance;
+      const typeForTemplate = options.direction === 'in' ? 'inflow' : (options.direction === 'out' ? 'outflow' : 'all');
       const payload = {
         company: state.company || {},
         report: {
           title: String(options.title || 'Cash and Bank Statement').trim() || 'Cash and Bank Statement'
         },
         rows,
-        balances: ledger || getCashBankLedger(periodValue),
+        balances: activeLedger,
+        openingBalance,
+        closingBalance,
         totalIn: rows.reduce((sum, r) => sum + (Number(r.inAmount) || 0), 0),
         totalOut: rows.reduce((sum, r) => sum + (Number(r.outAmount) || 0), 0),
         netFlow: rows.reduce((sum, r) => sum + (Number(r.inAmount) || 0) - (Number(r.outAmount) || 0), 0),
@@ -33639,6 +34125,7 @@
           includeSummary: options.includeSummary !== false,
           account: options.account || 'all',
           accountLabel: accountLabelMap[String(options.account || 'all')] || 'All Accounts',
+          type: typeForTemplate,
           direction: options.direction || 'all',
           mode: options.mode || 'all'
         }
@@ -33724,6 +34211,14 @@
     if (cbTypeFilter) cbTypeFilter.addEventListener('change', renderCashBank);
     if (cbDateFrom) cbDateFrom.addEventListener('change', renderCashBank);
     if (cbDateTo) cbDateTo.addEventListener('change', renderCashBank);
+    if (cbTotalBalanceCard) {
+      cbTotalBalanceCard.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        cbSelectedAccountKey = 'all';
+        renderCashBank();
+      });
+    }
     if (cbAdvancedToggle) {
       cbAdvancedToggle.addEventListener('change', () => {
         if (cbAdvancedFields) cbAdvancedFields.classList.toggle('active', !!cbAdvancedToggle.checked);
@@ -33753,7 +34248,7 @@
           includeSummary: !!cbExportIncludeSummary?.checked
         };
         const ledger = getCashBankLedger(exportOptions.period);
-        const filteredRows = filterCashBankTransactionsForExport(ledger.transactions, exportOptions);
+        const filteredRows = filterCashBankTransactionsForExport(ledger.transactions, exportOptions, ledger);
         if (!filteredRows.length) {
           if (cbExportError) cbExportError.textContent = 'No transactions found for selected export filters.';
           return;
@@ -34593,26 +35088,217 @@
       };
     }
 
+    function normalizeAccountingStatus(value) {
+      return String(value || '').trim().toLowerCase();
+    }
+
+    function isCancelledAccountingEntry(value) {
+      return normalizeAccountingStatus(value) === 'cancelled';
+    }
+
+    function isLinkedSalesReturnCreditNote(note = {}) {
+      const linkedId = String(note?.linkedSalesReturnId || '').trim();
+      const sourceType = normalizeAccountingStatus(note?.sourceType || '');
+      if (linkedId || sourceType === 'sales_return') return true;
+      const creditId = String(note?.id || '').trim();
+      if (!creditId) return false;
+      return (state.salesReturns || []).some((entry) => {
+        const linkedCreditNo = String(entry?.creditNoteNumber || '').trim();
+        if (!linkedCreditNo) return false;
+        if (linkedCreditNo !== creditId) return false;
+        const sameInvoice = String(entry?.invoiceId || '').trim() === String(note?.invoiceId || '').trim();
+        const sameCustomer = String(entry?.customer || '').trim() === String(note?.customer || '').trim();
+        return sameInvoice || sameCustomer;
+      });
+    }
+
+    function isLinkedPurchaseReturnDebitNote(note = {}) {
+      const linkedId = String(note?.linkedPurchaseReturnId || '').trim();
+      if (linkedId) return true;
+      const debitId = String(note?.id || '').trim();
+      if (!debitId) return false;
+      return (state.purchaseReturns || []).some((entry) => {
+        const linkedDebitNo = String(entry?.debitNoteNo || '').trim();
+        if (!linkedDebitNo || linkedDebitNo !== debitId) return false;
+        const samePurchase = String(entry?.purchaseId || '').trim() === String(note?.purchaseId || '').trim();
+        const sameSupplier = String(entry?.supplier || '').trim() === String(note?.supplier || '').trim();
+        return samePurchase || sameSupplier;
+      });
+    }
+
+    function isActiveSalesReturnForAdjustment(entry = {}) {
+      const status = normalizeAccountingStatus(entry?.status || entry?.legacyStatus || '');
+      return status !== 'draft' && !isCancelledAccountingEntry(status);
+    }
+
+    function isActiveCreditNoteForAdjustment(entry = {}) {
+      return !isCancelledAccountingEntry(entry?.status);
+    }
+
+    function isActivePurchaseReturnForAdjustment(entry = {}) {
+      return !isCancelledAccountingEntry(entry?.status);
+    }
+
+    function isActiveDebitNoteForAdjustment(entry = {}) {
+      return !isCancelledAccountingEntry(entry?.status);
+    }
+
+    function getInvoiceSalesReturnAdjustmentAmount(invoiceId) {
+      const id = String(invoiceId || '').trim();
+      if (!id) return 0;
+      return (state.salesReturns || [])
+        .filter((entry) => String(entry?.invoiceId || '').trim() === id)
+        .filter((entry) => isActiveSalesReturnForAdjustment(entry))
+        .reduce((sum, entry) => sum + (Number(entry?.amount) || 0), 0);
+    }
+
+    function getInvoiceManualCreditNoteAdjustmentAmount(invoiceId) {
+      const id = String(invoiceId || '').trim();
+      if (!id) return 0;
+      return (state.creditNotes || [])
+        .filter((entry) => String(entry?.invoiceId || '').trim() === id)
+        .filter((entry) => !isLinkedSalesReturnCreditNote(entry))
+        .filter((entry) => isActiveCreditNoteForAdjustment(entry))
+        .reduce((sum, entry) => sum + (Number(entry?.amount) || 0), 0);
+    }
+
+    function getInvoiceCreditAdjustmentAmount(invoiceId) {
+      return toRoundedCurrency(
+        getInvoiceSalesReturnAdjustmentAmount(invoiceId)
+        + getInvoiceManualCreditNoteAdjustmentAmount(invoiceId)
+      );
+    }
+
+    function getPurchaseReturnAdjustmentAmount(purchaseId) {
+      const id = String(purchaseId || '').trim();
+      if (!id) return 0;
+      return (state.purchaseReturns || [])
+        .filter((entry) => String(entry?.purchaseId || '').trim() === id)
+        .filter((entry) => isActivePurchaseReturnForAdjustment(entry))
+        .reduce((sum, entry) => sum + (Number(entry?.amount) || 0), 0);
+    }
+
+    function getPurchaseManualDebitNoteAdjustmentAmount(purchaseId) {
+      const id = String(purchaseId || '').trim();
+      if (!id) return 0;
+      return (state.debitNotes || [])
+        .filter((entry) => String(entry?.purchaseId || '').trim() === id)
+        .filter((entry) => !isLinkedPurchaseReturnDebitNote(entry))
+        .filter((entry) => isActiveDebitNoteForAdjustment(entry))
+        .reduce((sum, entry) => sum + (Number(entry?.amount) || 0), 0);
+    }
+
+    function getPurchaseTotalAdjustmentAmount(purchaseId) {
+      return toRoundedCurrency(
+        getPurchaseReturnAdjustmentAmount(purchaseId)
+        + getPurchaseManualDebitNoteAdjustmentAmount(purchaseId)
+      );
+    }
+
+    function getSalesReturnRefundSettlement(entry = {}) {
+      if (!isActiveSalesReturnForAdjustment(entry)) return null;
+      const modeKey = normalizeAccountingStatus(entry?.refundMode || '');
+      if (modeKey !== 'refund') return null;
+      const refundStatus = normalizeAccountingStatus(entry?.refundSettlementStatus || entry?.refundStatus || '');
+      const status = normalizeAccountingStatus(entry?.status || '');
+      const settled = entry?.refundSettled === true
+        || refundStatus === 'refunded'
+        || refundStatus === 'received'
+        || status === 'refunded';
+      if (!settled) return null;
+      const explicitAmount = Number(entry?.refundAmount);
+      const refundableAmount = Number(entry?.refundableAmount);
+      const fallbackAmount = Number(entry?.amount);
+      const amount = Number.isFinite(explicitAmount) && explicitAmount > 0
+        ? explicitAmount
+        : (Number.isFinite(refundableAmount) && refundableAmount > 0 ? refundableAmount : Math.max(0, fallbackAmount || 0));
+      if (amount <= 0) return null;
+      return {
+        amount: toRoundedCurrency(amount),
+        date: getLedgerDateValue(entry?.refundPaidDate || entry?.refundDate || entry?.date || entry?.createdAt || ''),
+        mode: normalizePaymentMode(entry?.refundPaymentMode || entry?.settlementMode || entry?.mode || 'cash'),
+        bankAccountId: String(entry?.refundBankAccountId || entry?.bankAccountId || entry?.accountId || '').trim(),
+        reference: String(entry?.refundReference || '').trim()
+      };
+    }
+
+    function getCreditNoteRefundSettlement(entry = {}) {
+      if (isLinkedSalesReturnCreditNote(entry)) return null;
+      if (!isActiveCreditNoteForAdjustment(entry)) return null;
+      const settlementType = normalizeAccountingStatus(entry?.settlementType || '');
+      const refundStatus = normalizeAccountingStatus(entry?.refundSettlementStatus || entry?.refundStatus || '');
+      const status = normalizeAccountingStatus(entry?.status || '');
+      const expectsRefund = settlementType === 'refund' || refundStatus === 'refunded' || status === 'refunded';
+      if (!expectsRefund) return null;
+      const settled = entry?.refundSettled === true || refundStatus === 'refunded' || status === 'refunded';
+      if (!settled) return null;
+      const explicitAmount = Number(entry?.refundAmount);
+      const baseAmount = Number(entry?.amount);
+      const amount = Number.isFinite(explicitAmount) && explicitAmount > 0 ? explicitAmount : Math.max(0, baseAmount || 0);
+      if (amount <= 0) return null;
+      return {
+        amount: toRoundedCurrency(amount),
+        date: getLedgerDateValue(entry?.refundPaidDate || entry?.refundDate || entry?.date || entry?.createdAt || ''),
+        mode: normalizePaymentMode(entry?.refundPaymentMode || entry?.mode || 'cash'),
+        bankAccountId: String(entry?.refundBankAccountId || entry?.bankAccountId || entry?.accountId || '').trim(),
+        reference: String(entry?.refundReference || '').trim()
+      };
+    }
+
+    function getPurchaseReturnRefundSettlement(entry = {}) {
+      if (!isActivePurchaseReturnForAdjustment(entry)) return null;
+      const refundStatus = normalizeAccountingStatus(entry?.refundStatus || '');
+      if (refundStatus !== 'refunded') return null;
+      const receiptStatus = normalizeAccountingStatus(entry?.refundReceiptStatus || '');
+      const settled = entry?.refundReceived === true
+        || receiptStatus === 'received'
+        || normalizeAccountingStatus(entry?.status || '') === 'refunded';
+      if (!settled) return null;
+      const explicitAmount = Number(entry?.refundAmount);
+      const baseAmount = Number(entry?.amount);
+      const amount = Number.isFinite(explicitAmount) && explicitAmount > 0 ? explicitAmount : Math.max(0, baseAmount || 0);
+      if (amount <= 0) return null;
+      return {
+        amount: toRoundedCurrency(amount),
+        date: getLedgerDateValue(entry?.refundReceivedDate || entry?.refundDate || entry?.date || entry?.createdAt || ''),
+        mode: normalizePaymentMode(entry?.refundReceiveMode || entry?.refundPaymentMode || entry?.mode || 'cash'),
+        bankAccountId: String(entry?.refundBankAccountId || entry?.bankAccountId || entry?.accountId || '').trim(),
+        reference: String(entry?.refundReference || '').trim()
+      };
+    }
+
+    function getDebitNoteRefundSettlement(entry = {}) {
+      if (!isActiveDebitNoteForAdjustment(entry)) return null;
+      const impactType = normalizeAccountingStatus(entry?.impactType || '');
+      if (impactType !== 'refund') return null;
+      const receiptStatus = normalizeAccountingStatus(entry?.refundReceiptStatus || entry?.refundStatus || '');
+      const status = normalizeAccountingStatus(entry?.status || '');
+      const settled = entry?.refundReceived === true
+        || receiptStatus === 'received'
+        || status === 'refunded'
+        || status === 'settled';
+      if (!settled || status === 'refund pending') return null;
+      const explicitAmount = Number(entry?.refundAmount);
+      const baseAmount = Number(entry?.amount);
+      const amount = Number.isFinite(explicitAmount) && explicitAmount > 0 ? explicitAmount : Math.max(0, baseAmount || 0);
+      if (amount <= 0) return null;
+      return {
+        amount: toRoundedCurrency(amount),
+        date: getLedgerDateValue(entry?.refundReceivedDate || entry?.refundDate || entry?.date || entry?.createdAt || ''),
+        mode: normalizePaymentMode(entry?.refundReceiveMode || entry?.refundPaymentMode || entry?.mode || 'cash'),
+        bankAccountId: String(entry?.refundBankAccountId || entry?.bankAccountId || entry?.accountId || '').trim(),
+        reference: String(entry?.refundReference || '').trim()
+      };
+    }
+
     function getInvoiceCollectionTarget(inv) {
       if (!inv || typeof inv !== 'object') return 0;
       const explicit = Number(inv.netReceivable);
       const baseTarget = Number.isFinite(explicit) && explicit > 0
         ? explicit
         : Math.max(0, toRoundedCurrency((Number(inv.total) || 0) - (Number(inv.tdsAmount) || 0)));
-      const returnAdjustment = (state.salesReturns || [])
-        .filter((entry) => {
-          if (String(entry?.invoiceId || '') !== String(inv.id || '')) return false;
-          const status = String(entry?.status || '').toLowerCase();
-          return status !== 'cancelled' && status !== 'draft';
-        })
-        .reduce((sum, entry) => sum + (Number(entry?.amount) || 0), 0);
-      if (returnAdjustment > 0) {
-        return Math.max(0, toRoundedCurrency(baseTarget - returnAdjustment));
-      }
-      if (Number.isFinite(explicit) && explicit > 0) return explicit;
-      const total = Number(inv.total) || 0;
-      const tdsAmount = Number(inv.tdsAmount) || 0;
-      return Math.max(0, toRoundedCurrency(total - tdsAmount));
+      const docAdjustments = getInvoiceCreditAdjustmentAmount(inv.id);
+      return Math.max(0, toRoundedCurrency(baseTarget - docAdjustments));
     }
 
     const DASHBOARD_CA_MODE_KEY = 'metrox_dashboard_ca_mode';
@@ -36253,6 +36939,11 @@
 
     function openReportPdfView() {
       if (!activeReportDetail) return;
+      if (blockIfNoFeature('export_reports', {
+        message: 'Upgrade to Pro plan for advanced report exports',
+        redirectOnBlock: true,
+        throwOnBlock: true
+      })) return;
       if (activeReportDetail.layout === 'balance-sheet') {
         openBalanceSheetPdfView(activeReportDetail);
         return;
@@ -37370,11 +38061,21 @@
       };
       const computeSlice = (fromDate, toDate) => {
         const invoices = (state.invoices || []).filter((inv) => isWithinRange(inv.createdAt || inv.date, fromDate, toDate));
-        const salesReturns = (state.salesReturns || []).filter((x) => isWithinRange(x.date || x.createdAt, fromDate, toDate));
-        const creditNotes = (state.creditNotes || []).filter((x) => isWithinRange(x.date || x.createdAt, fromDate, toDate));
+        const salesReturns = (state.salesReturns || [])
+          .filter((x) => isWithinRange(x.date || x.createdAt, fromDate, toDate))
+          .filter((x) => isActiveSalesReturnForAdjustment(x));
+        const creditNotes = (state.creditNotes || [])
+          .filter((x) => isWithinRange(x.date || x.createdAt, fromDate, toDate))
+          .filter((x) => !isLinkedSalesReturnCreditNote(x))
+          .filter((x) => isActiveCreditNoteForAdjustment(x));
         const purchases = (state.purchases || []).filter((x) => isWithinRange(x.date || x.createdAt, fromDate, toDate));
-        const purchaseReturns = (state.purchaseReturns || []).filter((x) => isWithinRange(x.date || x.createdAt, fromDate, toDate));
-        const debitNotes = (state.debitNotes || []).filter((x) => isWithinRange(x.date || x.createdAt, fromDate, toDate));
+        const purchaseReturns = (state.purchaseReturns || [])
+          .filter((x) => isWithinRange(x.date || x.createdAt, fromDate, toDate))
+          .filter((x) => isActivePurchaseReturnForAdjustment(x));
+        const debitNotes = (state.debitNotes || [])
+          .filter((x) => isWithinRange(x.date || x.createdAt, fromDate, toDate))
+          .filter((x) => !isLinkedPurchaseReturnDebitNote(x))
+          .filter((x) => isActiveDebitNoteForAdjustment(x));
         const expenses = (state.expenses || []).filter((x) => isWithinRange(x.date || x.createdAt, fromDate, toDate));
         const cashAdjustments = (((state.cashBank || {}).cashAdjustments) || [])
           .map((x) => normalizeCashAdjustment(x))
@@ -43408,7 +44109,11 @@
         const paymentsIn = applyRange(state.payments || [], (x) => x.date || x.createdAt, range);
         const paymentsOut = applyRange(state.supplierPayments || [], (x) => x.date || x.createdAt, range);
         const salesReturns = applyRange(state.salesReturns || [], (x) => x.date || x.createdAt, range);
+        const creditNotes = applyRange(state.creditNotes || [], (x) => x.date || x.createdAt, range)
+          .filter((x) => !isLinkedSalesReturnCreditNote(x));
         const purchaseReturns = applyRange(state.purchaseReturns || [], (x) => x.date || x.createdAt, range);
+        const debitNotes = applyRange(state.debitNotes || [], (x) => x.date || x.createdAt, range)
+          .filter((x) => !isLinkedPurchaseReturnDebitNote(x));
 
         const receivables = sumBy(invoices, (inv) => getInvoiceDue(inv));
         const payables = sumBy(purchases, (p) => getSupplierPurchaseDue(p));
@@ -43418,8 +44123,12 @@
         const returnsIn = sumBy(purchaseReturns, (x) => Number(x.amount) || 0);
         const inventory = Math.max(0, purchaseValue + returnsOut - returnsIn);
 
-        const cashIn = sumBy(paymentsIn, (p) => Number(p.amount) || 0);
-        const cashOut = sumBy(paymentsOut, (p) => Number(p.amount) || 0);
+        const customerRefundOut = sumBy(salesReturns, (x) => Number(getSalesReturnRefundSettlement(x)?.amount) || 0)
+          + sumBy(creditNotes, (x) => Number(getCreditNoteRefundSettlement(x)?.amount) || 0);
+        const supplierRefundIn = sumBy(purchaseReturns, (x) => Number(getPurchaseReturnRefundSettlement(x)?.amount) || 0)
+          + sumBy(debitNotes, (x) => Number(getDebitNoteRefundSettlement(x)?.amount) || 0);
+        const cashIn = sumBy(paymentsIn, (p) => Number(p.amount) || 0) + supplierRefundIn;
+        const cashOut = sumBy(paymentsOut, (p) => Number(p.amount) || 0) + customerRefundOut;
         const cashAndBank = Math.max(0, cashIn - cashOut);
 
         const outputGst = sumBy(invoices, (inv) => (Number(inv.cgst) || 0) + (Number(inv.sgst) || 0) + (Number(inv.igst) || 0));
@@ -44563,7 +45272,22 @@
         || reportLabelLower.includes('tcs ')
       );
       if (isGstReport && blockIfNoFeature('gst_reports')) return;
-      if (reportLabelLower === 'purchase summary' && blockIfNoFeature('analytics')) return;
+      if (
+        reportLabelLower === 'purchase summary'
+        && blockIfNoFeature('advanced_reports', {
+          message: 'Upgrade to Pro plan for advanced analytics',
+          redirectOnBlock: true,
+          throwOnBlock: true
+        })
+      ) return;
+      if (
+        reportLabelLower.includes('audit trail')
+        && blockIfNoFeature('audit_logs', {
+          message: 'Upgrade to Pro plan for audit logs',
+          redirectOnBlock: true,
+          throwOnBlock: true
+        })
+      ) return;
       markReportRecentlyUsed(reportLabel);
       if (reportLabelLower === 'balance sheet') {
         openBalanceSheetReport();
@@ -44616,6 +45340,11 @@
         return;
       }
       if (reportLabelLower.includes('bill wise profit')) {
+        if (blockIfNoFeature('advanced_reports', {
+          message: 'Upgrade to Pro plan for advanced reports',
+          redirectOnBlock: true,
+          throwOnBlock: true
+        })) return;
         openBillWiseProfitReport();
         return;
       }
@@ -46136,7 +46865,7 @@
 
     function getBusinessForInvoiceLimit() {
       const user = getUserDataSnapshot() || {};
-      const planType = String(user.plan_type || getCurrentPlanKey() || 'starter').trim().toLowerCase();
+      const planType = normalizePlanKey(user.plan_type || getCurrentPlanKey() || 'starter');
       const invoiceCountRaw = Number(user.invoice_count);
       const fallbackCount = Number(state?.invoices?.length || 0);
       const invoiceCount = Number.isFinite(invoiceCountRaw) ? invoiceCountRaw : fallbackCount;
@@ -46147,12 +46876,36 @@
       };
     }
 
+    const STARTER_INVOICE_LIMIT = 50;
+    const STARTER_INVOICE_LIMIT_MESSAGE = 'Starter plan limit reached (50 invoices). Upgrade to continue.';
+
+    function getStarterInvoiceLimitState(business = getBusinessForInvoiceLimit()) {
+      const userPlan = normalizePlanKey(business?.plan_type || 'starter');
+      const invoiceCount = Number(business?.invoice_count || 0);
+      return {
+        userPlan,
+        invoiceCount,
+        limitReached: userPlan === 'starter' && invoiceCount >= STARTER_INVOICE_LIMIT
+      };
+    }
+
+    function showStarterInvoiceLimitBlock(options = {}) {
+      if (typeof setInvoiceUiNote === 'function' && options.note !== false) {
+        setInvoiceUiNote(STARTER_INVOICE_LIMIT_MESSAGE, 'warning');
+      }
+      alert(STARTER_INVOICE_LIMIT_MESSAGE);
+      if (options.redirect !== false) {
+        window.location.href = '/index.html#pricing';
+      }
+      return false;
+    }
+
     function canCreateInvoice(business) {
       if (DISABLE_PLAN_AND_ACCESS_GATES) return true;
       if (!hasPlanFeatureAccess('basic_invoice')) return false;
-      if (hasPlanFeatureAccess('unlimited_invoice')) return true;
-      const count = Number(business?.invoice_count || 0);
-      return count < 50;
+      const { userPlan, invoiceCount } = getStarterInvoiceLimitState(business);
+      if (userPlan === 'starter' && invoiceCount >= STARTER_INVOICE_LIMIT) return false;
+      return true;
     }
 
     async function refreshBusinessForInvoiceLimit() {
@@ -46172,26 +46925,51 @@
       if (DISABLE_PLAN_AND_ACCESS_GATES) return true;
       const business = await refreshBusinessForInvoiceLimit();
       if (canCreateInvoice(business)) return true;
-      const message = 'Starter plan allows up to 50 invoices/month. Upgrade to Growth to unlock this feature 🚀';
-      if (typeof setInvoiceUiNote === 'function') setInvoiceUiNote(message, 'warning');
-      alert(message);
-      return false;
+      return showStarterInvoiceLimitBlock({ note: true, redirect: true });
     }
 
-    function blockIfNoFeature(feature) {
+    function blockIfNoFeature(feature, options = {}) {
       if (DISABLE_PLAN_AND_ACCESS_GATES) return false;
+      const safeFeature = String(feature || '').trim().toLowerCase();
       const mappedFeature = {
         gst_reports: 'reports',
-        analytics: 'analytics',
+        analytics: 'advanced_analytics',
         team_access: 'multi_user',
-        reminders: 'reminders'
-      }[String(feature || '').trim()] || '';
-      if (mappedFeature && !hasPlanFeatureAccess(mappedFeature)) {
-        alert('Upgrade to Growth to unlock this feature 🚀');
-        return true;
+        reminders: 'reminders',
+        advanced_reports: 'advanced_reports',
+        audit_logs: 'audit_logs',
+        export_reports: 'export_reports',
+        multi_user: 'multi_user'
+      }[safeFeature] || '';
+      const featureKey = mappedFeature || safeFeature;
+      const needsAccessCheck = !!mappedFeature || featureKey.includes('_');
+      const allowed = needsAccessCheck
+        ? hasPlanFeatureAccess(featureKey)
+        : !!window.APP_FEATURES?.[safeFeature];
+      if (allowed) return false;
+
+      const defaultMessage = {
+        reports: 'Upgrade to Growth plan to unlock reports',
+        reminders: 'Upgrade to Growth plan to unlock reminders',
+        advanced_analytics: 'Upgrade to Pro plan for advanced analytics',
+        advanced_reports: 'Upgrade to Pro plan for advanced reports',
+        audit_logs: 'Upgrade to Pro plan for audit logs',
+        multi_user: 'Upgrade to Pro plan for multi-user access',
+        export_reports: 'Upgrade to Pro plan for advanced report exports'
+      }[featureKey] || 'Upgrade your plan to unlock this feature';
+
+      alert(options.message || defaultMessage);
+
+      const shouldRedirect = typeof options.redirectOnBlock === 'boolean'
+        ? options.redirectOnBlock
+        : new Set(['advanced_analytics', 'advanced_reports', 'audit_logs', 'multi_user', 'export_reports']).has(featureKey);
+      if (shouldRedirect) {
+        window.location.href = '/index.html#pricing';
       }
-      if (!mappedFeature && !window.APP_FEATURES?.[feature]) return true;
-      return false;
+      if (options.throwOnBlock) {
+        throw new Error('Access blocked: Pro feature');
+      }
+      return true;
     }
     window.blockIfNoFeature = blockIfNoFeature;
 
@@ -46313,14 +47091,29 @@
       const isInvoiceEditing = !!document.getElementById('invoice-form')?.dataset?.editing;
 
       const limitReached = !canCreateInvoice(getBusinessForInvoiceLimit());
-      if (newInvoiceBtn) newInvoiceBtn.disabled = limitReached;
-      if (generateBtn) generateBtn.disabled = limitReached && !isInvoiceEditing;
+      if (newInvoiceBtn) {
+        const baseLabel = String(newInvoiceBtn.dataset.baseLabel || newInvoiceBtn.textContent || 'New Invoice').trim() || 'New Invoice';
+        newInvoiceBtn.dataset.baseLabel = baseLabel;
+        newInvoiceBtn.disabled = limitReached;
+        newInvoiceBtn.style.opacity = limitReached ? '0.5' : '';
+        newInvoiceBtn.style.cursor = limitReached ? 'not-allowed' : '';
+        newInvoiceBtn.textContent = limitReached ? 'Limit reached — Upgrade plan' : baseLabel;
+        newInvoiceBtn.title = limitReached ? STARTER_INVOICE_LIMIT_MESSAGE : '';
+      }
+      if (generateBtn) {
+        generateBtn.disabled = limitReached && !isInvoiceEditing;
+        generateBtn.style.opacity = limitReached && !isInvoiceEditing ? '0.5' : '';
+        generateBtn.style.cursor = limitReached && !isInvoiceEditing ? 'not-allowed' : '';
+      }
       document.querySelectorAll("[data-action='create-invoice']").forEach((btn) => {
-        btn.disabled = !!limitReached;
-        btn.style.opacity = limitReached ? '0.5' : '';
+        const isGenerateButton = btn.id === 'generate-invoice-btn';
+        const shouldDisable = !!limitReached && !(isGenerateButton && isInvoiceEditing);
+        btn.disabled = shouldDisable;
+        btn.style.opacity = shouldDisable ? '0.5' : '';
+        btn.style.cursor = shouldDisable ? 'not-allowed' : '';
       });
       if (invoiceNote) {
-        invoiceNote.textContent = limitReached ? 'Starter plan allows up to 50 invoices/month. Upgrade to Growth to unlock this feature 🚀' : '';
+        invoiceNote.textContent = limitReached ? STARTER_INVOICE_LIMIT_MESSAGE : '';
         invoiceNote.style.display = limitReached ? 'block' : 'none';
       }
 
@@ -46328,13 +47121,16 @@
       const exportGstExcel = document.getElementById('export-gst-excel');
       const gstReportsEnabled = !!features.gst_reports;
       const canDownloadPdf = true;
-      if (exportGstPdf) exportGstPdf.disabled = !(canDownloadPdf && gstReportsEnabled);
-      if (exportGstExcel) exportGstExcel.disabled = !(canDownloadPdf && gstReportsEnabled);
+      const canExportAdvancedReports = hasPlanFeatureAccess('export_reports');
+      if (exportGstPdf) exportGstPdf.disabled = !(canDownloadPdf && gstReportsEnabled && canExportAdvancedReports);
+      if (exportGstExcel) exportGstExcel.disabled = !(canDownloadPdf && gstReportsEnabled && canExportAdvancedReports);
       if (!gstReportsEnabled) {
         hideGSTReports();
       } else {
         showGSTReports();
       }
+      const reportExportActionBtn = document.getElementById('report-detail-export-csv');
+      if (reportExportActionBtn) reportExportActionBtn.disabled = !canExportAdvancedReports;
       applyFeatureLocks();
       applyReportsPlanLock();
       if (remindersSettingsLink) {
@@ -46523,9 +47319,10 @@
       (state.purchases || []).forEach((purchase) => {
         const supplier = String(purchase?.supplier || 'Supplier').trim() || 'Supplier';
         const purchaseId = String(purchase?.id || '').trim();
-        const total = Number(purchase?.total) || 0;
-        const paid = purchaseId ? (Number(paidByPurchaseId[purchaseId]) || 0) : (Number(purchase?.paidAmount) || 0);
-        const due = Math.max(0, total - paid);
+        const fallbackTotal = Number(purchase?.total) || 0;
+        const fallbackPaid = purchaseId ? (Number(paidByPurchaseId[purchaseId]) || 0) : (Number(purchase?.paidAmount) || 0);
+        const computedDue = typeof getSupplierPurchaseDue === 'function' ? getSupplierPurchaseDue(purchase) : Math.max(0, fallbackTotal - fallbackPaid);
+        const due = Number(computedDue) || 0;
         if (due <= 0) return;
         grouped[supplier] = (grouped[supplier] || 0) + due;
       });
@@ -48122,15 +48919,18 @@
       updateQuotationTable();
     }
 
-    function convertQuotationToInvoice(quotationId) {
+    async function convertQuotationToInvoice(quotationId) {
       const quotation = state.quotations.find((q) => q.id === quotationId);
       if (!quotation) return;
       if (!hasPermission('manage_invoices')) {
         alert('You do not have access to create invoices.');
         return;
       }
-      if (!canCreateInvoice(getBusinessForInvoiceLimit())) {
-        alert('Starter plan allows up to 50 invoices/month. Upgrade to Growth to unlock this feature 🚀');
+      const business = await refreshBusinessForInvoiceLimit();
+      const userPlan = business.plan_type || 'starter';
+      const invoiceCount = business.invoice_count || 0;
+      if (normalizePlanKey(userPlan) === 'starter' && Number(invoiceCount) >= STARTER_INVOICE_LIMIT) {
+        showStarterInvoiceLimitBlock({ note: false, redirect: true });
         return;
       }
       showScreen('invoices', 'Invoices');
@@ -48587,6 +49387,13 @@
         const profile = state.customers?.[name] || {};
         const invoices = (state.invoices || []).filter((inv) => inv.customer === name);
         const payments = (state.payments || []).filter((p) => p.customer === name);
+        const salesReturns = (state.salesReturns || [])
+          .filter((entry) => String(entry?.customer || '') === String(name))
+          .filter((entry) => isActiveSalesReturnForAdjustment(entry));
+        const manualCreditNotes = (state.creditNotes || [])
+          .filter((entry) => String(entry?.customer || '') === String(name))
+          .filter((entry) => !isLinkedSalesReturnCreditNote(entry))
+          .filter((entry) => isActiveCreditNoteForAdjustment(entry));
         const openingBalance = getCustomerOpeningBalance(profile);
         if (openingBalance > 0) {
           entries.push({
@@ -48601,13 +49408,13 @@
         }
         invoices.forEach((inv) => {
           const invoiceTotal = Number(inv.total) || 0;
-          const paidAmount = Number(inv.paidAmount) || 0;
+          const dueAmount = getInvoiceDue(inv);
           entries.push({
             date: getLedgerDateValue(inv.date || inv.createdAt),
             sortOrder: 1,
             ref: inv.id || '',
             desc: 'Invoice raised',
-            detail: `${inv.status || 'Open'} • Due ₹${fmt.format(Math.max(0, invoiceTotal - paidAmount))}`,
+            detail: `${inv.status || 'Open'} • Due ₹${fmt.format(dueAmount)}`,
             debit: invoiceTotal,
             credit: 0
           });
@@ -48622,6 +49429,58 @@
             detail: `${getPaymentAccountLabel(p)}${linkedInvoice?.id ? ` • Against ${linkedInvoice.id}` : ''}`,
             debit: 0,
             credit: Number(p.amount) || 0
+          });
+        });
+        salesReturns.forEach((entry) => {
+          const mode = normalizeAccountingStatus(entry?.refundMode || '');
+          const modeLabel = mode === 'refund' ? 'Refund' : (mode === 'adjust' ? 'Adjusted' : 'Credit');
+          entries.push({
+            date: getLedgerDateValue(entry.date || entry.createdAt),
+            sortOrder: 3,
+            ref: entry.creditNoteNumber || entry.id || 'SR',
+            desc: 'Sales return / credit',
+            detail: `${modeLabel}${entry?.invoiceId ? ` • Against ${entry.invoiceId}` : ''}`,
+            debit: 0,
+            credit: Number(entry.amount) || 0
+          });
+        });
+        manualCreditNotes.forEach((entry) => {
+          const settlementType = normalizeAccountingStatus(entry?.settlementType || '');
+          const settlementLabel = settlementType === 'refund' ? 'Refund' : (settlementType === 'adjusted' ? 'Adjusted' : 'Credit');
+          entries.push({
+            date: getLedgerDateValue(entry.date || entry.createdAt),
+            sortOrder: 4,
+            ref: entry.id || 'CN',
+            desc: 'Credit note issued',
+            detail: `${settlementLabel}${entry?.invoiceId ? ` • Against ${entry.invoiceId}` : ''}`,
+            debit: 0,
+            credit: Number(entry.amount) || 0
+          });
+        });
+        salesReturns.forEach((entry) => {
+          const settlement = getSalesReturnRefundSettlement(entry);
+          if (!settlement) return;
+          entries.push({
+            date: settlement.date || getLedgerDateValue(entry.date || entry.createdAt),
+            sortOrder: 5,
+            ref: entry.id || 'SR-RF',
+            desc: 'Refund paid',
+            detail: `${settlement.mode === 'bank' ? 'Bank' : 'Cash'}${entry?.invoiceId ? ` • Against ${entry.invoiceId}` : ''}`,
+            debit: Number(settlement.amount) || 0,
+            credit: 0
+          });
+        });
+        manualCreditNotes.forEach((entry) => {
+          const settlement = getCreditNoteRefundSettlement(entry);
+          if (!settlement) return;
+          entries.push({
+            date: settlement.date || getLedgerDateValue(entry.date || entry.createdAt),
+            sortOrder: 6,
+            ref: entry.id || 'CN-RF',
+            desc: 'Refund paid',
+            detail: `${settlement.mode === 'bank' ? 'Bank' : 'Cash'}${entry?.invoiceId ? ` • Against ${entry.invoiceId}` : ''}`,
+            debit: Number(settlement.amount) || 0,
+            credit: 0
           });
         });
         const billed = openingBalance + invoices.reduce((sum, inv) => sum + (Number(inv.total) || 0), 0);
@@ -48656,6 +49515,13 @@
       const supplierProfile = getSupplierProfile(name) || {};
       const purchases = (state.purchases || []).filter((p) => p.supplier === name);
       const supplierPayments = (state.supplierPayments || []).filter((p) => p.supplier === name);
+      const purchaseReturns = (state.purchaseReturns || [])
+        .filter((entry) => String(entry?.supplier || '') === String(name))
+        .filter((entry) => isActivePurchaseReturnForAdjustment(entry));
+      const manualDebitNotes = (state.debitNotes || [])
+        .filter((entry) => String(entry?.supplier || '') === String(name))
+        .filter((entry) => !isLinkedPurchaseReturnDebitNote(entry))
+        .filter((entry) => isActiveDebitNoteForAdjustment(entry));
       const openingBalance = Math.max(0, Number(supplierProfile.openingBalance) || 0);
       if (openingBalance > 0) {
         entries.push({
@@ -48670,7 +49536,7 @@
       }
       purchases.forEach((p) => {
         const total = Number(p.total) || 0;
-        const due = Math.max(0, total - getSupplierPurchasePaid(p.id));
+        const due = getSupplierPurchaseDue(p);
         entries.push({
           date: getLedgerDateValue(p.date || p.createdAt),
           sortOrder: 1,
@@ -48691,6 +49557,58 @@
           detail: `${p.mode || 'cash'}${purchase?.billNo ? ` • Against ${purchase.billNo}` : ''}`,
           debit: 0,
           credit: Number(p.amount) || 0
+        });
+      });
+      purchaseReturns.forEach((entry) => {
+        const refundStatus = normalizeAccountingStatus(entry?.refundStatus || '');
+        const modeLabel = refundStatus === 'refunded' ? 'Refund' : (refundStatus === 'adjusted' ? 'Adjusted' : 'Credit');
+        entries.push({
+          date: getLedgerDateValue(entry.date || entry.createdAt),
+          sortOrder: 3,
+          ref: entry.debitNoteNo || entry.id || 'PR',
+          desc: 'Purchase return / debit',
+          detail: `${modeLabel}${entry?.purchaseId ? ` • Against ${entry.purchaseId}` : ''}`,
+          debit: 0,
+          credit: Number(entry.amount) || 0
+        });
+      });
+      manualDebitNotes.forEach((entry) => {
+        const impact = normalizeAccountingStatus(entry?.impactType || '');
+        const impactLabel = impact === 'refund' ? 'Refund' : (impact === 'credit' ? 'Credit' : 'Adjusted');
+        entries.push({
+          date: getLedgerDateValue(entry.date || entry.createdAt),
+          sortOrder: 4,
+          ref: entry.id || 'DN',
+          desc: 'Debit note issued',
+          detail: `${impactLabel}${entry?.purchaseId ? ` • Against ${entry.purchaseId}` : ''}`,
+          debit: 0,
+          credit: Number(entry.amount) || 0
+        });
+      });
+      purchaseReturns.forEach((entry) => {
+        const settlement = getPurchaseReturnRefundSettlement(entry);
+        if (!settlement) return;
+        entries.push({
+          date: settlement.date || getLedgerDateValue(entry.date || entry.createdAt),
+          sortOrder: 5,
+          ref: entry.id || 'PR-RF',
+          desc: 'Refund received',
+          detail: `${settlement.mode === 'bank' ? 'Bank' : 'Cash'}${entry?.purchaseId ? ` • Against ${entry.purchaseId}` : ''}`,
+          debit: Number(settlement.amount) || 0,
+          credit: 0
+        });
+      });
+      manualDebitNotes.forEach((entry) => {
+        const settlement = getDebitNoteRefundSettlement(entry);
+        if (!settlement) return;
+        entries.push({
+          date: settlement.date || getLedgerDateValue(entry.date || entry.createdAt),
+          sortOrder: 6,
+          ref: entry.id || 'DN-RF',
+          desc: 'Refund received',
+          detail: `${settlement.mode === 'bank' ? 'Bank' : 'Cash'}${entry?.purchaseId ? ` • Against ${entry.purchaseId}` : ''}`,
+          debit: Number(settlement.amount) || 0,
+          credit: 0
         });
       });
       const billed = openingBalance + purchases.reduce((sum, p) => sum + (Number(p.total) || 0), 0);
@@ -48734,6 +49652,21 @@
           const dt = getLedgerDateValue(p.date || p.iso);
           if (dt) allDates.push(dt);
         });
+        (state.salesReturns || []).filter((entry) => String(entry?.customer || '') === String(name)).forEach((entry) => {
+          const dt = getLedgerDateValue(entry.date || entry.createdAt);
+          if (dt) allDates.push(dt);
+          const settledDt = getLedgerDateValue(entry.refundPaidDate || entry.refundDate || '');
+          if (settledDt) allDates.push(settledDt);
+        });
+        (state.creditNotes || [])
+          .filter((entry) => !isLinkedSalesReturnCreditNote(entry))
+          .filter((entry) => String(entry?.customer || '') === String(name))
+          .forEach((entry) => {
+            const dt = getLedgerDateValue(entry.date || entry.createdAt);
+            if (dt) allDates.push(dt);
+            const settledDt = getLedgerDateValue(entry.refundPaidDate || entry.refundDate || '');
+            if (settledDt) allDates.push(settledDt);
+          });
       } else {
         const supplierProfile = getSupplierProfile(name) || {};
         const openingDate = getLedgerDateValue(supplierProfile.openingBalanceDate || '');
@@ -48746,6 +49679,21 @@
           const dt = getLedgerDateValue(p.date || p.iso);
           if (dt) allDates.push(dt);
         });
+        (state.purchaseReturns || []).filter((entry) => String(entry?.supplier || '') === String(name)).forEach((entry) => {
+          const dt = getLedgerDateValue(entry.date || entry.createdAt);
+          if (dt) allDates.push(dt);
+          const settledDt = getLedgerDateValue(entry.refundReceivedDate || entry.refundDate || '');
+          if (settledDt) allDates.push(settledDt);
+        });
+        (state.debitNotes || [])
+          .filter((entry) => !isLinkedPurchaseReturnDebitNote(entry))
+          .filter((entry) => String(entry?.supplier || '') === String(name))
+          .forEach((entry) => {
+            const dt = getLedgerDateValue(entry.date || entry.createdAt);
+            if (dt) allDates.push(dt);
+            const settledDt = getLedgerDateValue(entry.refundReceivedDate || entry.refundDate || '');
+            if (settledDt) allDates.push(settledDt);
+          });
       }
       const today = new Date().toISOString().slice(0, 10);
       const from = options.from || allDates.sort()[0] || today.slice(0, 8) + '01';
@@ -49737,38 +50685,35 @@
       targetLineItemsBody.appendChild(row);
       applyItemToInvoiceRow(row, created);
 
+      let pickerCatalogSaveFailed = false;
       try {
         const saved = loadSavedItemCatalog();
-        const deduped = saved.filter((entry) => !(
-          normalizeCatalogType(entry.type) === created.type
-          && String(entry.name || '').trim().toLowerCase() === created.name.toLowerCase()
-        ));
+        const deduped = saved.filter((entry) =>
+          String(entry.name || '').trim().toLowerCase() !== created.name.toLowerCase()
+        );
         deduped.unshift(created);
         saveItemCatalog(deduped);
-
-        const liveCatalog = Array.isArray(state.serviceCatalog) ? state.serviceCatalog : [];
-        const normalizedLive = liveCatalog.map(normalizeServiceCatalogEntry).filter(Boolean);
-        const nextCatalogEntry = normalizeServiceCatalogEntry({
-          type: created.type,
-          name: created.name,
-          hsn: created.hsn || '',
-          sac: created.sac || '',
-          price: created.price || 0,
-          customerPricing: created.customerPricing || {}
-        });
-        if (nextCatalogEntry) {
-          const withoutDup = normalizedLive.filter((entry) => !(
-            normalizeCatalogType(entry.type) === normalizeCatalogType(nextCatalogEntry.type)
-            && String(entry.name || '').trim().toLowerCase() === String(nextCatalogEntry.name || '').trim().toLowerCase()
-          ));
-          withoutDup.unshift(nextCatalogEntry);
-          state.serviceCatalog = withoutDup;
-          saveState();
-          if (typeof renderProductCatalog === 'function') renderProductCatalog();
-          if (typeof renderServiceCatalog === 'function') renderServiceCatalog();
-        }
       } catch (_) {
-        alert('Item added, but could not save it in catalog.');
+        pickerCatalogSaveFailed = true;
+      }
+
+      const liveCatalog = Array.isArray(state.serviceCatalog) ? state.serviceCatalog : [];
+      const nextCatalogEntry = normalizeServiceCatalogEntry({
+        type: created.type,
+        name: created.name,
+        hsn: created.hsn || '',
+        sac: created.sac || '',
+        price: created.price || 0,
+        customerPricing: created.customerPricing || {}
+      });
+      if (nextCatalogEntry) {
+        state.serviceCatalog = buildCatalogNextState(liveCatalog, nextCatalogEntry);
+        saveState();
+        if (typeof renderProductCatalog === 'function') renderProductCatalog();
+        if (typeof renderServiceCatalog === 'function') renderServiceCatalog();
+      }
+      if (pickerCatalogSaveFailed) {
+        alert('Item added and synced to Products/Services, but picker cache save failed in browser storage.');
       }
 
       closeLineItemPicker();
@@ -50050,6 +50995,7 @@
     const STORAGE_KEY = 'metrox_taxinvoo_demo_state';
     const BACKUP_KEY = 'metrox_taxinvoo_demo_state_backup';
     const LAST_GOOD_KEY = 'metrox_taxinvoo_last_good_state';
+    const STATE_SHADOW_KEY_PREFIX = 'metrox_state_shadow_v1__';
     const TRIAL_DATA_CLEANUP_KEY = 'metrox_trial_data_cleanup_v2';
     const REQUIRE_LOGIN_EVERY_SESSION = false;
     const SCOPED_STATE_KEY_SEPARATOR = '__';
@@ -50412,6 +51358,78 @@
       }
     }
 
+    function collectPayloadIds(payload, key) {
+      return new Set(
+        (Array.isArray(payload?.[key]) ? payload[key] : [])
+          .map((row) => String(row?.id || '').trim())
+          .filter(Boolean)
+      );
+    }
+
+    function hasMissingPayloadIds(sourcePayload, targetPayload, key) {
+      const sourceIds = collectPayloadIds(sourcePayload, key);
+      const targetIds = collectPayloadIds(targetPayload, key);
+      for (const id of sourceIds) {
+        if (!targetIds.has(id)) return true;
+      }
+      return false;
+    }
+
+    function chooseRicherLocalPayload(primary, secondary) {
+      const a = primary && typeof primary === 'object' ? primary : {};
+      const b = secondary && typeof secondary === 'object' ? secondary : {};
+      const aCount = countStoredRecords(a);
+      const bCount = countStoredRecords(b);
+      const aUpdated = Date.parse(String(a?._meta?.updated_at || '')) || 0;
+      const bUpdated = Date.parse(String(b?._meta?.updated_at || '')) || 0;
+      if (aUpdated && bUpdated && Math.abs(aUpdated - bUpdated) > 1500) {
+        const newer = aUpdated > bUpdated ? a : b;
+        const older = newer === a ? b : a;
+        const newerCount = newer === a ? aCount : bCount;
+        const olderCount = newer === a ? bCount : aCount;
+        if (newerCount === 0 && olderCount > 0) return older;
+        return newer;
+      }
+      const aHasUniqueInvoices = hasMissingPayloadIds(a, b, 'invoices');
+      const bHasUniqueInvoices = hasMissingPayloadIds(b, a, 'invoices');
+      const aHasUniquePayments = hasMissingPayloadIds(a, b, 'payments');
+      const bHasUniquePayments = hasMissingPayloadIds(b, a, 'payments');
+      if (aHasUniqueInvoices || aHasUniquePayments) return a;
+      if (bHasUniqueInvoices || bHasUniquePayments) return b;
+      if (aCount > bCount) return a;
+      if (bCount > aCount) return b;
+      return aUpdated >= bUpdated ? a : b;
+    }
+
+    function getStateShadowKey(profileId = '') {
+      const businessId = resolveStorageBusinessId(profileId || activeBusinessProfileId);
+      return businessId ? `${STATE_SHADOW_KEY_PREFIX}${businessId}` : '';
+    }
+
+    function readStateShadowPayload(profileId = '') {
+      const key = getStateShadowKey(profileId);
+      if (!key) return null;
+      const fromSession = (() => {
+        try { return parseStoredPayload(sessionStorage.getItem(key)); } catch (_) { return null; }
+      })();
+      const fromLocal = (() => {
+        try { return parseStoredPayload(localStorage.getItem(key)); } catch (_) { return null; }
+      })();
+      return chooseRicherLocalPayload(fromSession, fromLocal);
+    }
+
+    function persistStateShadow(payload, profileId = '') {
+      const safePayload = payload && typeof payload === 'object' ? payload : null;
+      if (!safePayload) return;
+      const key = getStateShadowKey(profileId);
+      if (!key) return;
+      const existing = readStateShadowPayload(profileId);
+      const selected = chooseRicherLocalPayload(existing, safePayload);
+      const serialized = JSON.stringify(selected || safePayload);
+      try { sessionStorage.setItem(key, serialized); } catch (_) {}
+      try { localStorage.setItem(key, serialized); } catch (_) {}
+    }
+
     function findBestStoredPayloadAcrossAllKeys() {
       const candidateKeys = new Set([STORAGE_KEY, BACKUP_KEY, LAST_GOOD_KEY]);
       try {
@@ -50545,6 +51563,7 @@
           }
         }
       }
+      persistStateShadow(payload, activeBusinessProfileId);
       scheduleReminderEngine();
       if (typeof window.queueCloudStateSync === 'function') {
         window.queueCloudStateSync();
@@ -50586,6 +51605,10 @@
       const lastGoodCount = countStoredRecords(parsedLastGood);
       if (backupCount > selectedCount) selected = parsedBackup;
       if (lastGoodCount > countStoredRecords(selected)) selected = parsedLastGood;
+      const shadowPayload = readStateShadowPayload(targetBusinessId);
+      if (shadowPayload && countStoredRecords(shadowPayload) > 0) {
+        selected = chooseRicherLocalPayload(selected, shadowPayload);
+      }
       const bestAny = findBestStoredPayloadAcrossAllKeys();
       const allowCrossBusinessFallback = !targetBusinessId || !Array.isArray(businessProfiles) || businessProfiles.length <= 1;
       if ((!selected || countStoredRecords(selected) === 0) && bestAny?.count > 0 && allowCrossBusinessFallback) {
@@ -50721,6 +51744,7 @@
           state.company.qr = String(fallbackCompany.qr || '').trim();
         }
         persistBusinessMedia(targetBusinessId, state.company);
+        persistStateShadow(data, targetBusinessId);
         ensureReminderState();
         if (!state.company.invoiceNumber.pad) {
           const nextStr = String(state.company.invoiceNumber.next || '001');
@@ -51151,7 +52175,16 @@
         notes: String(item.notes || '').trim(),
         createdAt: item.createdAt || new Date().toISOString(),
         sourceType: 'sales_return',
-        linkedSalesReturnId
+        linkedSalesReturnId,
+        settlementType: item.refundMode === 'refund' ? 'refund' : (item.refundMode === 'adjust' ? 'adjusted' : 'credit'),
+        refundStatus: String(item.refundStatus || '').trim(),
+        refundSettlementStatus: String(item.refundSettlementStatus || '').trim(),
+        refundSettled: item.refundSettled === true,
+        refundPaidDate: String(item.refundPaidDate || '').trim(),
+        refundPaymentMode: String(item.refundPaymentMode || '').trim(),
+        refundBankAccountId: String(item.refundBankAccountId || '').trim(),
+        refundReference: String(item.refundReference || '').trim(),
+        refundAmount: Number(item.refundAmount) || 0
       };
       const existing = state.creditNotes.find((entry) => {
         if (linkedSalesReturnId && String(entry?.linkedSalesReturnId || '') === linkedSalesReturnId) return true;
@@ -51212,7 +52245,9 @@
       const getRefundStatus = (item) => {
         const mode = String(item.refundMode || '').toLowerCase();
         const status = String(item.refundStatus || '').toLowerCase();
-        if (status === 'refunded' || mode === 'refund') return 'Refund';
+        const settlementStatus = String(item.refundSettlementStatus || '').toLowerCase();
+        const settled = item.refundSettled === true || status === 'refunded' || settlementStatus === 'refunded';
+        if (mode === 'refund') return settled ? 'Refunded' : 'Refund Pending';
         if (status.includes('adjust') || mode === 'adjust') return 'Adjusted';
         if (status.includes('credit') || mode === 'credit') return 'Credit';
         return 'Credit';
@@ -51277,13 +52312,34 @@
           const id = btn.dataset.salesReturnRefund || '';
           const item = (state.salesReturns || []).find((entry) => String(entry.id || '') === String(id));
           if (!item) return;
+          const today = new Date().toISOString().slice(0, 10);
+          const mode = normalizePaymentMode(item.refundPaymentMode || item.refundMode || 'cash');
           item.status = 'refunded';
           item.refundMode = 'refund';
           item.refundStatus = 'refunded';
+          item.refundSettlementStatus = 'refunded';
+          item.refundSettled = true;
+          item.refundPaidDate = String(item.refundPaidDate || today);
+          item.refundPaymentMode = mode;
+          if (mode === 'bank') {
+            item.refundBankAccountId = String(item.refundBankAccountId || getDefaultBankAccountId() || '');
+          } else {
+            item.refundBankAccountId = '';
+          }
+          const explicitRefund = Number(item.refundAmount);
+          const refundableAmount = Number(item.refundableAmount);
+          const fallbackAmount = Number(item.amount);
+          item.refundAmount = Number.isFinite(explicitRefund) && explicitRefund > 0
+            ? explicitRefund
+            : (Number.isFinite(refundableAmount) && refundableAmount > 0 ? refundableAmount : Math.max(0, fallbackAmount || 0));
           upsertSalesReturnLinkedCreditNote(item);
           saveState();
           renderSalesReturnTable();
           renderCreditNoteTable();
+          renderCashBank();
+          renderLedger();
+          updateDashboard();
+          updateProfitLoss();
         });
       });
       salesReturnTableBody.querySelectorAll('[data-sales-return-adjust]').forEach((btn) => {
@@ -51294,10 +52350,17 @@
           item.status = 'adjusted';
           item.refundMode = 'adjust';
           item.refundStatus = 'adjusted';
+          item.refundSettlementStatus = 'pending';
+          item.refundSettled = false;
+          item.refundAmount = 0;
           upsertSalesReturnLinkedCreditNote(item);
           saveState();
           renderSalesReturnTable();
           renderCreditNoteTable();
+          renderCashBank();
+          renderLedger();
+          updateDashboard();
+          updateProfitLoss();
         });
       });
     }
@@ -51977,10 +53040,16 @@
         const statusKey = String(status || 'issued').toLowerCase();
         const statusClass = statusKey === 'cancelled' ? 'status-pill pr-status-cancelled'
           : (statusKey === 'refunded' ? 'status-pill status-refunded' : 'status-pill status-issued');
-        const refundStatus = String(item.refundStatus || 'Credited');
-        const refundKey = refundStatus.toLowerCase();
-        const refundClass = refundKey === 'refunded' ? 'status-pill status-refunded'
-          : (refundKey === 'adjusted' ? 'status-pill status-adjusted' : 'status-pill status-issued');
+        const refundStatusRaw = String(item.refundStatus || 'Credited');
+        const refundStatusKey = refundStatusRaw.toLowerCase();
+        const receiptStatus = String(item.refundReceiptStatus || '').toLowerCase();
+        const refundReceived = item.refundReceived === true || receiptStatus === 'received';
+        const refundStatus = refundStatusKey === 'refunded'
+          ? (refundReceived ? 'Refund Received' : 'Refund Pending')
+          : refundStatusRaw;
+        const refundClass = refundStatusKey === 'refunded'
+          ? (refundReceived ? 'status-pill status-refunded' : 'status-pill dn-status-refund-pending')
+          : (refundStatusKey === 'adjusted' ? 'status-pill status-adjusted' : 'status-pill status-issued');
         const purchase = state.purchases.find((p) => p.id === item.purchaseId);
         return `<tr>
           <td>${item.date || '—'}</td>
@@ -52020,6 +53089,7 @@
           state.purchaseReturns = (state.purchaseReturns || []).filter((item) => item.id !== id);
           saveState();
           renderPurchaseReturnTable();
+          renderCashBank();
           updateDashboard();
           updateProfitLoss();
           renderLedger();
@@ -52070,7 +53140,12 @@
           : (statusKey === 'adjusted' ? 'status-pill dn-status-adjusted'
             : (statusKey === 'refund pending' ? 'status-pill dn-status-refund-pending' : 'status-pill dn-status-issued'));
         const purchase = state.purchases.find((p) => p.id === item.purchaseId);
-        const impactType = String(item.impactType || 'Adjusted');
+        const impactTypeRaw = String(item.impactType || 'Adjusted');
+        const impactKey = impactTypeRaw.toLowerCase();
+        const refundReceived = item.refundReceived === true || String(item.refundReceiptStatus || '').toLowerCase() === 'received';
+        const impactType = impactKey === 'refund'
+          ? (refundReceived ? 'Refund (Received)' : 'Refund (Pending)')
+          : impactTypeRaw;
         const linkedPurchaseReturn = String(item.linkedPurchaseReturnId || '').trim() || '—';
         return `<tr>
           <td>${item.date || '—'}</td>
@@ -52109,6 +53184,7 @@
           state.debitNotes = (state.debitNotes || []).filter((item) => item.id !== id);
           saveState();
           renderDebitNoteTable();
+          renderCashBank();
           updateDashboard();
           updateProfitLoss();
           renderLedger();
@@ -52515,15 +53591,18 @@
     }
 
     function getSupplierPurchasePaid(purchaseId) {
+      const targetId = String(purchaseId || '').trim();
       return (state.supplierPayments || [])
-        .filter(p => p.purchaseId === purchaseId)
-        .reduce((sum, p) => sum + (p.amount || 0), 0);
+        .filter((p) => String(p?.purchaseId || '').trim() === targetId)
+        .reduce((sum, p) => sum + (Number(p?.amount) || 0), 0);
     }
 
     function getSupplierPurchaseDue(purchase) {
       const total = Number(purchase.total) || 0;
       const paid = getSupplierPurchasePaid(purchase.id);
-      return Math.max(0, total - paid);
+      const adjustments = getPurchaseTotalAdjustmentAmount(purchase?.id);
+      const adjustedTotal = Math.max(0, toRoundedCurrency(total - adjustments));
+      return Math.max(0, toRoundedCurrency(adjustedTotal - paid));
     }
 
     function renderSupplierDetail(name) {
@@ -54038,6 +55117,11 @@
     const exportPdfBtn = document.getElementById('export-gst-pdf');
     if (exportPdfBtn) {
       exportPdfBtn.addEventListener('click', () => {
+        if (blockIfNoFeature('export_reports', {
+          message: 'Upgrade to Pro plan for advanced report exports',
+          redirectOnBlock: true,
+          throwOnBlock: true
+        })) return;
         const gstSel = document.getElementById('gst-month');
         const monthKey = gstSel?.value || new Date().toISOString().slice(0, 7);
         const monthInvoices = state.invoices.filter(inv => (inv.createdAt || '').startsWith(monthKey));
@@ -54074,6 +55158,11 @@
     const exportExcelBtn = document.getElementById('export-gst-excel');
     if (exportExcelBtn) {
       exportExcelBtn.addEventListener('click', () => {
+        if (blockIfNoFeature('export_reports', {
+          message: 'Upgrade to Pro plan for advanced report exports',
+          redirectOnBlock: true,
+          throwOnBlock: true
+        })) return;
         const headers = ['Invoice ID', 'Date', 'Customer', 'Taxable', 'CGST', 'SGST', 'IGST', 'Total'];
         const rows = state.invoices.map(inv => [
           inv.id,
@@ -54896,8 +55985,7 @@
       const prefix = isNonGst ? (cfg.nonGstPrefix || getNonGstInvoicePrefix(cfg.prefix)) : (cfg.prefix || 'EG-');
       const nextNum = parseInt(isNonGst ? cfg.nonGstNext : cfg.next, 10) || 1;
       const pad = isNonGst ? (cfg.nonGstPad || 3) : (cfg.pad || 3);
-      const prefixWithSpace = prefix.endsWith(' ') ? prefix : `${prefix} `;
-      return `${prefixWithSpace}${String(nextNum).padStart(pad, '0')}`;
+      return buildInvoiceSeriesId(prefix, nextNum, pad);
     }
 
     function getInvoiceSeriesConfig(invoiceType = 'gst') {
@@ -54924,6 +56012,44 @@
         value: parseInt(match[1], 10) || 0,
         pad: match[1].length
       };
+    }
+
+    function buildInvoiceSeriesId(prefix, number, pad = 3) {
+      const safePrefix = String(prefix || 'EG-').trim() || 'EG-';
+      const safeNumber = Math.max(1, parseInt(number, 10) || 1);
+      const safePad = Math.max(1, Number(pad) || 3);
+      const prefixWithSpace = safePrefix.endsWith(' ') ? safePrefix : `${safePrefix} `;
+      return `${prefixWithSpace}${String(safeNumber).padStart(safePad, '0')}`;
+    }
+
+    function advanceInvoiceSeriesAfterCreate(invoiceId, invoiceType = 'gst') {
+      const cfg = ensureInvoiceNumberConfig();
+      const isNonGst = invoiceType === 'non-gst';
+      const nextKey = isNonGst ? 'nonGstNext' : 'next';
+      const padKey = isNonGst ? 'nonGstPad' : 'pad';
+      const startKey = isNonGst ? 'nonGstStart' : 'start';
+      const seriesType = isNonGst ? 'non-gst' : 'gst';
+      const prefix = isNonGst ? (cfg.nonGstPrefix || getNonGstInvoicePrefix(cfg.prefix)) : (cfg.prefix || 'EG-');
+      const currentNext = Math.max(1, parseInt(cfg[nextKey], 10) || 1);
+      const parsed = parseInvoiceSeriesNumber(invoiceId, prefix);
+      const inferredPad = parsed?.pad || String(cfg[nextKey] || '001').length || 3;
+      const pad = Math.max(1, Number(cfg[padKey] || 3) || 3, inferredPad);
+      let candidate = Math.max(currentNext, parsed?.value ? parsed.value + 1 : currentNext + 1);
+      const usedIds = new Set(
+        (state.invoices || [])
+          .filter((inv) => String(inv?.type || 'gst').toLowerCase() === seriesType)
+          .map((inv) => String(inv?.id || '').trim())
+          .filter(Boolean)
+      );
+      let guard = 0;
+      while (guard < 5000 && usedIds.has(buildInvoiceSeriesId(prefix, candidate, pad))) {
+        candidate += 1;
+        guard += 1;
+      }
+      cfg[nextKey] = String(candidate).padStart(pad, '0');
+      cfg[padKey] = pad;
+      if (!cfg[startKey]) cfg[startKey] = String(currentNext).padStart(pad, '0');
+      state.company.invoiceNumber = { ...(state.company.invoiceNumber || {}), ...cfg };
     }
 
     function findNextSeriesNumber(numbers, startValue = 1, preferGapFill = true) {
@@ -55222,234 +56348,270 @@
 
     async function handleGenerateInvoice() {
       if (!form) return;
-      if (!hasPermission('manage_invoices')) {
-        alert('You do not have access to create or edit invoices.');
-        return;
+      if (form.dataset.submitting === '1') return;
+      form.dataset.submitting = '1';
+      if (generateBtn) {
+        generateBtn.disabled = true;
+        generateBtn.textContent = form.dataset.editing ? 'Updating Invoice...' : 'Generating Invoice...';
       }
-      const isEditing = !!form.dataset.editing;
-      if (!isEditing) {
-        const allowed = await enforceInvoiceLimitOrAlert();
-        if (!allowed) {
-          setInvoiceUiNote('Starter plan allows up to 50 invoices/month. Upgrade to Growth to unlock this feature 🚀', 'warning');
+      try {
+        if (!hasPermission('manage_invoices')) {
+          alert('You do not have access to create or edit invoices.');
           return;
         }
-      }
-      const data = new FormData(form);
-      const customer = data.get('customer').trim();
-      const invoiceType = data.get('invoiceType');
-      const invoiceDateValue = String(data.get('invoiceDate') || '').trim() || new Date().toISOString().slice(0, 10);
-      const dueDateValue = String(data.get('dueDate') || '').trim() || (() => {
-        const base = parseDateValue(invoiceDateValue) || new Date();
-        const dt = new Date(base);
-        dt.setDate(dt.getDate() + 30);
-        return dt.toISOString().slice(0, 10);
-      })();
-      const nonGstReason = invoiceType === 'non-gst'
-        ? String(data.get('nonGstReason') || 'unregistered_customer').trim()
-        : '';
-      const customerGstin = invoiceType === 'non-gst' ? '' : String(data.get('customerGstin') || '').trim();
-      const consigneeDifferent = !!form.consigneeDifferent?.checked;
-      const consignee = consigneeDifferent
-        ? {
-          isDifferent: true,
-          name: String(data.get('consigneeName') || '').trim(),
-          address: String(data.get('consigneeAddress') || '').trim(),
-          gstin: invoiceType === 'non-gst' ? '' : String(data.get('consigneeGstin') || '').trim().toUpperCase(),
-          phone: String(data.get('consigneePhone') || '').trim(),
-          state: String(data.get('consigneeState') || '').trim(),
-          stateCode: gstStateCodes[data.get('consigneeState')] || ''
+        const isEditing = !!form.dataset.editing;
+        if (!isEditing) {
+          const allowed = await enforceInvoiceLimitOrAlert();
+          if (!allowed) {
+            setInvoiceUiNote(STARTER_INVOICE_LIMIT_MESSAGE, 'warning');
+            return;
+          }
         }
-        : {
-          isDifferent: false,
-          name: '',
-          address: '',
-          gstin: '',
-          phone: '',
-          state: '',
-          stateCode: ''
-        };
-      const supply = data.get('supply');
-      const rate = Number(data.get('gstRate'));
-      if (customerGstin && !isValidIndianGstin(customerGstin)) {
-        alert('Enter valid Customer GSTIN.');
-        return;
-      }
-      if (consigneeDifferent) {
-        if (!consignee.name || !consignee.address) {
-          alert('Enter consignee name and address.');
-          return;
-        }
-        if (consignee.gstin && !isValidIndianGstin(consignee.gstin)) {
-          alert('Enter valid Consignee GSTIN.');
-          return;
-        }
-      }
-      const items = collectLineItems();
-      const additionalCharges = collectAdditionalCharges();
-      updateAdditionalChargesTotals();
-      const compliance = {
-        tdsRate: !!state.company?.tdsEnabled ? normalizeComplianceRate(data.get('tdsRate')) : 0,
-        tdsSection: !!state.company?.tdsEnabled ? String(data.get('tdsSection') || '').trim() : '',
-        tcsRate: !!state.company?.tcsEnabled ? normalizeComplianceRate(data.get('tcsRate')) : 0,
-        tcsSection: !!state.company?.tcsEnabled ? String(data.get('tcsSection') || '').trim() : ''
-      };
-      if (!items.length) {
-        alert('Please add at least one line item.');
-        return;
-      }
-      const itemsTaxable = items.reduce((sum, item) => sum + item.total, 0);
-      const calc = calculateInvoiceTotalsFromItemsAndCharges(
-        itemsTaxable,
-        additionalCharges,
-        rate,
-        supply,
-        invoiceType,
-        compliance
-      );
 
-      const oldId = String(form.dataset.editing || '').trim();
-      const manualId = String(data.get('invoiceId') || '').trim();
-      const bankAccountId = String(data.get('bankAccountId') || '').trim() || getResolvedDefaultInvoiceBankId();
-      const bankSnapshot = getBillingBankSnapshot(bankAccountId);
-      const cfg = ensureInvoiceNumberConfig();
-      const isNonGstInvoice = invoiceType === 'non-gst';
-      const nextNum = parseInt(isNonGstInvoice ? cfg.nonGstNext : cfg.next, 10) || 1;
-      const pad = isNonGstInvoice ? (cfg.nonGstPad || 3) : (cfg.pad || 3);
-      const id = isEditing ? (manualId || oldId) : (manualId || getNextInvoiceId(invoiceType));
-      if (!id) {
-        alert('Invoice number is required.');
-        return;
-      }
-      const duplicate = state.invoices.find((inv) => inv.id === id);
-      if (duplicate && (!isEditing || id !== oldId)) {
-        alert('Invoice number already exists. Please use a different number.');
-        return;
-      }
-      if (!isEditing) {
-        if (isNonGstInvoice) {
-          state.company.invoiceNumber.nonGstNext = String(nextNum + 1).padStart(pad, '0');
-        } else {
-          state.company.invoiceNumber.next = String(nextNum + 1).padStart(pad, '0');
+        const data = new FormData(form);
+        const customer = String(data.get('customer') || '').trim();
+        const invoiceType = String(data.get('invoiceType') || 'gst').trim();
+        const invoiceDateValue = String(data.get('invoiceDate') || '').trim() || new Date().toISOString().slice(0, 10);
+        const dueDateValue = String(data.get('dueDate') || '').trim() || (() => {
+          const base = parseDateValue(invoiceDateValue) || new Date();
+          const dt = new Date(base);
+          dt.setDate(dt.getDate() + 30);
+          return dt.toISOString().slice(0, 10);
+        })();
+        const nonGstReason = invoiceType === 'non-gst'
+          ? String(data.get('nonGstReason') || 'unregistered_customer').trim()
+          : '';
+        const customerGstin = invoiceType === 'non-gst' ? '' : String(data.get('customerGstin') || '').trim();
+        const consigneeDifferent = !!form.consigneeDifferent?.checked;
+        const consignee = consigneeDifferent
+          ? {
+            isDifferent: true,
+            name: String(data.get('consigneeName') || '').trim(),
+            address: String(data.get('consigneeAddress') || '').trim(),
+            gstin: invoiceType === 'non-gst' ? '' : String(data.get('consigneeGstin') || '').trim().toUpperCase(),
+            phone: String(data.get('consigneePhone') || '').trim(),
+            state: String(data.get('consigneeState') || '').trim(),
+            stateCode: gstStateCodes[data.get('consigneeState')] || ''
+          }
+          : {
+            isDifferent: false,
+            name: '',
+            address: '',
+            gstin: '',
+            phone: '',
+            state: '',
+            stateCode: ''
+          };
+        const supply = data.get('supply');
+        const rate = Number(data.get('gstRate'));
+
+        if (customerGstin && !isValidIndianGstin(customerGstin)) {
+          alert('Enter valid Customer GSTIN.');
+          return;
         }
-      }
-      const invoice = {
-        id,
-        date: invoiceDateValue,
-        dueDate: dueDateValue,
-        customer,
-        customerDetails: {
+        if (consigneeDifferent) {
+          if (!consignee.name || !consignee.address) {
+            alert('Enter consignee name and address.');
+            return;
+          }
+          if (consignee.gstin && !isValidIndianGstin(consignee.gstin)) {
+            alert('Enter valid Consignee GSTIN.');
+            return;
+          }
+        }
+
+        const items = collectLineItems();
+        const additionalCharges = collectAdditionalCharges();
+        updateAdditionalChargesTotals();
+        const compliance = {
+          tdsRate: !!state.company?.tdsEnabled ? normalizeComplianceRate(data.get('tdsRate')) : 0,
+          tdsSection: !!state.company?.tdsEnabled ? String(data.get('tdsSection') || '').trim() : '',
+          tcsRate: !!state.company?.tcsEnabled ? normalizeComplianceRate(data.get('tcsRate')) : 0,
+          tcsSection: !!state.company?.tcsEnabled ? String(data.get('tcsSection') || '').trim() : ''
+        };
+        if (!items.length) {
+          alert('Please add at least one line item.');
+          return;
+        }
+        const itemsTaxable = items.reduce((sum, item) => sum + item.total, 0);
+        const calc = calculateInvoiceTotalsFromItemsAndCharges(
+          itemsTaxable,
+          additionalCharges,
+          rate,
+          supply,
+          invoiceType,
+          compliance
+        );
+
+        const oldId = String(form.dataset.editing || '').trim();
+        const manualId = String(data.get('invoiceId') || '').trim();
+        const bankAccountId = String(data.get('bankAccountId') || '').trim() || getResolvedDefaultInvoiceBankId();
+        const bankSnapshot = getBillingBankSnapshot(bankAccountId);
+        const id = isEditing ? (manualId || oldId) : (manualId || getNextInvoiceId(invoiceType));
+        if (!id) {
+          alert('Invoice number is required.');
+          return;
+        }
+        const duplicate = state.invoices.find((inv) => inv.id === id);
+        if (duplicate && (!isEditing || id !== oldId)) {
+          alert('Invoice number already exists. Please use a different number.');
+          return;
+        }
+
+        const invoice = {
+          id,
+          date: invoiceDateValue,
+          dueDate: dueDateValue,
+          customer,
+          customerDetails: {
+            gstin: customerGstin,
+            phone: data.get('customerPhone'),
+            email: data.get('customerEmail'),
+            address: data.get('customerAddress'),
+            state: data.get('customerState'),
+            stateCode: gstStateCodes[data.get('customerState')] || ''
+          },
+          consignee,
+          bankAccountId,
+          bank: bankSnapshot,
+          items,
+          additionalCharges,
+          type: invoiceType,
+          nonGstReason,
+          supply,
+          rate,
+          taxable: calc.taxable,
+          cgst: calc.cgst,
+          sgst: calc.sgst,
+          igst: calc.igst,
+          tdsRate: calc.tdsRate,
+          tdsAmount: calc.tdsAmount,
+          tdsSection: calc.tdsSection,
+          tcsRate: calc.tcsRate,
+          tcsAmount: calc.tcsAmount,
+          tcsSection: calc.tcsSection,
+          total: calc.total,
+          netReceivable: calc.netReceivable,
+          roundOff: calc.roundOff,
+          paidAmount: 0,
+          createdAt: `${invoiceDateValue}T00:00:00`,
+          notes: data.get('notes') || ''
+        };
+
+        state.customers[customer] = {
+          name: customer,
           gstin: customerGstin,
           phone: data.get('customerPhone'),
           email: data.get('customerEmail'),
           address: data.get('customerAddress'),
           state: data.get('customerState'),
           stateCode: gstStateCodes[data.get('customerState')] || ''
-        },
-        consignee,
-        bankAccountId,
-        bank: bankSnapshot,
-        items,
-        additionalCharges,
-        type: invoiceType,
-        nonGstReason,
-        supply,
-        rate,
-        taxable: calc.taxable,
-        cgst: calc.cgst,
-        sgst: calc.sgst,
-        igst: calc.igst,
-        tdsRate: calc.tdsRate,
-        tdsAmount: calc.tdsAmount,
-        tdsSection: calc.tdsSection,
-        tcsRate: calc.tcsRate,
-        tcsAmount: calc.tcsAmount,
-        tcsSection: calc.tcsSection,
-        total: calc.total,
-        netReceivable: calc.netReceivable,
-        roundOff: calc.roundOff,
-        paidAmount: 0,
-        createdAt: `${invoiceDateValue}T00:00:00`,
-        notes: data.get('notes') || ''
-      };
+        };
 
-      state.customers[customer] = {
-        name: customer,
-        gstin: customerGstin,
-        phone: data.get('customerPhone'),
-        email: data.get('customerEmail'),
-        address: data.get('customerAddress'),
-        state: data.get('customerState'),
-        stateCode: gstStateCodes[data.get('customerState')] || ''
-      };
-
-      setInvoiceStatus(invoice);
-      if (isEditing) {
-        const idx = state.invoices.findIndex(inv => inv.id === oldId);
-        if (idx !== -1) {
-          invoice.paidAmount = state.invoices[idx].paidAmount || 0;
-          setInvoiceStatus(invoice);
-          state.invoices[idx] = invoice;
-          if (id !== oldId) {
-            state.payments = (state.payments || []).map((payment) => (
-              payment.invoiceId === oldId ? { ...payment, invoiceId: id } : payment
-            ));
+        setInvoiceStatus(invoice);
+        if (isEditing) {
+          const idx = state.invoices.findIndex(inv => inv.id === oldId);
+          if (idx !== -1) {
+            invoice.paidAmount = state.invoices[idx].paidAmount || 0;
+            setInvoiceStatus(invoice);
+            state.invoices[idx] = invoice;
+            if (id !== oldId) {
+              state.payments = (state.payments || []).map((payment) => (
+                payment.invoiceId === oldId ? { ...payment, invoiceId: id } : payment
+              ));
+            }
           }
+        } else {
+          const latestBusinessForFinalCheck = await refreshBusinessForInvoiceLimit();
+          if (!canCreateInvoice(latestBusinessForFinalCheck)) {
+            showStarterInvoiceLimitBlock({ note: true, redirect: true });
+            return;
+          }
+          state.invoices.push(invoice);
+          advanceInvoiceSeriesAfterCreate(id, invoiceType);
+          try {
+            if (typeof window.incrementBusinessInvoiceCount === 'function') {
+              await window.incrementBusinessInvoiceCount(1);
+            } else {
+              const currentUser = getUserDataSnapshot() || {};
+              syncGlobalBusinessData({
+                ...currentUser,
+                invoice_count: Number(currentUser.invoice_count || 0) + 1
+              });
+            }
+          } catch (_) {}
         }
-      } else {
-        const latestBusinessForFinalCheck = await refreshBusinessForInvoiceLimit();
-        if (!canCreateInvoice(latestBusinessForFinalCheck)) {
-          setInvoiceUiNote('Starter plan allows up to 50 invoices/month. Upgrade to Growth to unlock this feature 🚀', 'warning');
-          alert('Starter plan allows up to 50 invoices/month. Upgrade to Growth to unlock this feature 🚀');
-          return;
-        }
-        state.invoices.push(invoice);
+
         try {
-          if (typeof window.incrementBusinessInvoiceCount === 'function') {
-            await window.incrementBusinessInvoiceCount(1);
-          } else {
-            const currentUser = getUserDataSnapshot() || {};
-            syncGlobalBusinessData({
-              ...currentUser,
-              invoice_count: Number(currentUser.invoice_count || 0) + 1
-            });
+          syncCatalogEntriesFromInvoiceItems(items);
+        } catch (catalogErr) {
+          console.warn('Invoice saved but catalog sync failed.', catalogErr);
+        }
+        saveState();
+
+        const runInvoiceUiStep = (label, fn) => {
+          try {
+            fn();
+          } catch (uiErr) {
+            console.warn(`Invoice UI refresh step failed: ${label}`, uiErr);
           }
-        } catch (_) {}
+        };
+
+        runInvoiceUiStep('preview', () => updatePreview(invoice));
+        runInvoiceUiStep('invoice table', () => updateInvoiceTable());
+        runInvoiceUiStep('dashboard', () => updateDashboard());
+        runInvoiceUiStep('profit and loss', () => updateProfitLoss());
+        runInvoiceUiStep('customers', () => renderCustomers());
+        runInvoiceUiStep('invoice downloads', () => renderInvoiceDownloads());
+        runInvoiceUiStep('customer select', () => populateCustomerSelect());
+        clearInvoiceDraft();
+
+        form.reset();
+        if (customerSelect) {
+          customerSelect.value = '';
+          customerSelect.dataset.currentValue = '';
+        }
+        const gstRateField = form.querySelector('[name="gstRate"]');
+        if (gstRateField) gstRateField.value = '18';
+        if (nonGstReasonInput) nonGstReasonInput.value = 'unregistered_customer';
+        const customerSearchInput = document.getElementById('customer-select-search');
+        if (customerSearchInput) customerSearchInput.value = '';
+        delete form.dataset.editing;
+
+        syncInvoiceComplianceVisibility();
+        toggleInvoiceGstFields();
+        if (form.consigneeDifferent) form.consigneeDifferent.checked = false;
+        toggleConsigneeFields();
+        lineItemsBody.innerHTML = '';
+        if (chargeLinesBody) chargeLinesBody.innerHTML = '';
+        updateLineTotals();
+        updateAdditionalChargesTotals();
+        renderInvoiceBankSelect();
+        syncInvoiceDateDefaults({ forceDue: true });
+        syncInvoiceIdInput(true);
+        syncInvoiceCustomerSelectOptions();
+        syncInvoiceCustomerSearchMeta();
+
+        const successTitle = isEditing ? 'Invoice updated' : 'Invoice generated';
+        const successMessage = `${id} saved successfully.`;
+        setInvoiceUiNote('Invoice saved successfully. The local draft copy was cleared.', 'success');
+        if (typeof pushReminderToast === 'function') {
+          pushReminderToast(successTitle, successMessage, 'success');
+        }
+      } catch (error) {
+        const errMessage = String(error?.message || 'Unexpected error. Please try again.');
+        console.error('Invoice generation failed:', error);
+        setInvoiceUiNote(`Invoice could not be saved: ${errMessage}`, 'warning');
+        if (typeof pushReminderToast === 'function') {
+          pushReminderToast('Invoice save failed', errMessage, 'error');
+        }
+      } finally {
+        delete form.dataset.submitting;
+        if (generateBtn) {
+          generateBtn.textContent = form.dataset.editing ? 'Update Invoice' : 'Generate Invoice';
+        }
+        applyPlanGates();
       }
-      syncCatalogEntriesFromInvoiceItems(items);
-      updatePreview(invoice);
-      updateInvoiceTable();
-      updateDashboard();
-      updateProfitLoss();
-      renderCustomers();
-      renderInvoiceDownloads();
-      populateCustomerSelect();
-      clearInvoiceDraft();
-      saveState();
-      form.reset();
-      if (customerSelect) {
-        customerSelect.value = '';
-        customerSelect.dataset.currentValue = '';
-      }
-      form.querySelector('[name="gstRate"]').value = '18';
-      if (nonGstReasonInput) nonGstReasonInput.value = 'unregistered_customer';
-      const customerSearchInput = document.getElementById('customer-select-search');
-      if (customerSearchInput) customerSearchInput.value = '';
-      delete form.dataset.editing;
-      if (generateBtn) generateBtn.textContent = 'Generate Invoice';
-      syncInvoiceComplianceVisibility();
-      toggleInvoiceGstFields();
-      if (form.consigneeDifferent) form.consigneeDifferent.checked = false;
-      toggleConsigneeFields();
-      lineItemsBody.innerHTML = '';
-      if (chargeLinesBody) chargeLinesBody.innerHTML = '';
-      updateLineTotals();
-      updateAdditionalChargesTotals();
-      renderInvoiceBankSelect();
-      syncInvoiceDateDefaults({ forceDue: true });
-      syncInvoiceIdInput(true);
-      syncInvoiceCustomerSelectOptions();
-      syncInvoiceCustomerSearchMeta();
-      setInvoiceUiNote('Invoice saved successfully. The local draft copy was cleared.', 'success');
     }
 
     if (generateBtn) {
@@ -56269,7 +57431,7 @@
         {
           const activeProfile = businessProfiles.find((row) => row.id === activeBusinessProfileId);
           if (activeProfile) {
-            activeProfile.name = state.company.name || activeProfile.name || 'Untitled Business';
+            activeProfile.name = state.company.name || activeProfile.name || 'Business';
             activeProfile.phone = state.company.phone || activeProfile.phone || '';
             activeProfile.company = compactBusinessCompanyForProfile(state.company);
             persistBusinessProfiles();
@@ -57150,11 +58312,46 @@
           phone: String(mergedCompany.phone || base.phone || '').trim(),
           company: mergedCompany
         };
+        const normalizeIdentityToken = (value = '') => String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+        const identityName = (() => {
+          const safeName = normalizeIdentityToken(normalized.name || mergedCompany.name || '');
+          if (!safeName || safeName === 'untitled business' || safeName === 'business' || safeName === 'your company') return '';
+          return safeName;
+        })();
+        const identityPhone = normalizeIdentityToken(normalized.phone || mergedCompany.phone || '');
+        const identityGstin = normalizeIdentityToken(mergedCompany.gstin || '');
+        const targetIdentityKey = `${identityName}|${identityPhone}|${identityGstin}`;
+        const isShadowDuplicateOfTarget = (row) => {
+          const rowId = String(row?.id || '').trim();
+          if (!rowId || rowId === id) return false;
+          const rowCompany = row?.company && typeof row.company === 'object' ? row.company : {};
+          const rowNameRaw = normalizeIdentityToken(row?.name || rowCompany.name || '');
+          const rowName = (!rowNameRaw || rowNameRaw === 'untitled business' || rowNameRaw === 'business' || rowNameRaw === 'your company')
+            ? ''
+            : rowNameRaw;
+          const rowPhone = normalizeIdentityToken(row?.phone || rowCompany.phone || '');
+          const rowGstin = normalizeIdentityToken(rowCompany.gstin || '');
+          const rowIdentityKey = `${rowName}|${rowPhone}|${rowGstin}`;
+          if (!targetIdentityKey || rowIdentityKey !== targetIdentityKey) return false;
+          const rowHasMeaningfulData = [
+            rowCompany.gstin,
+            rowCompany.address,
+            rowCompany.email,
+            rowCompany.pan,
+            rowCompany.city,
+            rowCompany.state,
+            rowCompany.pincode
+          ].some((value) => String(value || '').trim());
+          if (rowHasMeaningfulData) return false;
+          return payloadCount(readLocalPayload(rowId)) === 0;
+        };
         if (idx >= 0) {
           next.splice(idx, 1);
         }
         next.unshift(normalized);
-        localStorage.setItem(BUSINESS_PROFILES_STORAGE_KEY, JSON.stringify(next));
+        const cleaned = next.filter((row) => !isShadowDuplicateOfTarget(row));
+        localStorage.setItem(BUSINESS_PROFILES_STORAGE_KEY, JSON.stringify(cleaned));
+        localStorage.setItem(ACTIVE_BUSINESS_PROFILE_KEY, id);
       } catch (err) {
         console.warn('Business profile scope align failed:', err);
       }
@@ -57192,12 +58389,43 @@
       const cloudBusinessId = cloudSafe?._meta?.business_id || '';
       const localUpdatedAtMs = parseIsoMs(localSafe?._meta?.updated_at);
       const cloudUpdatedAtMs = parseIsoMs(cloudSafe?._meta?.updated_at) || getCloudUpdatedAtMs(cloudUpdatedAt);
+      const collectIds = (arr) => new Set(
+        (Array.isArray(arr) ? arr : [])
+          .map((row) => String(row?.id || '').trim())
+          .filter(Boolean)
+      );
+      const hasAnyMissingIds = (sourceSet, targetSet) => {
+        for (const id of sourceSet) {
+          if (!targetSet.has(id)) return true;
+        }
+        return false;
+      };
+      const localInvoiceIds = collectIds(localSafe.invoices);
+      const cloudInvoiceIds = collectIds(cloudSafe.invoices);
+      const localPaymentIds = collectIds(localSafe.payments);
+      const cloudPaymentIds = collectIds(cloudSafe.payments);
+      const localHasUniqueInvoices = hasAnyMissingIds(localInvoiceIds, cloudInvoiceIds);
+      const cloudHasUniqueInvoices = hasAnyMissingIds(cloudInvoiceIds, localInvoiceIds);
+      const localHasUniquePayments = hasAnyMissingIds(localPaymentIds, cloudPaymentIds);
+      const cloudHasUniquePayments = hasAnyMissingIds(cloudPaymentIds, localPaymentIds);
 
       if (businessId && localBusinessId && localBusinessId !== businessId) {
         return { source: 'cloud', payload: cloudSafe };
       }
       if (businessId && cloudBusinessId && cloudBusinessId !== businessId) {
         return { source: 'local', payload: localSafe };
+      }
+      // Strict anti-loss guard: if local has invoices/payments that cloud does not, keep local.
+      if (localHasUniqueInvoices || localHasUniquePayments) {
+        return { source: 'local', payload: localSafe };
+      }
+      // If only cloud has additional invoices/payments and is newer, allow cloud hydration.
+      if (
+        (cloudHasUniqueInvoices || cloudHasUniquePayments)
+        && cloudUpdatedAtMs > localUpdatedAtMs
+        && cloudCount >= localCount
+      ) {
+        return { source: 'cloud', payload: cloudSafe };
       }
       if (
         (localDeliveryCount > cloudDeliveryCount || localEwayCount > cloudEwayCount)
@@ -57211,8 +58439,8 @@
       ) {
         return { source: 'cloud', payload: cloudSafe };
       }
-      if (localCount >= cloudCount + 2) return { source: 'local', payload: localSafe };
-      if (cloudCount >= localCount + 2) return { source: 'cloud', payload: cloudSafe };
+      if (localCount >= cloudCount + 1) return { source: 'local', payload: localSafe };
+      if (cloudCount >= localCount + 2 && cloudUpdatedAtMs > localUpdatedAtMs) return { source: 'cloud', payload: cloudSafe };
       if (Array.isArray(localSafe.invoices) && localSafe.invoices.length > 0 && (!Array.isArray(cloudSafe.invoices) || cloudSafe.invoices.length === 0)) {
         return { source: 'local', payload: localSafe };
       }

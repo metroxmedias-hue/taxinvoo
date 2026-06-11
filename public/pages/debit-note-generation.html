@@ -223,6 +223,35 @@
           <label class="impact-option"><input type="radio" name="impact-type" value="Refund" /> Expect refund from supplier</label>
           <label class="impact-option"><input type="radio" name="impact-type" value="Credit" /> Keep as supplier credit</label>
         </div>
+        <div id="refund-receipt-section" style="display:none;margin-top:12px;">
+          <div class="grid-2">
+            <label>Refund receipt status
+              <select id="refund-receipt-status">
+                <option value="pending">Pending</option>
+                <option value="received">Received</option>
+              </select>
+            </label>
+            <label>Refund received date
+              <input type="date" id="refund-received-date" />
+            </label>
+          </div>
+          <div class="grid-2">
+            <label>Receive mode
+              <select id="refund-receive-mode">
+                <option value="cash">Cash</option>
+                <option value="bank">Bank</option>
+              </select>
+            </label>
+            <label id="refund-bank-wrap">Refund bank account
+              <select id="refund-bank-account">
+                <option value="">Auto (first bank account)</option>
+              </select>
+            </label>
+          </div>
+          <label>Reference
+            <input type="text" id="refund-reference" placeholder="UTR / note / receipt ref" />
+          </label>
+        </div>
       </div>
 
       <div class="summary">
@@ -262,6 +291,7 @@
       const PREFILL_KEY = 'metrox_debit_note_prefill_from_purchase_return';
       const target = '../app/index.html#/debit-note';
       const fmt = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 });
+      const STORAGE_SAVE_ERROR_MESSAGE = 'Could not save changes because browser storage is full. Clear old data and try again.';
 
       const theme = localStorage.getItem('Metrox TaxInvoo_theme');
       if (theme === 'light') document.body.classList.add('light');
@@ -282,6 +312,13 @@
       const gstReversalIgstEl = document.getElementById('gst-reversal-igst');
       const linkedPurchaseReturnEl = document.getElementById('linked-purchase-return');
       const impactTypeInputs = Array.from(document.querySelectorAll('input[name="impact-type"]'));
+      const refundReceiptSectionEl = document.getElementById('refund-receipt-section');
+      const refundReceiptStatusEl = document.getElementById('refund-receipt-status');
+      const refundReceivedDateEl = document.getElementById('refund-received-date');
+      const refundReceiveModeEl = document.getElementById('refund-receive-mode');
+      const refundBankWrapEl = document.getElementById('refund-bank-wrap');
+      const refundBankAccountEl = document.getElementById('refund-bank-account');
+      const refundReferenceEl = document.getElementById('refund-reference');
       const amountEl = document.getElementById('amount');
       const dateEl = document.getElementById('date');
       const reasonEl = document.getElementById('reason');
@@ -291,6 +328,7 @@
       const saveBtn = document.getElementById('save-btn');
 
       dateEl.value = new Date().toISOString().slice(0, 10);
+      if (refundReceivedDateEl) refundReceivedDateEl.value = dateEl.value;
 
       function esc(value) {
         return String(value || '').replace(/[&<>'"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[ch] || ch));
@@ -336,14 +374,50 @@
         }
       }
 
+      function isQuotaError(err) {
+        return String(err?.name || '').toLowerCase() === 'quotaexceedederror'
+          || /quota/i.test(String(err?.message || ''));
+      }
+
       function saveState(next) {
         const payload = next && typeof next === 'object' ? next : {};
         payload._meta = { ...(payload._meta || {}), updated_at: new Date().toISOString() };
         const serialized = JSON.stringify(payload);
         const scoped = getScopedLocalStateKeys();
-        localStorage.setItem(scoped.primary, serialized);
-        localStorage.setItem(scoped.backup, serialized);
-        localStorage.setItem(scoped.lastGood, serialized);
+        const writeState = (writeLastGood = true) => {
+          localStorage.setItem(scoped.primary, serialized);
+          localStorage.setItem(scoped.backup, serialized);
+          if (writeLastGood) localStorage.setItem(scoped.lastGood, serialized);
+          else localStorage.removeItem(scoped.lastGood);
+        };
+
+        try {
+          writeState(true);
+          return true;
+        } catch (firstErr) {
+          if (!isQuotaError(firstErr)) {
+            console.error('Failed to save debit-note data.', firstErr);
+            return false;
+          }
+          try {
+            writeState(false);
+            return true;
+          } catch (secondErr) {
+            if (!isQuotaError(secondErr)) {
+              console.error('Failed to save debit-note data.', secondErr);
+              return false;
+            }
+            try {
+              localStorage.removeItem(scoped.backup);
+              localStorage.removeItem(scoped.lastGood);
+              localStorage.setItem(scoped.primary, serialized);
+              return true;
+            } catch (finalErr) {
+              console.warn('Browser storage is full. Latest debit-note changes remain only in this tab session.', finalErr);
+              return false;
+            }
+          }
+        }
       }
 
       const state = parseState();
@@ -351,6 +425,57 @@
       state.debitNotes = Array.isArray(state.debitNotes) ? state.debitNotes : [];
       state.purchaseReturns = Array.isArray(state.purchaseReturns) ? state.purchaseReturns : [];
       state.supplierPayments = Array.isArray(state.supplierPayments) ? state.supplierPayments : [];
+      state.cashBank = state.cashBank && typeof state.cashBank === 'object' ? state.cashBank : {};
+      state.cashBank.accounts = Array.isArray(state.cashBank.accounts) ? state.cashBank.accounts : [];
+      state.cashBank.defaultBankAccountId = String(state.cashBank.defaultBankAccountId || '');
+
+      function normalizePaymentMode(value) {
+        const raw = String(value || '').trim().toLowerCase();
+        if (raw === 'bank' || raw === 'upi' || raw === 'card' || raw === 'cheque') return 'bank';
+        return 'cash';
+      }
+
+      function getDefaultBankAccountId() {
+        const fallbackId = String(state.cashBank.defaultBankAccountId || '').trim();
+        if (fallbackId && (state.cashBank.accounts || []).some((acc) => String(acc.id || '') === fallbackId)) {
+          return fallbackId;
+        }
+        return String(state.cashBank.accounts?.[0]?.id || '').trim();
+      }
+
+      function renderRefundBankAccounts() {
+        if (!refundBankAccountEl) return;
+        const options = ['<option value="">Auto (first bank account)</option>']
+          .concat((state.cashBank.accounts || []).map((acc) => {
+            const name = String(acc.accountName || acc.label || 'Bank Account');
+            const number = String(acc.accountNo || acc.accountNumber || acc.account || '').trim();
+            const tail = number ? ` • ${number.slice(-4).padStart(Math.min(4, number.length), '•')}` : '';
+            return `<option value="${String(acc.id || '')}">${name}${tail}</option>`;
+          }));
+        refundBankAccountEl.innerHTML = options.join('');
+      }
+
+      function getImpactTypeValue() {
+        const selected = impactTypeInputs.find((input) => input.checked);
+        return String(selected?.value || 'Adjusted');
+      }
+
+      function syncRefundReceiptFields() {
+        const impactValue = String(getImpactTypeValue() || '').toLowerCase();
+        const showReceipt = impactValue === 'refund';
+        if (refundReceiptSectionEl) refundReceiptSectionEl.style.display = showReceipt ? '' : 'none';
+        if (!showReceipt) return;
+        const receiptStatus = String(refundReceiptStatusEl?.value || 'pending').toLowerCase();
+        const showBank = normalizePaymentMode(refundReceiveModeEl?.value || 'cash') === 'bank';
+        if (refundBankWrapEl) refundBankWrapEl.style.display = showBank ? '' : 'none';
+        if (showBank && refundBankAccountEl && !String(refundBankAccountEl.value || '').trim()) {
+          refundBankAccountEl.value = getDefaultBankAccountId();
+        }
+        if (receiptStatus === 'received' && refundReceivedDateEl && !refundReceivedDateEl.value) {
+          refundReceivedDateEl.value = dateEl.value || new Date().toISOString().slice(0, 10);
+        }
+      }
+
       const editingId = localStorage.getItem(EDIT_KEY) || '';
       if (editingId) localStorage.removeItem(EDIT_KEY);
       const prefillRaw = localStorage.getItem(PREFILL_KEY) || '';
@@ -366,10 +491,35 @@
         saveBtn.textContent = 'Create Debit Note';
       }
 
+      function normalizeAccountingStatus(value) {
+        return String(value || '').trim().toLowerCase();
+      }
+
+      function isLinkedPurchaseReturnDebitNote(note = {}) {
+        const linkedId = String(note?.linkedPurchaseReturnId || '').trim();
+        if (linkedId) return true;
+        const debitId = String(note?.id || '').trim();
+        if (!debitId) return false;
+        return (state.purchaseReturns || []).some((entry) => {
+          const linkedDebitNo = String(entry?.debitNoteNo || '').trim();
+          if (!linkedDebitNo || linkedDebitNo !== debitId) return false;
+          const samePurchase = String(entry?.purchaseId || '').trim() === String(note?.purchaseId || '').trim();
+          const sameSupplier = String(entry?.supplier || '').trim() === String(note?.supplier || '').trim();
+          return samePurchase || sameSupplier;
+        });
+      }
+
       function notedForPurchase(purchaseId) {
-        return state.debitNotes
-          .filter((x) => x.purchaseId === purchaseId && x.id !== editingId)
+        const purchaseReturnTotal = state.purchaseReturns
+          .filter((x) => String(x?.purchaseId || '') === String(purchaseId || ''))
+          .filter((x) => normalizeAccountingStatus(x?.status || '') !== 'cancelled')
           .reduce((sum, x) => sum + (Number(x.amount) || 0), 0);
+        const manualDebitNoteTotal = state.debitNotes
+          .filter((x) => x.purchaseId === purchaseId && x.id !== editingId)
+          .filter((x) => !isLinkedPurchaseReturnDebitNote(x))
+          .filter((x) => normalizeAccountingStatus(x?.status || '') !== 'cancelled')
+          .reduce((sum, x) => sum + (Number(x.amount) || 0), 0);
+        return purchaseReturnTotal + manualDebitNoteTotal;
       }
 
       function paidForPurchase(purchaseId) {
@@ -379,16 +529,21 @@
       }
 
       function getSelectedImpactType() {
-        const selected = impactTypeInputs.find((input) => input.checked);
-        return String(selected?.value || 'Adjusted');
+        return String(getImpactTypeValue() || 'Adjusted');
       }
 
       function suppliers() {
-        const names = new Set();
+        const canonicalByKey = new Map();
         state.purchases.forEach((p) => {
-          if (p.supplier) names.add(String(p.supplier));
+          const rawName = String(p.supplier || '').trim();
+          if (!rawName) return;
+          const key = normalizeName(rawName);
+          if (!key || canonicalByKey.has(key)) return;
+          canonicalByKey.set(key, rawName);
         });
-        return Array.from(names).sort((a, b) => a.localeCompare(b));
+        return Array.from(canonicalByKey.values()).sort((a, b) =>
+          a.localeCompare(b, undefined, { sensitivity: 'base' })
+        );
       }
 
       function renderSupplierOptions() {
@@ -433,6 +588,7 @@
       }
 
       function updateFinancialImpact() {
+        syncRefundReceiptFields();
         const purchase = state.purchases.find((p) => p.id === purchaseEl.value);
         const amount = Math.max(0, Number(amountEl.value) || 0);
         if (!purchase) return;
@@ -462,6 +618,7 @@
       }
 
       renderSupplierOptions();
+      renderRefundBankAccounts();
       if (editingNote) {
         supplierEl.value = editingNote.supplier || '';
         renderPurchaseOptions();
@@ -472,6 +629,13 @@
         statusEl.value = editingNote.status || 'Issued';
         const impactInput = impactTypeInputs.find((input) => String(input.value || '') === String(editingNote.impactType || 'Adjusted'));
         if (impactInput) impactInput.checked = true;
+        if (refundReceiptStatusEl) {
+          refundReceiptStatusEl.value = String(editingNote.refundReceiptStatus || 'pending').toLowerCase();
+        }
+        if (refundReceivedDateEl) refundReceivedDateEl.value = editingNote.refundReceivedDate || dateEl.value || new Date().toISOString().slice(0, 10);
+        if (refundReceiveModeEl) refundReceiveModeEl.value = normalizePaymentMode(editingNote.refundReceiveMode || editingNote.refundPaymentMode || 'cash');
+        if (refundBankAccountEl) refundBankAccountEl.value = String(editingNote.refundBankAccountId || '');
+        if (refundReferenceEl) refundReferenceEl.value = editingNote.refundReference || '';
         if (linkedPurchaseReturnEl) linkedPurchaseReturnEl.textContent = editingNote.linkedPurchaseReturnId || '—';
         notesEl.value = editingNote.notes || '';
       } else if (prefill && typeof prefill === 'object') {
@@ -491,6 +655,7 @@
       } else {
         renderPurchaseOptions();
       }
+      syncRefundReceiptFields();
       updateSummary();
 
       supplierEl.addEventListener('change', () => {
@@ -501,6 +666,8 @@
       purchaseEl.addEventListener('change', updateSummary);
       amountEl.addEventListener('input', updateFinancialImpact);
       impactTypeInputs.forEach((input) => input.addEventListener('change', updateFinancialImpact));
+      if (refundReceiptStatusEl) refundReceiptStatusEl.addEventListener('change', syncRefundReceiptFields);
+      if (refundReceiveModeEl) refundReceiveModeEl.addEventListener('change', syncRefundReceiptFields);
 
       document.getElementById('debit-note-form').addEventListener('submit', (e) => {
         e.preventDefault();
@@ -523,6 +690,22 @@
           errorEl.textContent = `Debit note amount exceeds allowed limit (INR ${fmt.format(allowed)}).`;
           return;
         }
+        const impactType = getSelectedImpactType();
+        const isRefundImpact = String(impactType || '').toLowerCase() === 'refund';
+        const refundReceiptStatus = isRefundImpact
+          ? String(refundReceiptStatusEl?.value || 'pending').toLowerCase()
+          : 'not_applicable';
+        const refundReceived = isRefundImpact && refundReceiptStatus === 'received';
+        const refundReceiveMode = isRefundImpact
+          ? normalizePaymentMode(refundReceiveModeEl?.value || 'cash')
+          : '';
+        const refundBankAccountId = (isRefundImpact && refundReceiveMode === 'bank')
+          ? String(refundBankAccountEl?.value || getDefaultBankAccountId() || '').trim()
+          : '';
+        if (refundReceived && refundReceiveMode === 'bank' && !refundBankAccountId) {
+          errorEl.textContent = 'Please add/select a bank account from Cash & Bank.';
+          return;
+        }
 
         const payload = {
           id: editingId || `DN-${Date.now()}`,
@@ -532,7 +715,16 @@
           date,
           reason: reasonEl.value || 'other',
           status: statusEl.value || 'Issued',
-          impactType: getSelectedImpactType(),
+          impactType,
+          refundReceiptStatus,
+          refundReceived,
+          refundReceivedDate: refundReceived
+            ? String(refundReceivedDateEl?.value || date || new Date().toISOString().slice(0, 10))
+            : '',
+          refundReceiveMode: isRefundImpact ? refundReceiveMode : '',
+          refundBankAccountId,
+          refundReference: isRefundImpact ? String(refundReferenceEl?.value || '').trim() : '',
+          refundAmount: refundReceived ? Number(amount.toFixed(2)) : 0,
           linkedPurchaseReturnId: String(linkedPurchaseReturnEl?.textContent || '').trim() === '—' ? '' : String(linkedPurchaseReturnEl?.textContent || '').trim(),
           gstReversal: (() => {
             const cgst = Number(purchase.inputCgst) || 0;
@@ -551,7 +743,10 @@
           state.debitNotes.push(payload);
         }
 
-        saveState(state);
+        if (!saveState(state)) {
+          errorEl.textContent = STORAGE_SAVE_ERROR_MESSAGE;
+          return;
+        }
         goBack();
       });
     })();

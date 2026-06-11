@@ -243,6 +243,7 @@
       const EDIT_KEY = 'metrox_edit_supplier_payment_id';
       const target = '../app/index.html#/payment-out';
       const fmt = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 });
+      const STORAGE_SAVE_ERROR_MESSAGE = 'Could not save changes because browser storage is full. Clear old data and try again.';
 
       const theme = localStorage.getItem('Metrox TaxInvoo_theme');
       if (theme === 'light') document.body.classList.add('light');
@@ -301,14 +302,50 @@
         }
       }
 
+      function isQuotaError(err) {
+        return String(err?.name || '').toLowerCase() === 'quotaexceedederror'
+          || /quota/i.test(String(err?.message || ''));
+      }
+
       function saveState(next) {
         const payload = next && typeof next === 'object' ? next : {};
         payload._meta = { ...(payload._meta || {}), updated_at: new Date().toISOString() };
         const serialized = JSON.stringify(payload);
         const scoped = getScopedLocalStateKeys();
-        localStorage.setItem(scoped.primary, serialized);
-        localStorage.setItem(scoped.backup, serialized);
-        localStorage.setItem(scoped.lastGood, serialized);
+        const writeState = (writeLastGood = true) => {
+          localStorage.setItem(scoped.primary, serialized);
+          localStorage.setItem(scoped.backup, serialized);
+          if (writeLastGood) localStorage.setItem(scoped.lastGood, serialized);
+          else localStorage.removeItem(scoped.lastGood);
+        };
+
+        try {
+          writeState(true);
+          return true;
+        } catch (firstErr) {
+          if (!isQuotaError(firstErr)) {
+            console.error('Failed to save payment-out data.', firstErr);
+            return false;
+          }
+          try {
+            writeState(false);
+            return true;
+          } catch (secondErr) {
+            if (!isQuotaError(secondErr)) {
+              console.error('Failed to save payment-out data.', secondErr);
+              return false;
+            }
+            try {
+              localStorage.removeItem(scoped.backup);
+              localStorage.removeItem(scoped.lastGood);
+              localStorage.setItem(scoped.primary, serialized);
+              return true;
+            } catch (finalErr) {
+              console.warn('Browser storage is full. Latest payment-out changes remain only in this tab session.', finalErr);
+              return false;
+            }
+          }
+        }
       }
 
       function normalizeName(name) {
@@ -321,6 +358,8 @@
       const state = parseState();
       state.purchases = Array.isArray(state.purchases) ? state.purchases : [];
       state.supplierPayments = Array.isArray(state.supplierPayments) ? state.supplierPayments : [];
+      state.purchaseReturns = Array.isArray(state.purchaseReturns) ? state.purchaseReturns : [];
+      state.debitNotes = Array.isArray(state.debitNotes) ? state.debitNotes : [];
       if (!state.cashBank || typeof state.cashBank !== 'object') {
         state.cashBank = { accounts: [], openingCash: 0, cashAdjustments: [], transfers: [], defaultBankAccountId: '' };
       }
@@ -343,7 +382,30 @@
       function getPurchaseDue(purchase) {
         const total = Number(purchase?.total) || 0;
         const paid = getPurchasePaidExcludingCurrent(purchase?.id);
-        return Math.max(0, total - paid);
+        const purchaseId = String(purchase?.id || '').trim();
+        const isPurchaseReturnActive = (entry) => String(entry?.status || '').trim().toLowerCase() !== 'cancelled';
+        const isDebitNoteActive = (entry) => String(entry?.status || '').trim().toLowerCase() !== 'cancelled';
+        const isLinkedPurchaseReturnDebitNote = (entry) => {
+          if (String(entry?.linkedPurchaseReturnId || '').trim()) return true;
+          const debitId = String(entry?.id || '').trim();
+          if (!debitId) return false;
+          return (state.purchaseReturns || []).some((pr) => {
+            if (String(pr?.debitNoteNo || '').trim() !== debitId) return false;
+            const samePurchase = String(pr?.purchaseId || '').trim() === purchaseId;
+            return samePurchase;
+          });
+        };
+        const purchaseReturnAdjustments = (state.purchaseReturns || [])
+          .filter((entry) => String(entry?.purchaseId || '').trim() === purchaseId)
+          .filter((entry) => isPurchaseReturnActive(entry))
+          .reduce((sum, entry) => sum + (Number(entry?.amount) || 0), 0);
+        const manualDebitAdjustments = (state.debitNotes || [])
+          .filter((entry) => String(entry?.purchaseId || '').trim() === purchaseId)
+          .filter((entry) => !isLinkedPurchaseReturnDebitNote(entry))
+          .filter((entry) => isDebitNoteActive(entry))
+          .reduce((sum, entry) => sum + (Number(entry?.amount) || 0), 0);
+        const adjustedTotal = Math.max(0, total - purchaseReturnAdjustments - manualDebitAdjustments);
+        return Math.max(0, adjustedTotal - paid);
       }
 
       function getSuppliers() {
@@ -534,7 +596,10 @@
           state.supplierPayments.push(payload);
         }
 
-        saveState(state);
+        if (!saveState(state)) {
+          errorEl.textContent = STORAGE_SAVE_ERROR_MESSAGE;
+          return;
+        }
         goBack();
       });
     })();

@@ -428,6 +428,7 @@
       const EDIT_KEY = 'metrox_edit_purchase_order_id';
       const target = '../app/index.html#/purchase-orders';
       const fmt = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 });
+      const STORAGE_SAVE_ERROR_MESSAGE = 'Could not save changes because browser storage is full. Clear old data and try again.';
       const ITEM_CATALOG_KEY_PREFIX = 'metrox_item_catalog_v1__';
 
       const theme = localStorage.getItem('Metrox TaxInvoo_theme');
@@ -535,14 +536,50 @@
         }
       }
 
+      function isQuotaError(err) {
+        return String(err?.name || '').toLowerCase() === 'quotaexceedederror'
+          || /quota/i.test(String(err?.message || ''));
+      }
+
       function saveState(next) {
         const payload = next && typeof next === 'object' ? next : {};
         payload._meta = { ...(payload._meta || {}), updated_at: new Date().toISOString() };
         const serialized = JSON.stringify(payload);
         const scoped = getScopedLocalStateKeys();
-        localStorage.setItem(scoped.primary, serialized);
-        localStorage.setItem(scoped.backup, serialized);
-        localStorage.setItem(scoped.lastGood, serialized);
+        const writeState = (writeLastGood = true) => {
+          localStorage.setItem(scoped.primary, serialized);
+          localStorage.setItem(scoped.backup, serialized);
+          if (writeLastGood) localStorage.setItem(scoped.lastGood, serialized);
+          else localStorage.removeItem(scoped.lastGood);
+        };
+
+        try {
+          writeState(true);
+          return true;
+        } catch (firstErr) {
+          if (!isQuotaError(firstErr)) {
+            console.error('Failed to save purchase-order data.', firstErr);
+            return false;
+          }
+          try {
+            writeState(false);
+            return true;
+          } catch (secondErr) {
+            if (!isQuotaError(secondErr)) {
+              console.error('Failed to save purchase-order data.', secondErr);
+              return false;
+            }
+            try {
+              localStorage.removeItem(scoped.backup);
+              localStorage.removeItem(scoped.lastGood);
+              localStorage.setItem(scoped.primary, serialized);
+              return true;
+            } catch (finalErr) {
+              console.warn('Browser storage is full. Latest purchase-order changes remain only in this tab session.', finalErr);
+              return false;
+            }
+          }
+        }
       }
 
       function getItemCatalogStorageKey() {
@@ -572,7 +609,17 @@
 
       function saveItemCatalog(entries = []) {
         const safe = Array.isArray(entries) ? entries.map(toCatalogEntry).filter(Boolean) : [];
-        localStorage.setItem(getItemCatalogStorageKey(), JSON.stringify(safe));
+        try {
+          localStorage.setItem(getItemCatalogStorageKey(), JSON.stringify(safe));
+          return true;
+        } catch (err) {
+          if (isQuotaError(err)) {
+            console.warn('Browser storage is full. Could not save item catalog.', err);
+            return false;
+          }
+          console.error('Failed to save item catalog.', err);
+          return false;
+        }
       }
 
       const state = parseState();
@@ -999,7 +1046,10 @@
         const saved = loadSavedItemCatalog();
         const deduped = saved.filter((entry) => !(entry.type === created.type && String(entry.name || '').toLowerCase() === created.name.toLowerCase()));
         deduped.unshift(created);
-        saveItemCatalog(deduped);
+        if (!saveItemCatalog(deduped)) {
+          errorEl.textContent = STORAGE_SAVE_ERROR_MESSAGE;
+          return;
+        }
         const liveCatalog = Array.isArray(state.serviceCatalog) ? state.serviceCatalog : [];
         state.serviceCatalog = [
           { type: created.type, name: created.name, hsn: '', sac: '', price: created.price || 0 },
@@ -1008,7 +1058,10 @@
             && String(entry?.name || '').trim().toLowerCase() === created.name.toLowerCase()
           ))
         ];
-        saveState(state);
+        if (!saveState(state)) {
+          errorEl.textContent = STORAGE_SAVE_ERROR_MESSAGE;
+          return;
+        }
         applyPickedItem(created);
         closePicker();
       });
@@ -1090,7 +1143,10 @@
           state.purchaseOrders.push(payload);
         }
 
-        saveState(state);
+        if (!saveState(state)) {
+          errorEl.textContent = STORAGE_SAVE_ERROR_MESSAGE;
+          return;
+        }
         goBack();
       });
     })();

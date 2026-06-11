@@ -13368,6 +13368,14 @@
   <script>
     (function () {
       try {
+        var path = String(window.location.pathname || '');
+        var hash = String(window.location.hash || '').toLowerCase();
+        if (/\/settings\.html$/i.test(path)) {
+          document.body.classList.add('settings-standalone');
+          if (/^#\/share\//.test(hash) || /^#\/reports\/shared/.test(hash)) {
+            document.body.classList.add('shared-reports-mode');
+          }
+        }
         if (document.documentElement.classList.contains('theme-light')) {
           document.body.classList.add('light');
         }

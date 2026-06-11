@@ -330,6 +330,7 @@
       const EDIT_KEY = 'metrox_edit_delivery_challan_id';
       const target = '../app/index.html#/sales-transactions';
       const fmt = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 });
+      const STORAGE_SAVE_ERROR_MESSAGE = 'Could not save changes because browser storage is full. Clear old data and try again.';
 
       const theme = localStorage.getItem('Metrox TaxInvoo_theme');
       if (theme === 'light') document.body.classList.add('light');
@@ -649,7 +650,19 @@
 
       function saveItemCatalog(entries = []) {
         const safe = Array.isArray(entries) ? entries.map(toCatalogEntry).filter(Boolean) : [];
-        localStorage.setItem(getItemCatalogStorageKey(), JSON.stringify(safe));
+        try {
+          localStorage.setItem(getItemCatalogStorageKey(), JSON.stringify(safe));
+          return true;
+        } catch (err) {
+          const isQuotaError = String(err?.name || '').toLowerCase() === 'quotaexceedederror'
+            || /quota/i.test(String(err?.message || ''));
+          if (isQuotaError) {
+            console.warn('Browser storage is full. Could not save item catalog.', err);
+            return false;
+          }
+          console.error('Failed to save item catalog.', err);
+          return false;
+        }
       }
 
       function collectCatalogFromState() {
@@ -835,7 +848,10 @@
         const saved = loadSavedItemCatalog();
         const deduped = saved.filter((entry) => !(entry.type === created.type && String(entry.name || '').toLowerCase() === created.name.toLowerCase()));
         deduped.unshift(created);
-        saveItemCatalog(deduped);
+        if (!saveItemCatalog(deduped)) {
+          errorEl.textContent = STORAGE_SAVE_ERROR_MESSAGE;
+          return;
+        }
         const nextCatalogRow = {
           type: created.type,
           name: created.name,
@@ -851,7 +867,10 @@
             && String(entry?.name || '').trim().toLowerCase() === String(nextCatalogRow.name || '').trim().toLowerCase()
           ))
         ];
-        saveState(state);
+        if (!saveState(state)) {
+          errorEl.textContent = STORAGE_SAVE_ERROR_MESSAGE;
+          return;
+        }
         removePlaceholderBeforeAdd();
         const tr = itemRow({ description: created.name, hsn: created.hsn || created.sac || '', qty: 1, rate: created.price || 0, taxRate: 0 });
         itemRowsEl.appendChild(tr);

@@ -436,6 +436,35 @@
             <label><input type="radio" name="refund-mode" value="refund" /> Refund to customer</label>
             <label><input type="radio" name="refund-mode" value="adjust" /> Adjust in next invoice</label>
           </div>
+          <div id="refund-settlement-section" class="summary" style="margin-top:12px;display:none;">
+            <div class="grid-2">
+              <label>Refund settlement
+                <select id="refund-settlement-status">
+                  <option value="pending">Pending</option>
+                  <option value="refunded">Refunded</option>
+                </select>
+              </label>
+              <label>Refund paid date
+                <input type="date" id="refund-paid-date" />
+              </label>
+            </div>
+            <div class="grid-2">
+              <label>Refund payment mode
+                <select id="refund-payment-mode">
+                  <option value="cash">Cash</option>
+                  <option value="bank">Bank</option>
+                </select>
+              </label>
+              <label id="refund-bank-wrap">Refund bank account
+                <select id="refund-bank-account">
+                  <option value="">Auto (first bank account)</option>
+                </select>
+              </label>
+            </div>
+            <label>Reference
+              <input type="text" id="refund-reference" placeholder="UTR / voucher / note" />
+            </label>
+          </div>
         </div>
       </div>
 
@@ -500,6 +529,13 @@
       const creditNoteTotalEl = document.getElementById('credit-note-total');
       const invoicePaidEl = document.getElementById('invoice-paid');
       const paymentImpactTextEl = document.getElementById('payment-impact-text');
+      const refundSettlementSectionEl = document.getElementById('refund-settlement-section');
+      const refundSettlementStatusEl = document.getElementById('refund-settlement-status');
+      const refundPaidDateEl = document.getElementById('refund-paid-date');
+      const refundPaymentModeEl = document.getElementById('refund-payment-mode');
+      const refundBankWrapEl = document.getElementById('refund-bank-wrap');
+      const refundBankAccountEl = document.getElementById('refund-bank-account');
+      const refundReferenceEl = document.getElementById('refund-reference');
       const cnPreviewNumberEl = document.getElementById('cn-preview-number');
       const cnPreviewInvoiceEl = document.getElementById('cn-preview-invoice');
       const cnPreviewAmountEl = document.getElementById('cn-preview-amount');
@@ -508,6 +544,7 @@
       const saveBtn = document.getElementById('save-btn');
 
       dateEl.value = new Date().toISOString().slice(0, 10);
+      if (refundPaidDateEl) refundPaidDateEl.value = dateEl.value;
 
       function goBack() {
         try { localStorage.setItem(FOCUS_KEY, '1'); } catch (_) {}
@@ -606,6 +643,56 @@
       state.invoices = Array.isArray(state.invoices) ? state.invoices : [];
       state.salesReturns = Array.isArray(state.salesReturns) ? state.salesReturns : [];
       state.creditNotes = Array.isArray(state.creditNotes) ? state.creditNotes : [];
+      state.cashBank = state.cashBank && typeof state.cashBank === 'object' ? state.cashBank : {};
+      state.cashBank.accounts = Array.isArray(state.cashBank.accounts) ? state.cashBank.accounts : [];
+      state.cashBank.defaultBankAccountId = String(state.cashBank.defaultBankAccountId || '');
+
+      function normalizePaymentMode(value) {
+        const raw = String(value || '').trim().toLowerCase();
+        if (raw === 'bank' || raw === 'upi' || raw === 'card' || raw === 'cheque') return 'bank';
+        return 'cash';
+      }
+
+      function getDefaultBankAccountId() {
+        const fallbackId = String(state.cashBank.defaultBankAccountId || '').trim();
+        if (fallbackId && (state.cashBank.accounts || []).some((acc) => String(acc.id || '') === fallbackId)) {
+          return fallbackId;
+        }
+        return String(state.cashBank.accounts?.[0]?.id || '').trim();
+      }
+
+      function renderRefundBankAccounts() {
+        if (!refundBankAccountEl) return;
+        const options = ['<option value="">Auto (first bank account)</option>']
+          .concat((state.cashBank.accounts || []).map((acc) => {
+            const name = String(acc.accountName || acc.label || 'Bank Account');
+            const number = String(acc.accountNo || acc.accountNumber || acc.account || '').trim();
+            const tail = number ? ` • ${number.slice(-4).padStart(Math.min(4, number.length), '•')}` : '';
+            return `<option value="${String(acc.id || '')}">${name}${tail}</option>`;
+          }));
+        refundBankAccountEl.innerHTML = options.join('');
+      }
+
+      function getRefundSettlementStatus() {
+        const selected = String(refundSettlementStatusEl?.value || '').toLowerCase();
+        if (selected === 'refunded') return 'refunded';
+        if (String(statusEl?.value || '').toLowerCase() === 'refunded') return 'refunded';
+        return 'pending';
+      }
+
+      function syncRefundSettlementFields() {
+        const mode = getRefundMode();
+        const showSettlement = mode === 'refund';
+        if (refundSettlementSectionEl) refundSettlementSectionEl.style.display = showSettlement ? '' : 'none';
+        if (!showSettlement) return;
+        const settlementStatus = getRefundSettlementStatus();
+        if (refundSettlementStatusEl) refundSettlementStatusEl.value = settlementStatus;
+        const showBank = normalizePaymentMode(refundPaymentModeEl?.value || 'cash') === 'bank';
+        if (refundBankWrapEl) refundBankWrapEl.style.display = showBank ? '' : 'none';
+        if (showBank && refundBankAccountEl && !String(refundBankAccountEl.value || '').trim()) {
+          refundBankAccountEl.value = getDefaultBankAccountId();
+        }
+      }
 
       const customers = Object.keys(state.customers)
         .filter((name) => !state.customers[name]?.deleted)
@@ -619,14 +706,39 @@
         return state.invoices.find((inv) => String(inv.id) === String(id));
       }
 
+      function normalizeAccountingStatus(value) {
+        return String(value || '').trim().toLowerCase();
+      }
+
+      function isLinkedSalesReturnCreditNote(note = {}) {
+        const linkedId = String(note?.linkedSalesReturnId || '').trim();
+        const sourceType = normalizeAccountingStatus(note?.sourceType || '');
+        if (linkedId || sourceType === 'sales_return') return true;
+        const creditId = String(note?.id || '').trim();
+        if (!creditId) return false;
+        return (state.salesReturns || []).some((entry) => {
+          const linkedCreditNo = String(entry?.creditNoteNumber || '').trim();
+          if (!linkedCreditNo || linkedCreditNo !== creditId) return false;
+          const sameInvoice = String(entry?.invoiceId || '').trim() === String(note?.invoiceId || '').trim();
+          const sameCustomer = String(entry?.customer || '').trim() === String(note?.customer || '').trim();
+          return sameInvoice || sameCustomer;
+        });
+      }
+
       function getReturnedAmount(invoiceId) {
-        return (state.salesReturns || [])
+        const salesReturnTotal = (state.salesReturns || [])
           .filter((r) => {
             if (String(r.invoiceId) !== String(invoiceId)) return false;
-            const status = String(r.status || '').toLowerCase();
+            const status = normalizeAccountingStatus(r.status || r.legacyStatus || '');
             return status !== 'cancelled' && status !== 'draft';
           })
           .reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+        const manualCreditTotal = (state.creditNotes || [])
+          .filter((entry) => String(entry?.invoiceId || '') === String(invoiceId))
+          .filter((entry) => !isLinkedSalesReturnCreditNote(entry))
+          .filter((entry) => normalizeAccountingStatus(entry?.status || '') !== 'cancelled')
+          .reduce((sum, entry) => sum + (Number(entry?.amount) || 0), 0);
+        return salesReturnTotal + manualCreditTotal;
       }
 
       function getInvoiceGstAmount(inv) {
@@ -745,7 +857,16 @@
           notes: String(row.notes || '').trim(),
           createdAt: row.createdAt || new Date().toISOString(),
           sourceType: 'sales_return',
-          linkedSalesReturnId
+          linkedSalesReturnId,
+          settlementType: row.refundMode === 'refund' ? 'refund' : (row.refundMode === 'adjust' ? 'adjusted' : 'credit'),
+          refundStatus: String(row.refundStatus || '').trim(),
+          refundSettlementStatus: String(row.refundSettlementStatus || '').trim(),
+          refundSettled: row.refundSettled === true,
+          refundPaidDate: String(row.refundPaidDate || '').trim(),
+          refundPaymentMode: String(row.refundPaymentMode || '').trim(),
+          refundBankAccountId: String(row.refundBankAccountId || '').trim(),
+          refundReference: String(row.refundReference || '').trim(),
+          refundAmount: Number(row.refundAmount) || 0
         };
         const existing = (state.creditNotes || []).find((entry) => {
           if (String(entry?.linkedSalesReturnId || '') === linkedSalesReturnId && linkedSalesReturnId) return true;
@@ -768,6 +889,7 @@
       }
 
       function syncInvoiceSummary() {
+        syncRefundSettlementFields();
         const inv = getInvoiceById(invoiceEl.value);
         if (!inv) {
           invoiceTotalEl.textContent = 'INR 0';
@@ -889,9 +1011,23 @@
         });
       }
       document.querySelectorAll('input[name="refund-mode"]').forEach((radio) => {
-        radio.addEventListener('change', syncInvoiceSummary);
+        radio.addEventListener('change', () => {
+          syncRefundSettlementFields();
+          syncInvoiceSummary();
+        });
       });
+      if (statusEl) {
+        statusEl.addEventListener('change', syncRefundSettlementFields);
+      }
+      if (refundSettlementStatusEl) {
+        refundSettlementStatusEl.addEventListener('change', syncRefundSettlementFields);
+      }
+      if (refundPaymentModeEl) {
+        refundPaymentModeEl.addEventListener('change', syncRefundSettlementFields);
+      }
 
+      renderRefundBankAccounts();
+      syncRefundSettlementFields();
       renderInvoiceOptions('');
       syncInvoiceSummary();
 
@@ -939,6 +1075,21 @@
         const projectedTarget = Math.max(0, invoiceTotal - (alreadyReturned + amount));
         const refundableAmount = paid > projectedTarget ? (paid - projectedTarget) : 0;
         const creditBalanceAmount = Math.max(0, projectedTarget - paid);
+        const refundSettlementStatus = refundMode === 'refund' ? getRefundSettlementStatus() : 'pending';
+        const refundSettled = refundMode === 'refund' && refundSettlementStatus === 'refunded';
+        const refundPaymentMode = refundMode === 'refund'
+          ? normalizePaymentMode(refundPaymentModeEl?.value || 'cash')
+          : '';
+        const refundBankAccountId = (refundMode === 'refund' && refundPaymentMode === 'bank')
+          ? String(refundBankAccountEl?.value || getDefaultBankAccountId() || '').trim()
+          : '';
+        if (refundSettled && refundPaymentMode === 'bank' && !refundBankAccountId) {
+          errorEl.textContent = 'Please add/select a bank account from Cash & Bank.';
+          return;
+        }
+        const refundAmount = refundSettled
+          ? Number((refundableAmount > 0 ? refundableAmount : amount).toFixed(2))
+          : 0;
 
         const payload = {
           id: `SR-${Date.now()}`,
@@ -954,7 +1105,18 @@
           creditNoteNumber,
           gstReversal: Number(gstReversal.toFixed(2)),
           refundMode,
-          refundStatus: refundMode === 'refund' ? 'pending' : (refundMode === 'adjust' ? 'adjust_pending' : 'credit_pending'),
+          refundStatus: refundMode === 'refund'
+            ? (refundSettled ? 'refunded' : 'pending')
+            : (refundMode === 'adjust' ? 'adjust_pending' : 'credit_pending'),
+          refundSettlementStatus: refundMode === 'refund' ? refundSettlementStatus : 'pending',
+          refundSettled,
+          refundPaidDate: refundSettled
+            ? String(refundPaidDateEl?.value || date || new Date().toISOString().slice(0, 10))
+            : '',
+          refundPaymentMode: refundMode === 'refund' ? refundPaymentMode : '',
+          refundBankAccountId,
+          refundReference: refundMode === 'refund' ? String(refundReferenceEl?.value || '').trim() : '',
+          refundAmount,
           legacyStatus: toStatusLabel(statusEl.value || 'issued'),
           itemWiseEnabled: !!enableItemWiseReturnEl?.checked,
           refundableAmount: Number(refundableAmount.toFixed(2)),

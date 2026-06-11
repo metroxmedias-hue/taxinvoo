@@ -373,11 +373,14 @@
       const STORAGE_KEY = 'metrox_taxinvoo_demo_state';
       const BACKUP_KEY = 'metrox_taxinvoo_demo_state_backup';
       const LAST_GOOD_KEY = 'metrox_taxinvoo_last_good_state';
+      const BUSINESS_PROFILES_KEY = 'metrox_business_profiles_v1';
       const ACTIVE_BUSINESS_PROFILE_KEY = 'metrox_active_business_profile_v1';
       const SCOPED_STATE_KEY_SEPARATOR = '__';
       const PAYMENT_IN_FORM_FOCUS_KEY = 'metrox_open_payment_in_form';
+      const PAYMENT_IN_GENERATION_CONTEXT_KEY = 'metrox_payment_in_generation_context_v1';
       const target = '../app/index.html#/sales-transactions';
       const fmt = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 });
+      const STORAGE_SAVE_ERROR_MESSAGE = 'Could not save changes because browser storage is full. Clear old data and try again.';
 
       const theme = localStorage.getItem('Metrox TaxInvoo_theme');
       if (theme === 'light') document.body.classList.add('light');
@@ -412,62 +415,289 @@
       document.getElementById('back-btn').addEventListener('click', goBack);
       document.getElementById('cancel-btn').addEventListener('click', goBack);
 
-      function getScopedLocalStateKeys() {
-        const profileId = String(localStorage.getItem(ACTIVE_BUSINESS_PROFILE_KEY) || '').trim().replace(/[^a-zA-Z0-9_-]/g, '');
-        if (!profileId) {
-          return { primary: STORAGE_KEY, backup: BACKUP_KEY, lastGood: LAST_GOOD_KEY };
+      function normalizeBusinessStorageId(value) {
+        return String(value || '').trim().replace(/[^a-zA-Z0-9_-]/g, '');
+      }
+
+      function parseMoney(value) {
+        if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+        if (value == null) return 0;
+        const cleaned = String(value).replace(/[^0-9.-]/g, '');
+        const parsed = Number(cleaned);
+        return Number.isFinite(parsed) ? parsed : 0;
+      }
+
+      function toAmount(value) {
+        return Math.max(0, Math.round(parseMoney(value) * 100) / 100);
+      }
+
+      function toPaise(value) {
+        return Math.max(0, Math.round(toAmount(value) * 100));
+      }
+
+      function resolvePaymentAgainstDue(amount, due) {
+        const amountPaise = toPaise(amount);
+        const duePaise = toPaise(due);
+        const diffPaise = amountPaise - duePaise;
+        if (diffPaise <= 0) {
+          return {
+            exceeds: false,
+            amount: toAmount(amountPaise / 100),
+            due: toAmount(duePaise / 100),
+            overBy: 0
+          };
+        }
+        // Accept +/- 1 paise drift caused by floating conversions.
+        if (diffPaise <= 1) {
+          return {
+            exceeds: false,
+            amount: toAmount(duePaise / 100),
+            due: toAmount(duePaise / 100),
+            overBy: 0
+          };
         }
         return {
-          primary: `${STORAGE_KEY}${SCOPED_STATE_KEY_SEPARATOR}${profileId}`,
-          backup: `${BACKUP_KEY}${SCOPED_STATE_KEY_SEPARATOR}${profileId}`,
-          lastGood: `${LAST_GOOD_KEY}${SCOPED_STATE_KEY_SEPARATOR}${profileId}`
+          exceeds: true,
+          amount: toAmount(amountPaise / 100),
+          due: toAmount(duePaise / 100),
+          overBy: toAmount(diffPaise / 100)
         };
       }
 
-      function parseState() {
+      function getProfileCandidates() {
+        const ids = [];
+        const pushId = (value) => {
+          const safe = normalizeBusinessStorageId(value);
+          if (safe && !ids.includes(safe)) ids.push(safe);
+        };
+        pushId(localStorage.getItem(ACTIVE_BUSINESS_PROFILE_KEY));
+        pushId(localStorage.getItem('activeBusinessId'));
         try {
-          const scoped = getScopedLocalStateKeys();
-          const raw = localStorage.getItem(scoped.primary)
-            || localStorage.getItem(scoped.backup)
-            || localStorage.getItem(scoped.lastGood)
-            || localStorage.getItem(STORAGE_KEY)
-            || localStorage.getItem(BACKUP_KEY)
-            || localStorage.getItem(LAST_GOOD_KEY);
-          const parsed = raw ? JSON.parse(raw) : {};
-          return parsed && typeof parsed === 'object' ? parsed : {};
-        } catch (_) {
-          return {};
+          const profiles = JSON.parse(localStorage.getItem(BUSINESS_PROFILES_KEY) || '[]');
+          if (Array.isArray(profiles)) {
+            profiles.forEach((profile) => pushId(profile?.id));
+          }
+        } catch (_) {}
+        return ids;
+      }
+
+      let resolvedProfileId = '';
+
+      function getScopedLocalStateKeys(profileId = resolvedProfileId) {
+        const safeProfileId = normalizeBusinessStorageId(profileId);
+        if (!safeProfileId) {
+          return { primary: STORAGE_KEY, backup: BACKUP_KEY, lastGood: LAST_GOOD_KEY };
         }
+        return {
+          primary: `${STORAGE_KEY}${SCOPED_STATE_KEY_SEPARATOR}${safeProfileId}`,
+          backup: `${BACKUP_KEY}${SCOPED_STATE_KEY_SEPARATOR}${safeProfileId}`,
+          lastGood: `${LAST_GOOD_KEY}${SCOPED_STATE_KEY_SEPARATOR}${safeProfileId}`
+        };
+      }
+
+      function parseStoredPayload(raw) {
+        if (!raw) return null;
+        try {
+          const parsed = JSON.parse(raw);
+          return parsed && typeof parsed === 'object' ? parsed : null;
+        } catch (_) {
+          return null;
+        }
+      }
+
+      function countStoredRecords(payload) {
+        if (!payload || typeof payload !== 'object') return 0;
+        const counters = [
+          Array.isArray(payload.invoices) ? payload.invoices.length : 0,
+          Array.isArray(payload.payments) ? payload.payments.length : 0,
+          payload.customers && typeof payload.customers === 'object' ? Object.keys(payload.customers).length : 0
+        ];
+        return counters.reduce((sum, value) => sum + value, 0);
+      }
+
+      function parseState() {
+        const activeId = normalizeBusinessStorageId(localStorage.getItem(ACTIVE_BUSINESS_PROFILE_KEY));
+        const candidateIds = getProfileCandidates();
+        if (activeId && !candidateIds.includes(activeId)) candidateIds.unshift(activeId);
+        const keyRows = [];
+        const addKeyRow = (key, profileId = '') => {
+          if (!keyRows.some((row) => row.key === key)) {
+            keyRows.push({ key, profileId: normalizeBusinessStorageId(profileId) });
+          }
+        };
+
+        candidateIds.forEach((id) => {
+          const scoped = getScopedLocalStateKeys(id);
+          addKeyRow(scoped.primary, id);
+          addKeyRow(scoped.backup, id);
+          addKeyRow(scoped.lastGood, id);
+        });
+        addKeyRow(STORAGE_KEY, activeId);
+        addKeyRow(BACKUP_KEY, activeId);
+        addKeyRow(LAST_GOOD_KEY, activeId);
+
+        let best = null;
+        keyRows.forEach((row) => {
+          const payload = parseStoredPayload(localStorage.getItem(row.key));
+          if (!payload) return;
+          const records = countStoredRecords(payload);
+          const updatedAt = Date.parse(String(payload?._meta?.updated_at || '')) || 0;
+          const ownerId = normalizeBusinessStorageId(payload?._meta?.business_id || '');
+          const ownerMatches = !!(activeId && ownerId && ownerId === activeId);
+          const score = (records * 1000000000) + (ownerMatches ? 1000000 : 0) + updatedAt;
+          if (!best || score > best.score) {
+            best = {
+              score,
+              payload,
+              profileId: ownerId || row.profileId || activeId
+            };
+          }
+        });
+
+        resolvedProfileId = normalizeBusinessStorageId(best?.profileId || activeId || candidateIds[0] || '');
+        return best?.payload && typeof best.payload === 'object' ? best.payload : {};
+      }
+
+      function readLaunchContextPayload() {
+        try {
+          const raw = sessionStorage.getItem(PAYMENT_IN_GENERATION_CONTEXT_KEY);
+          if (!raw) return null;
+          const parsed = JSON.parse(raw);
+          if (!parsed || typeof parsed !== 'object') return null;
+          const businessId = normalizeBusinessStorageId(parsed.businessId || localStorage.getItem(ACTIVE_BUSINESS_PROFILE_KEY));
+          return {
+            customers: parsed.customers && typeof parsed.customers === 'object' ? parsed.customers : {},
+            invoices: Array.isArray(parsed.invoices) ? parsed.invoices : [],
+            payments: Array.isArray(parsed.payments) ? parsed.payments : [],
+            cashBank: parsed.cashBank && typeof parsed.cashBank === 'object' ? parsed.cashBank : {},
+            _meta: {
+              business_id: businessId,
+              updated_at: String(parsed.createdAt || new Date().toISOString())
+            }
+          };
+        } catch (_) {
+          return null;
+        }
+      }
+
+      function isQuotaError(err) {
+        return String(err?.name || '').toLowerCase() === 'quotaexceedederror'
+          || /quota/i.test(String(err?.message || ''));
       }
 
       function saveState(next) {
         const payload = next && typeof next === 'object' ? next : {};
-        payload._meta = { ...(payload._meta || {}), updated_at: new Date().toISOString() };
+        payload._meta = {
+          ...(payload._meta || {}),
+          business_id: normalizeBusinessStorageId(payload?._meta?.business_id || resolvedProfileId || localStorage.getItem(ACTIVE_BUSINESS_PROFILE_KEY)),
+          updated_at: new Date().toISOString()
+        };
         const serialized = JSON.stringify(payload);
-        const scoped = getScopedLocalStateKeys();
-        localStorage.setItem(scoped.primary, serialized);
-        localStorage.setItem(scoped.backup, serialized);
-        localStorage.setItem(scoped.lastGood, serialized);
+        const scoped = getScopedLocalStateKeys(payload._meta.business_id);
+        const writeState = (writeLastGood = true) => {
+          localStorage.setItem(scoped.primary, serialized);
+          localStorage.setItem(scoped.backup, serialized);
+          if (writeLastGood) localStorage.setItem(scoped.lastGood, serialized);
+          else localStorage.removeItem(scoped.lastGood);
+        };
+
+        try {
+          writeState(true);
+          return true;
+        } catch (firstErr) {
+          if (!isQuotaError(firstErr)) {
+            console.error('Failed to save payment-in data.', firstErr);
+            return false;
+          }
+          try {
+            writeState(false);
+            return true;
+          } catch (secondErr) {
+            if (!isQuotaError(secondErr)) {
+              console.error('Failed to save payment-in data.', secondErr);
+              return false;
+            }
+            try {
+              localStorage.removeItem(scoped.backup);
+              localStorage.removeItem(scoped.lastGood);
+              localStorage.setItem(scoped.primary, serialized);
+              return true;
+            } catch (finalErr) {
+              console.warn('Browser storage is full. Latest payment-in changes remain only in this tab session.', finalErr);
+              return false;
+            }
+          }
+        }
       }
 
-      function getInvoiceDue(inv) {
-        const total = Number(inv.total) || 0;
-        const paid = Number(inv.paidAmount) || 0;
-        return Math.max(0, total - paid);
+      function getInvoiceCollectionTarget(inv) {
+        if (!inv || typeof inv !== 'object') return 0;
+        const explicit = parseMoney(inv.netReceivable);
+        const baseTarget = explicit > 0 ? toAmount(explicit) : toAmount(parseMoney(inv.total) - parseMoney(inv.tdsAmount));
+        const invoiceId = String(inv.id || '').trim();
+        if (!invoiceId) return baseTarget;
+        const isSalesReturnActive = (entry) => {
+          const status = String(entry?.status || entry?.legacyStatus || '').trim().toLowerCase();
+          return status !== 'draft' && status !== 'cancelled';
+        };
+        const isCreditNoteActive = (entry) => String(entry?.status || '').trim().toLowerCase() !== 'cancelled';
+        const isLinkedSalesReturnCreditNote = (entry) => {
+          if (String(entry?.sourceType || '').trim().toLowerCase() === 'sales_return') return true;
+          if (String(entry?.linkedSalesReturnId || '').trim()) return true;
+          const noteId = String(entry?.id || '').trim();
+          if (!noteId) return false;
+          return (state.salesReturns || []).some((sr) => {
+            if (String(sr?.creditNoteNumber || '').trim() !== noteId) return false;
+            const sameInvoice = String(sr?.invoiceId || '').trim() === String(entry?.invoiceId || '').trim();
+            return sameInvoice;
+          });
+        };
+        const salesReturnAdjustments = (state.salesReturns || [])
+          .filter((entry) => String(entry?.invoiceId || '').trim() === invoiceId)
+          .filter((entry) => isSalesReturnActive(entry))
+          .reduce((sum, entry) => sum + parseMoney(entry?.amount), 0);
+        const manualCreditAdjustments = (state.creditNotes || [])
+          .filter((entry) => String(entry?.invoiceId || '').trim() === invoiceId)
+          .filter((entry) => !isLinkedSalesReturnCreditNote(entry))
+          .filter((entry) => isCreditNoteActive(entry))
+          .reduce((sum, entry) => sum + parseMoney(entry?.amount), 0);
+        return Math.max(0, toAmount(baseTarget - salesReturnAdjustments - manualCreditAdjustments));
       }
 
-      function setInvoiceStatus(inv) {
-        const total = Number(inv.total) || 0;
-        const paid = Number(inv.paidAmount) || 0;
-        if (paid >= total) inv.status = 'Paid';
+      function getInvoicePaidAmount(inv, payments = []) {
+        const fromInvoice = toAmount(inv?.paidAmount);
+        const invoiceId = String(inv?.id || '').trim();
+        if (!invoiceId) return fromInvoice;
+        const fromPayments = toAmount((Array.isArray(payments) ? payments : [])
+          .filter((payment) => String(payment?.invoiceId || '').trim() === invoiceId)
+          .reduce((sum, payment) => sum + parseMoney(payment?.amount), 0));
+        return Math.max(fromInvoice, fromPayments);
+      }
+
+      function getInvoiceDue(inv, payments = []) {
+        return Math.max(0, toAmount(getInvoiceCollectionTarget(inv) - getInvoicePaidAmount(inv, payments)));
+      }
+
+      function setInvoiceStatus(inv, payments = []) {
+        const target = getInvoiceCollectionTarget(inv);
+        const paid = getInvoicePaidAmount(inv, payments);
+        if (paid >= target && target > 0) inv.status = 'Paid';
         else if (paid > 0) inv.status = 'Partial';
         else inv.status = 'Pending';
       }
 
-      const state = parseState();
+      const persistedState = parseState();
+      const launchContextState = readLaunchContextPayload();
+      const useLaunchContext = countStoredRecords(launchContextState) >= countStoredRecords(persistedState);
+      const state = useLaunchContext ? launchContextState : persistedState;
+      if (useLaunchContext) {
+        resolvedProfileId = normalizeBusinessStorageId(state?._meta?.business_id || resolvedProfileId);
+      }
       state.customers = state.customers && typeof state.customers === 'object' ? state.customers : {};
       state.invoices = Array.isArray(state.invoices) ? state.invoices : [];
       state.payments = Array.isArray(state.payments) ? state.payments : [];
+      state.salesReturns = Array.isArray(state.salesReturns) ? state.salesReturns : [];
+      state.creditNotes = Array.isArray(state.creditNotes) ? state.creditNotes : [];
       state.cashBank = state.cashBank && typeof state.cashBank === 'object' ? state.cashBank : {};
       state.cashBank.accounts = Array.isArray(state.cashBank.accounts) ? state.cashBank.accounts : [];
       state.cashBank.defaultBankAccountId = String(state.cashBank.defaultBankAccountId || '');
@@ -519,11 +749,18 @@
         modeHintEl.className = 'form-hint';
       }
 
-      const customers = Object.keys(state.customers)
-        .filter((name) => !state.customers[name]?.deleted)
-        .sort((a, b) => a.localeCompare(b));
+      const customers = Array.from(new Set([
+        ...Object.keys(state.customers)
+          .filter((name) => !state.customers[name]?.deleted),
+        ...state.invoices
+          .map((inv) => String(inv?.customer || '').trim())
+          .filter(Boolean)
+      ])).sort((a, b) => a.localeCompare(b));
 
-      const openInvoices = state.invoices.filter((inv) => getInvoiceDue(inv) > 0);
+      const openInvoices = state.invoices.filter((inv) => {
+        const isCancelled = String(inv?.status || '').trim().toLowerCase() === 'cancelled';
+        return !isCancelled && getInvoiceDue(inv, state.payments) > 0;
+      });
 
       if (!openInvoices.length) {
         saveBtn.disabled = true;
@@ -540,7 +777,7 @@
           .sort((a, b) => String(a.id || '').localeCompare(String(b.id || '')));
         invoiceEl.innerHTML = ['<option value="">Select invoice</option>']
           .concat(rows.map((inv) => {
-            const due = getInvoiceDue(inv);
+            const due = getInvoiceDue(inv, state.payments);
             return `<option value="${inv.id}">${inv.id} | ${inv.customer} | Due INR ${fmt.format(due)}</option>`;
           }))
           .join('');
@@ -566,16 +803,22 @@
           saveBtn.textContent = 'Save Payment';
           return;
         }
-        const total = Number(inv.total) || 0;
-        const due = getInvoiceDue(inv);
+        const total = getInvoiceCollectionTarget(inv) + toAmount(inv.tdsAmount);
+        const due = getInvoiceDue(inv, state.payments);
         invoiceTotalEl.textContent = `₹${fmt.format(total)}`;
         invoiceDueEl.textContent = `₹${fmt.format(due)}`;
 
-        if (!amountEl.value || Number(amountEl.value) <= 0) {
+        const selectedInvoiceId = String(inv.id || '');
+        if (invoiceEl.dataset.lastSyncedInvoice !== selectedInvoiceId) {
+          amountEl.value = due.toFixed(2);
+          invoiceEl.dataset.lastSyncedInvoice = selectedInvoiceId;
+        } else if (!amountEl.value || Number(amountEl.value) <= 0) {
           amountEl.value = due.toFixed(2);
         }
 
-        const amount = Number(amountEl.value) || 0;
+        const amount = toAmount(amountEl.value);
+        const paymentDecision = resolvePaymentAgainstDue(amount, due);
+        const safeAmount = paymentDecision.amount;
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const dueDateRaw = String(inv.dueDate || '').trim();
@@ -584,10 +827,10 @@
         const smartTips = [];
         if (isOverdue) smartTips.push('⚠ This invoice is overdue - consider collecting full payment');
 
-        if (amount > due) {
-          const extra = amount - due;
+        if (paymentDecision.exceeds) {
+          const extra = paymentDecision.overBy;
           statusEl.innerHTML = `<span class="status-preview-stack"><span class="status-chip overpaid">Overpaid</span><span class="status-remaining">₹${fmt.format(extra)} extra</span></span>`;
-          if (previewPaidEl) previewPaidEl.textContent = `₹${fmt.format(amount)}`;
+          if (previewPaidEl) previewPaidEl.textContent = `₹${fmt.format(safeAmount)}`;
           if (previewRemainingEl) previewRemainingEl.textContent = '₹0';
           if (previewStatusEl) previewStatusEl.innerHTML = '<span class="status-chip overpaid">Overpaid</span>';
           if (amountHintEl) {
@@ -596,7 +839,7 @@
           }
           errorEl.textContent = 'Payment amount cannot exceed invoice due.';
           saveBtn.textContent = 'Save Payment';
-        } else if (amount <= 0) {
+        } else if (safeAmount <= 0) {
           statusEl.textContent = '-';
           if (previewPaidEl) previewPaidEl.textContent = '₹0';
           if (previewRemainingEl) previewRemainingEl.textContent = `₹${fmt.format(due)}`;
@@ -608,8 +851,9 @@
           errorEl.textContent = '';
           saveBtn.textContent = 'Save Payment';
         } else {
-          const remaining = Math.max(0, due - amount);
-          if (previewPaidEl) previewPaidEl.textContent = `₹${fmt.format(amount)}`;
+          if (safeAmount !== amount) amountEl.value = safeAmount.toFixed(2);
+          const remaining = Math.max(0, toAmount(due - safeAmount));
+          if (previewPaidEl) previewPaidEl.textContent = `₹${fmt.format(safeAmount)}`;
           if (previewRemainingEl) previewRemainingEl.textContent = `₹${fmt.format(remaining)}`;
           if (remaining === 0) {
             statusEl.innerHTML = '<span class="status-preview-stack"><span class="status-chip paid">Paid</span><span class="status-remaining">₹0 remaining</span></span>';
@@ -663,37 +907,45 @@
       document.getElementById('payment-in-form').addEventListener('submit', (e) => {
         e.preventDefault();
         const inv = selectedInvoice();
-        const amount = Number(amountEl.value) || 0;
+        const amount = toAmount(amountEl.value);
         const date = dateEl.value || new Date().toISOString().slice(0, 10);
 
         if (!inv) {
           errorEl.textContent = 'Select an invoice.';
           return;
         }
-        const due = getInvoiceDue(inv);
+        const due = getInvoiceDue(inv, state.payments);
         if (amount <= 0) {
           errorEl.textContent = 'Amount must be greater than 0.';
           return;
         }
-        if (amount > due) {
+        const paymentDecision = resolvePaymentAgainstDue(amount, due);
+        if (paymentDecision.exceeds) {
           errorEl.textContent = 'Payment amount cannot exceed invoice due.';
           return;
         }
+        const appliedAmount = paymentDecision.amount;
 
-        inv.paidAmount = (Number(inv.paidAmount) || 0) + amount;
-        setInvoiceStatus(inv);
+        saveBtn.disabled = true;
+        inv.paidAmount = toAmount(getInvoicePaidAmount(inv, state.payments) + appliedAmount);
+        setInvoiceStatus(inv, state.payments);
         state.payments.push({
           id: `PAY-${Date.now()}`,
           invoiceId: inv.id,
           customer: inv.customer,
-          amount,
+          amount: appliedAmount,
           mode: modeEl.value || 'cash',
           bankAccountId: normalizeMode(modeEl.value) === 'bank' ? (bankAccountEl.value || getDefaultBankAccountId()) : '',
           date,
           notes: String(notesEl.value || '').trim()
         });
 
-        saveState(state);
+        const saved = saveState(state);
+        if (!saved) {
+          errorEl.textContent = STORAGE_SAVE_ERROR_MESSAGE;
+          saveBtn.disabled = false;
+          return;
+        }
         goBack();
       });
     })();
