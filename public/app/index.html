@@ -8358,6 +8358,116 @@
       grid-template-columns: 1fr 1fr;
       gap: 10px;
     }
+    .first-onboarding-track {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .first-onboarding-hero {
+      min-height: 340px;
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 14px;
+      text-align: center;
+      padding: 28px;
+    }
+    .first-onboarding-hero h4 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.15;
+    }
+    .first-onboarding-hero p {
+      max-width: 560px;
+      margin: 0 auto;
+      color: var(--muted);
+    }
+    .first-onboarding-icon {
+      width: 72px;
+      height: 72px;
+      display: grid;
+      place-items: center;
+      border-radius: 18px;
+      background: rgba(88,214,193,0.14);
+      border: 1px solid rgba(88,214,193,0.35);
+      font-size: 34px;
+    }
+    .first-onboarding-actions {
+      justify-content: center;
+    }
+    .wizard-section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .onboarding-upload-preview {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .onboarding-upload-preview > div,
+    .invoice-prefix-preview {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: rgba(255,255,255,0.03);
+      display: grid;
+      gap: 6px;
+    }
+    .onboarding-upload-preview span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .trial-active-banner {
+      border: 1px solid rgba(88,214,193,0.35);
+      border-radius: 16px;
+      padding: 12px 14px;
+      margin-bottom: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      background: rgba(88,214,193,0.1);
+    }
+    .trial-active-banner strong {
+      display: block;
+    }
+    .trial-active-banner span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .first-invoice-modal-card {
+      max-width: 520px;
+      text-align: center;
+    }
+    .first-invoice-modal-icon {
+      width: 70px;
+      height: 70px;
+      margin: 0 auto 8px;
+      display: grid;
+      place-items: center;
+      border-radius: 18px;
+      border: 1px solid rgba(88,214,193,0.35);
+      background: rgba(88,214,193,0.14);
+      font-size: 34px;
+    }
+    .first-invoice-modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .first-invoice-celebration {
+      text-align: center;
+      display: grid;
+      gap: 14px;
+    }
+    .first-invoice-celebration h3 {
+      margin: 0;
+      font-size: 24px;
+    }
     .wizard-step-pill {
       border: 1px solid var(--line);
       border-radius: 999px;
@@ -22320,123 +22430,127 @@
       </div>
       <div class="content">
         <section class="screen" id="get-started">
-          <div class="wizard-shell">
+          <div class="wizard-shell first-onboarding" id="first-time-onboarding">
             <div class="panel">
               <div class="wizard-header">
                 <div>
-                  <h3 style="margin:0;">Let’s set up Metrox TaxInvoo for your business</h3>
-                  <div class="muted" style="font-size:12px;">Two quick steps. You can update everything later in Settings.</div>
+                  <h3 id="ft-onboarding-title" style="margin:0;">Welcome to TaxInvoo 🚀</h3>
+                  <div class="muted" id="ft-onboarding-subtitle" style="font-size:12px;">Let's get your business ready for GST billing in less than 2 minutes.</div>
                 </div>
-                <button class="btn" type="button" id="skip-get-started">Skip for now</button>
+                <button class="btn" type="button" id="skip-get-started">Skip & Go To Dashboard</button>
               </div>
-              <div class="wizard-step-track">
-                <div class="wizard-step-pill active" data-wizard-pill="1">Step 1 · Business Basics</div>
-                <div class="wizard-step-pill" data-wizard-pill="2">Step 2 · Billing Preferences</div>
+              <div class="wizard-step-track first-onboarding-track" id="ft-progress-track">
+                <div class="wizard-step-pill" data-wizard-pill="1">Step 1 of 3</div>
+                <div class="wizard-step-pill" data-wizard-pill="2">Step 2 of 3</div>
+                <div class="wizard-step-pill" data-wizard-pill="3">Step 3 of 3</div>
               </div>
-              <div class="wizard-step-note" id="gs-step-note">Step 1 incomplete</div>
+              <div class="wizard-step-note" id="gs-step-note">Welcome</div>
             </div>
 
-            <div class="panel wizard-step-pane active" data-wizard-step="1">
-              <h4 style="margin:0;">Business Basics</h4>
+            <div class="panel wizard-step-pane active" data-onboarding-step="welcome">
+              <div class="first-onboarding-hero">
+                <div class="first-onboarding-icon" aria-hidden="true">🚀</div>
+                <h4>Welcome to TaxInvoo</h4>
+                <p>Let's get your business ready for GST billing in less than 2 minutes.</p>
+                <div class="wizard-actions first-onboarding-actions">
+                  <button class="btn primary" type="button" id="ft-start-setup">Start Setup</button>
+                  <button class="btn" type="button" id="ft-skip-dashboard">Skip & Go To Dashboard</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel wizard-step-pane" data-onboarding-step="business">
+              <div class="wizard-section-head">
+                <span class="pill">Step 1 of 3</span>
+                <h4 style="margin:0;">Business Setup</h4>
+              </div>
               <div class="split">
-                <label class="field">Business name
+                <label class="field">Business Name
                   <input type="text" id="gs-business-name" placeholder="Metrox Media" />
                   <span class="field-error" id="gs-business-name-error"></span>
                 </label>
-                <label class="field">Business type
-                  <select id="gs-business-type">
-                    <option value="goods">Goods</option>
-                    <option value="services">Services</option>
-                  </select>
+                <label class="field">Owner Name
+                  <input type="text" id="gs-owner-name" placeholder="Owner name" />
+                  <span class="field-error" id="gs-owner-name-error"></span>
                 </label>
               </div>
               <div class="split">
+                <label class="field">Mobile Number
+                  <input type="tel" id="gs-mobile" placeholder="+91 90000 00000" />
+                  <span class="field-error" id="gs-mobile-error"></span>
+                </label>
                 <label class="field">State
                   <input type="text" id="gs-state" placeholder="Maharashtra" />
                   <span class="field-error" id="gs-state-error"></span>
                 </label>
-                <label class="field">City
-                  <input type="text" id="gs-city" placeholder="Mumbai" />
-                </label>
               </div>
-              <label class="field">Business address
-                <input type="text" id="gs-address" placeholder="Registered office address" />
-                <span class="field-error" id="gs-address-error"></span>
+              <label class="field">GST Number (optional)
+                <input type="text" id="gs-gstin" placeholder="27ABCDE1234F1Z5" />
+                <span class="field-error" id="gs-gstin-error"></span>
               </label>
               <div class="wizard-actions">
-                <span class="muted" style="font-size:12px;">Required: Business name</span>
+                <button class="btn" type="button" id="gs-back">Back</button>
                 <button class="btn primary" type="button" id="gs-next">Continue</button>
               </div>
             </div>
 
-            <div class="panel wizard-step-pane" data-wizard-step="2">
-              <h4 style="margin:0;">Billing Preferences</h4>
-              <div class="split">
-                <label class="field">GST registration
-                  <select id="gs-gst-mode">
-                    <option value="gst">GST Registered</option>
-                    <option value="non-gst">Not GST Registered</option>
-                  </select>
-                </label>
-                <label class="field">Default GST slab
-                  <select id="gs-default-slab">
-                    <option value="0">0%</option>
-                    <option value="5">5%</option>
-                    <option value="12">12%</option>
-                    <option value="18" selected>18%</option>
-                    <option value="28">28%</option>
-                  </select>
-                </label>
+            <div class="panel wizard-step-pane" data-onboarding-step="branding">
+              <div class="wizard-section-head">
+                <span class="pill">Step 2 of 3</span>
+                <h4 style="margin:0;">Branding</h4>
               </div>
               <div class="split">
-                <label class="field">UPI ID (optional)
-                  <input type="text" id="gs-upi" placeholder="name@upi" />
-                  <span class="field-error" id="gs-upi-error"></span>
+                <label class="field">Upload Logo (optional)
+                  <input type="file" id="gs-logo" accept="image/*" />
+                  <span class="field-error" id="gs-logo-error"></span>
                 </label>
-                <label class="field">Company GSTIN (optional)
-                  <input type="text" id="gs-gstin" placeholder="27ABCDE1234F1Z5" />
-                  <span class="field-error" id="gs-gstin-error"></span>
-                </label>
-              </div>
-              <div class="panel" style="background:rgba(255,255,255,0.03);">
-                <h5 style="margin:0;">Accountant Collaboration (Optional)</h5>
-                <label class="field">
-                  <span><input type="checkbox" id="gs-invite-accountant" /> Invite accountant right after setup</span>
-                </label>
-                <div class="split">
-                  <label class="field">Accountant name
-                    <input type="text" id="gs-accountant-name" placeholder="CA Ankit Mishra" />
-                  </label>
-                  <label class="field">Accountant email
-                    <input type="email" id="gs-accountant-email" placeholder="ca@firm.com" />
-                    <span class="field-error" id="gs-accountant-email-error"></span>
-                  </label>
-                </div>
-                <label class="field">Accountant phone (optional)
-                  <input type="text" id="gs-accountant-phone" placeholder="+91 98765 43210" />
-                  <span class="field-error" id="gs-accountant-phone-error"></span>
+                <label class="field">Upload Signature (optional)
+                  <input type="file" id="gs-signature" accept="image/*" />
+                  <span class="field-error" id="gs-signature-error"></span>
                 </label>
               </div>
-              <div class="wizard-choice-cards">
-                <div class="wizard-choice-card">
-                  <h5>Create Invoice</h5>
-                  <p>Start billing immediately after setup.</p>
-                  <button class="btn" type="button" data-gs-finish="invoices">Finish & Create Invoice</button>
+              <div class="onboarding-upload-preview">
+                <div><strong>Logo</strong><span id="gs-logo-status">Optional</span></div>
+                <div><strong>Signature</strong><span id="gs-signature-status">Optional</span></div>
+              </div>
+              <div class="wizard-actions">
+                <button class="btn" type="button" id="ft-branding-back">Back</button>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                  <button class="btn" type="button" id="ft-branding-skip">Skip For Now</button>
+                  <button class="btn primary" type="button" id="ft-branding-next">Continue</button>
                 </div>
-                <div class="wizard-choice-card">
-                  <h5>Explore Dashboard</h5>
-                  <p>Go to dashboard and review the business overview.</p>
-                  <button class="btn" type="button" data-gs-finish="dashboard">Finish & Explore</button>
-                </div>
-                <div class="wizard-choice-card">
-                  <h5>Open Settings</h5>
-                  <p>Continue branding, templates, and user access controls.</p>
-                  <button class="btn" type="button" data-gs-finish="settings">Finish & Open Settings</button>
+              </div>
+            </div>
+
+            <div class="panel wizard-step-pane" data-onboarding-step="invoice">
+              <div class="wizard-section-head">
+                <span class="pill">Step 3 of 3</span>
+                <h4 style="margin:0;">Invoice Settings</h4>
+              </div>
+              <div class="split">
+                <label class="field">Invoice Prefix
+                  <input type="text" id="gs-invoice-prefix" value="INV-" placeholder="INV-" />
+                  <span class="field-error" id="gs-invoice-prefix-error"></span>
+                </label>
+                <div class="summary invoice-prefix-preview">
+                  <div class="row"><span>Preview</span><strong id="gs-invoice-preview">INV-0001</strong></div>
                 </div>
               </div>
               <div class="wizard-actions">
-                <button class="btn" type="button" id="gs-back">Back</button>
-                <span class="muted" style="font-size:12px;">You can change this later anytime.</span>
+                <button class="btn" type="button" id="ft-invoice-back">Back</button>
+                <button class="btn primary" type="button" id="ft-complete-setup">Complete Setup</button>
+              </div>
+            </div>
+
+            <div class="panel wizard-step-pane" data-onboarding-step="success">
+              <div class="first-onboarding-hero success">
+                <div class="first-onboarding-icon" aria-hidden="true">🎉</div>
+                <h4>Your business is ready 🎉</h4>
+                <p>You can now create GST invoices, track payments and manage customers.</p>
+                <div class="wizard-actions first-onboarding-actions">
+                  <button class="btn primary" type="button" id="ft-create-first-invoice">Create First Invoice</button>
+                  <button class="btn" type="button" id="ft-go-dashboard">Go To Dashboard</button>
+                </div>
               </div>
             </div>
           </div>
@@ -22565,6 +22679,13 @@
         </section>
         <section class="screen active" id="dashboard">
           <div class="dashboard-shell" id="dashboard-shell">
+            <div class="trial-active-banner" id="trial-active-banner" hidden>
+              <div>
+                <strong>🎁 Free Trial Active</strong>
+                <span id="trial-active-days">Your free trial is active.</span>
+              </div>
+              <span>Explore TaxInvoo without changing your billing settings.</span>
+            </div>
             <div class="dashboard-head">
               <div class="dashboard-head-copy">
                 <span class="dashboard-kicker">Financial command center</span>
@@ -25641,14 +25762,6 @@
         </section>
 
         <section class="screen" id="reports">
-          <div class="feature-lock-overlay" id="reports-lock-overlay" hidden>
-            <div class="feature-lock-card">
-              <div class="feature-lock-icon" aria-hidden="true">🔒</div>
-              <h5>Reports are locked on Starter</h5>
-              <p>Upgrade to Growth to unlock this feature 🚀</p>
-              <button class="btn primary" type="button" id="reports-upgrade-cta">Upgrade to Growth to unlock this feature 🚀</button>
-            </div>
-          </div>
           <div class="reports-shell">
             <div class="reports-head">
               <div>
@@ -26401,6 +26514,19 @@
 
   <div id="reminder-toast-root" aria-live="polite" aria-atomic="true"></div>
 
+  <div class="modal-backdrop" id="first-invoice-modal" aria-hidden="true">
+    <div class="modal first-invoice-modal-card">
+      <div class="first-invoice-modal-icon" aria-hidden="true">🎉</div>
+      <h3 style="margin:0;">🎉 First Invoice Created</h3>
+      <p class="muted" style="margin:6px 0 0;">Congratulations! You're officially billing with TaxInvoo.</p>
+      <div class="first-invoice-modal-actions">
+        <button class="btn" type="button" id="first-invoice-download">Download PDF</button>
+        <button class="btn" type="button" id="first-invoice-whatsapp">Share via WhatsApp</button>
+        <button class="btn primary" type="button" id="first-invoice-create-another">Create Another Invoice</button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-backdrop" id="payment-modal">
     <div class="modal">
       <div class="modal-header">
@@ -26922,6 +27048,7 @@
     }
     const state = {
       users: [],
+      onboardingCompleted: false,
       invoices: [],
       invoiceCounter: 2409,
       quotations: [],
@@ -27029,7 +27156,7 @@
       },
       starter: {
         invoice_limit: 50,
-        gst_reports: false,
+        gst_reports: true,
         analytics: false,
         team_access: false,
         recurring: false,
@@ -27185,59 +27312,7 @@
     }
 
     function hasStrictReportsAccess() {
-      if (DISABLE_PLAN_AND_ACCESS_GATES) return true;
-      const user = getUserDataSnapshot() || {};
-      const rawStatus = String(user.plan_status || user.subscription_status || '').trim().toLowerCase();
-      const parseDateValue = (value) => {
-        if (!value) return null;
-        if (value instanceof Date) return Number.isFinite(value.getTime()) ? value : null;
-        if (typeof value?.toDate === 'function') {
-          const parsed = value.toDate();
-          return parsed instanceof Date && Number.isFinite(parsed.getTime()) ? parsed : null;
-        }
-        if (typeof value === 'object' && Number.isFinite(Number(value.seconds))) {
-          const parsed = new Date(Number(value.seconds) * 1000);
-          return Number.isFinite(parsed.getTime()) ? parsed : null;
-        }
-        const parsed = new Date(value);
-        return Number.isFinite(parsed.getTime()) ? parsed : null;
-      };
-      const paidEnd = parseDateValue(
-        user.subscription_end_date
-        || user.current_period_end
-        || user.next_billing_date
-        || user.plan_expires_at
-        || null
-      );
-      const now = new Date();
-      const explicitPaidExpiry = rawStatus === 'expired' && paidEnd && now > paidEnd;
-      const planCandidates = [
-        user.plan_type,
-        user.current_plan,
-        user.subscription?.plan,
-        window.businessData?.plan_type,
-        window.businessData?.current_plan,
-        localStorage.getItem('metrox_plan'),
-        window.APP_PLAN
-      ].map((value) => normalizePlanKey(value)).filter(Boolean);
-      const hasPaidReportsTier = planCandidates.some((plan) => plan === 'growth' || plan === 'pro');
-      if (hasPaidReportsTier && !explicitPaidExpiry) return true;
-
-      const accessState = resolveUserAccessState(user);
-      if (accessState === 'full_access') return true;
-
-      const planKey = getPlanKeyForRestrictionGate();
-      const accessModule = window.METROX_PLAN_ACCESS;
-      if (typeof accessModule?.canAccessReports === 'function') {
-        return !!accessModule.canAccessReports(planKey);
-      }
-      if (typeof accessModule?.hasAccess === 'function') {
-        return !!accessModule.hasAccess(planKey, 'reports');
-      }
-      if (typeof window.hasAccess === 'function') {
-        return !!window.hasAccess(planKey, 'reports');
-      }
-      return planKey === 'growth' || planKey === 'pro';
+      return true;
     }
 
     function openGrowthUpgradeCta() {
@@ -27313,18 +27388,42 @@
     const gsAccountantName = document.getElementById('gs-accountant-name');
     const gsAccountantEmail = document.getElementById('gs-accountant-email');
     const gsAccountantPhone = document.getElementById('gs-accountant-phone');
+    const gsOwnerName = document.getElementById('gs-owner-name');
+    const gsMobile = document.getElementById('gs-mobile');
+    const gsLogo = document.getElementById('gs-logo');
+    const gsSignature = document.getElementById('gs-signature');
+    const gsLogoStatus = document.getElementById('gs-logo-status');
+    const gsSignatureStatus = document.getElementById('gs-signature-status');
+    const gsInvoicePrefix = document.getElementById('gs-invoice-prefix');
+    const gsInvoicePreview = document.getElementById('gs-invoice-preview');
     const gsStepNote = document.getElementById('gs-step-note');
     const gsNextBtn = document.getElementById('gs-next');
     const gsBackBtn = document.getElementById('gs-back');
     const gsWizardPills = document.querySelectorAll('[data-wizard-pill]');
     const gsWizardSteps = document.querySelectorAll('[data-wizard-step]');
+    const ftStepPanes = document.querySelectorAll('#first-time-onboarding [data-onboarding-step]');
+    const ftStartSetupBtn = document.getElementById('ft-start-setup');
+    const ftSkipDashboardBtn = document.getElementById('ft-skip-dashboard');
+    const ftBrandingBackBtn = document.getElementById('ft-branding-back');
+    const ftBrandingSkipBtn = document.getElementById('ft-branding-skip');
+    const ftBrandingNextBtn = document.getElementById('ft-branding-next');
+    const ftInvoiceBackBtn = document.getElementById('ft-invoice-back');
+    const ftCompleteSetupBtn = document.getElementById('ft-complete-setup');
+    const ftCreateFirstInvoiceBtn = document.getElementById('ft-create-first-invoice');
+    const ftGoDashboardBtn = document.getElementById('ft-go-dashboard');
     const gsBusinessNameError = document.getElementById('gs-business-name-error');
+    const gsOwnerNameError = document.getElementById('gs-owner-name-error');
+    const gsMobileError = document.getElementById('gs-mobile-error');
     const gsStateError = document.getElementById('gs-state-error');
     const gsAddressError = document.getElementById('gs-address-error');
     const gsUpiError = document.getElementById('gs-upi-error');
     const gsGstinError = document.getElementById('gs-gstin-error');
     const gsAccountantEmailError = document.getElementById('gs-accountant-email-error');
     const gsAccountantPhoneError = document.getElementById('gs-accountant-phone-error');
+    const firstInvoiceModal = document.getElementById('first-invoice-modal');
+    const firstInvoiceDownloadBtn = document.getElementById('first-invoice-download');
+    const firstInvoiceWhatsappBtn = document.getElementById('first-invoice-whatsapp');
+    const firstInvoiceCreateAnotherBtn = document.getElementById('first-invoice-create-another');
     const salesNavGroup = document.getElementById('sales-nav-group');
     const salesNavToggle = document.getElementById('sales-nav-toggle');
     const salesNavSubmenu = document.getElementById('sales-nav-submenu');
@@ -27338,8 +27437,6 @@
     const reportsGrid = document.getElementById('reports-grid');
     const reportsScreen = document.getElementById('reports');
     const reportsShell = reportsScreen?.querySelector('.reports-shell');
-    const reportsLockOverlay = document.getElementById('reports-lock-overlay');
-    const reportsUpgradeCta = document.getElementById('reports-upgrade-cta');
     const reportsNavItem = document.querySelector('.nav-item[data-screen="reports"]');
     const reportsNavLabel = reportsNavItem?.querySelector('.nav-item-label');
     const remindersSettingsLink = document.querySelector('[data-settings-page-link="reminders"]');
@@ -28107,34 +28204,121 @@
     }
     window.trackOnboardingEvent = trackOnboardingEvent;
 
+    const ONBOARDING_COMPLETED_KEY = 'metrox_onboarding_completed_v1';
+    const ONBOARDING_LEGACY_DONE_KEY = 'metrox_onboarding_v2_done';
+    const ONBOARDING_NEW_BUSINESS_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+    const ONBOARDING_STEP_IDS = ['welcome', 'business', 'branding', 'invoice', 'success'];
+    let currentFirstOnboardingStep = 'welcome';
+
+    function getOnboardingStorageKey() {
+      let businessId = '';
+      try {
+        businessId = String(activeBusinessProfileId || localStorage.getItem(ACTIVE_BUSINESS_PROFILE_KEY) || getUserDataSnapshot()?.business_id || '').trim();
+      } catch (_) {}
+      return `${ONBOARDING_COMPLETED_KEY}:${businessId || 'default'}`;
+    }
+
+    function isOnboardingCompleted() {
+      if (state.onboardingCompleted === true) return true;
+      try {
+        return localStorage.getItem(getOnboardingStorageKey()) === '1';
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function setOnboardingCompleted(completed = true) {
+      state.onboardingCompleted = completed === true;
+      try {
+        const key = getOnboardingStorageKey();
+        if (state.onboardingCompleted) {
+          localStorage.setItem(key, '1');
+          localStorage.setItem(ONBOARDING_LEGACY_DONE_KEY, '1');
+        } else {
+          localStorage.removeItem(key);
+        }
+      } catch (_) {}
+    }
+
+    function parseOnboardingDateMs(value) {
+      if (!value) return 0;
+      if (value instanceof Date) return Number.isFinite(value.getTime()) ? value.getTime() : 0;
+      if (typeof value?.toDate === 'function') {
+        const date = value.toDate();
+        return date instanceof Date && Number.isFinite(date.getTime()) ? date.getTime() : 0;
+      }
+      if (typeof value === 'object' && Number.isFinite(Number(value.seconds))) {
+        return Number(value.seconds) * 1000;
+      }
+      const ms = Date.parse(String(value || ''));
+      return Number.isFinite(ms) ? ms : 0;
+    }
+
+    function hasOnboardingActivity() {
+      return (state.invoices?.length || 0) > 0
+        || (state.payments?.length || 0) > 0
+        || Object.keys(state.customers || {}).length > 0
+        || Number(getUserDataSnapshot()?.invoice_count || 0) > 0;
+    }
+
+    function isRecentlyCreatedBusiness() {
+      const businessData = getUserDataSnapshot() || {};
+      const createdMs = parseOnboardingDateMs(
+        businessData.created_at
+        || businessData.trial_starts_at
+        || businessData.subscription_start_date
+        || ''
+      );
+      return createdMs > 0 && (Date.now() - createdMs) <= ONBOARDING_NEW_BUSINESS_WINDOW_MS;
+    }
+
+    function shouldShowFirstTimeOnboarding() {
+      if (isOnboardingCompleted()) return false;
+      if (hasOnboardingActivity()) {
+        setOnboardingCompleted(true);
+        return false;
+      }
+      const hasStoredProfile = !!String(state.company?.name || '').trim() || !!String(getUserDataSnapshot()?.name || '').trim();
+      return isRecentlyCreatedBusiness() || !hasStoredProfile;
+    }
+
     function getOnboardingSteps() {
-      const companyNameReady = !!String(state.company?.name || '').trim();
-      const profileReady = companyNameReady && !!String(state.company?.address || '').trim() && !!String(state.company?.state || '').trim();
-      const brandingReady = !!String(state.company?.logo || '').trim();
+      const businessProfileReady = !!String(state.company?.name || '').trim()
+        && !!String(state.company?.ownerName || state.company?.owner || '').trim()
+        && !!String(state.company?.phone || '').trim()
+        && !!String(state.company?.state || '').trim();
+      const logoReady = !!String(state.company?.logo || '').trim();
       const firstInvoiceReady = (state.invoices?.length || 0) > 0;
+      const firstCustomerReady = Object.keys(state.customers || {}).some((name) => !state.customers?.[name]?.deleted);
       const firstPaymentReady = (state.payments?.length || 0) > 0;
       return [
         {
           id: 'profile',
-          label: 'Complete business profile',
-          done: profileReady,
+          label: 'Business Profile',
+          done: businessProfileReady,
           action: () => showScreen('get-started', 'Get Started')
         },
         {
-          id: 'branding',
-          label: 'Upload logo (signature optional)',
-          done: brandingReady,
-          action: () => showScreen('settings', 'Settings', { settingsPage: 'account' })
+          id: 'logo',
+          label: 'Upload Logo',
+          done: logoReady,
+          action: () => showScreen('get-started', 'Get Started')
         },
         {
           id: 'invoice',
-          label: 'Create first invoice',
+          label: 'Create First Invoice',
           done: firstInvoiceReady,
           action: () => showScreen('invoices', 'Invoices')
         },
         {
+          id: 'customer',
+          label: 'Add First Customer',
+          done: firstCustomerReady,
+          action: () => showScreen('customers', 'Customers')
+        },
+        {
           id: 'payment',
-          label: 'Record first payment',
+          label: 'Record First Payment',
           done: firstPaymentReady,
           action: () => openPaymentInGenerationPage()
         }
@@ -28150,23 +28334,22 @@
       if (onboardingPanel) {
         onboardingPanel.style.display = done >= total ? 'none' : '';
       }
-      if (done >= total) localStorage.setItem('metrox_onboarding_v2_done', '1');
       if (onboardingProgressLabel) onboardingProgressLabel.textContent = `${progress}% complete`;
       if (onboardingProgressFill) onboardingProgressFill.style.width = `${progress}%`;
 
       onboardingStepsEl.innerHTML = steps.map((step) => `
         <div class="onboarding-step ${step.done ? 'done' : ''}">
-          <span>${step.label}</span>
+          <span>${step.done ? '✔' : '⬜'} ${step.label}</span>
           <div style="display:flex;gap:8px;align-items:center;">
             <span class="onboarding-status ${step.done ? 'done' : ''}">${step.done ? 'Done' : 'Pending'}</span>
-            ${step.done ? '' : `<button type="button" class="btn" data-onboarding-step="${step.id}">Open</button>`}
+            ${step.done ? '' : `<button type="button" class="btn" data-checklist-step="${step.id}">Open</button>`}
           </div>
         </div>
       `).join('');
 
-      onboardingStepsEl.querySelectorAll('[data-onboarding-step]').forEach((btn) => {
+      onboardingStepsEl.querySelectorAll('[data-checklist-step]').forEach((btn) => {
         btn.addEventListener('click', () => {
-          const target = steps.find((step) => step.id === btn.dataset.onboardingStep);
+          const target = steps.find((step) => step.id === btn.dataset.checklistStep);
           if (target?.action) target.action();
         });
       });
@@ -28174,37 +28357,23 @@
 
     function syncGetStartedFormFromState() {
       if (!gsBusinessName) return;
-      gsBusinessName.value = state.company?.name || '';
-      if (gsBusinessType) gsBusinessType.value = state.company?.type || 'services';
-      if (gsState) gsState.value = state.company?.state || '';
-      if (gsCity) gsCity.value = state.company?.city || '';
-      if (gsAddress) gsAddress.value = state.company?.address || '';
-      if (gsDefaultSlab) gsDefaultSlab.value = state.company?.defaultSlab || '18';
-      if (gsUpi) gsUpi.value = state.company?.bank?.upi || '';
-      if (gsGstin) gsGstin.value = state.company?.gstin || '';
-      if (gsInviteAccountant) gsInviteAccountant.checked = !!state.company?.accountant?.inviteAfterSetup;
-      if (gsAccountantName) gsAccountantName.value = state.company?.accountant?.name || '';
-      if (gsAccountantEmail) gsAccountantEmail.value = state.company?.accountant?.email || '';
-      if (gsAccountantPhone) gsAccountantPhone.value = state.company?.accountant?.phone || '';
-      if (gsGstMode) {
-        gsGstMode.value = state.company?.gstin ? 'gst' : 'non-gst';
-      }
-      if (gsGstin && gsGstMode) {
-        gsGstin.disabled = gsGstMode.value !== 'gst';
-      }
-      const inviteOn = !!gsInviteAccountant?.checked;
-      if (gsAccountantName) gsAccountantName.disabled = !inviteOn;
-      if (gsAccountantEmail) gsAccountantEmail.disabled = !inviteOn;
-      if (gsAccountantPhone) gsAccountantPhone.disabled = !inviteOn;
+      const businessData = getUserDataSnapshot() || {};
+      gsBusinessName.value = state.company?.name || businessData.name || '';
+      if (gsOwnerName) gsOwnerName.value = state.company?.ownerName || state.company?.owner || businessData.owner_name || '';
+      if (gsMobile) gsMobile.value = state.company?.phone || businessData.phone || '';
+      if (gsState) gsState.value = state.company?.state || businessData.state || '';
+      if (gsGstin) gsGstin.value = state.company?.gstin || businessData.gstin || '';
+      if (gsInvoicePrefix) gsInvoicePrefix.value = state.company?.invoiceNumber?.prefix || 'INV-';
+      if (gsLogoStatus) gsLogoStatus.textContent = state.company?.logo ? 'Uploaded' : 'Optional';
+      if (gsSignatureStatus) gsSignatureStatus.textContent = state.company?.signature ? 'Uploaded' : 'Optional';
       setFieldError(gsBusinessName, gsBusinessNameError, '');
+      setFieldError(gsOwnerName, gsOwnerNameError, '');
+      setFieldError(gsMobile, gsMobileError, '');
       setFieldError(gsState, gsStateError, '');
-      setFieldError(gsAddress, gsAddressError, '');
       setFieldError(gsGstin, gsGstinError, '');
-      setFieldError(gsUpi, gsUpiError, '');
-      setFieldError(gsAccountantEmail, gsAccountantEmailError, '');
-      setFieldError(gsAccountantPhone, gsAccountantPhoneError, '');
+      updateInvoicePrefixPreview();
       validateGetStartedFields(false);
-      setGetStartedStepNote();
+      setFirstOnboardingStep(currentFirstOnboardingStep || 'welcome');
     }
 
     function setFieldError(fieldEl, errorEl, message) {
@@ -28216,183 +28385,163 @@
 
     function validateGetStartedFields(showErrors = true) {
       const name = (gsBusinessName?.value || '').trim();
+      const ownerName = (gsOwnerName?.value || '').trim();
+      const mobile = (gsMobile?.value || '').trim();
       const stateValue = (gsState?.value || '').trim();
-      const address = (gsAddress?.value || '').trim();
-      const gstMode = gsGstMode?.value || 'gst';
       const gstin = (gsGstin?.value || '').trim().toUpperCase();
-      const upi = (gsUpi?.value || '').trim().toLowerCase();
-      const inviteNow = !!gsInviteAccountant?.checked;
-      const accountantEmail = (gsAccountantEmail?.value || '').trim().toLowerCase();
-      const accountantPhone = (gsAccountantPhone?.value || '').trim();
+      const mobileDigits = mobile.replace(/[^\d]/g, '');
+      const prefix = (gsInvoicePrefix?.value || '').trim() || 'INV-';
 
       const errors = {
         name: name.length >= 2 ? '' : 'Enter business name (min 2 characters).',
+        owner: ownerName.length >= 2 ? '' : 'Enter owner name.',
+        mobile: mobileDigits.length >= 10 && mobileDigits.length <= 15 ? '' : 'Enter a valid mobile number.',
         state: stateValue.length >= 2 ? '' : 'Enter state name.',
-        address: address.length >= 6 ? '' : 'Enter complete business address.'
+        prefix: prefix.length <= 12 ? '' : 'Keep prefix under 12 characters.'
       };
 
       let gstinError = '';
-      if (gstMode === 'gst') {
+      if (gstin) {
         const gstinPattern = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][0-9A-Z]Z[0-9A-Z]$/;
-        if (!gstin) gstinError = 'GSTIN is required for GST mode.';
-        else if (!gstinPattern.test(gstin)) gstinError = 'Enter valid 15-character GSTIN.';
+        if (!gstinPattern.test(gstin)) gstinError = 'Enter valid 15-character GSTIN or leave it empty.';
       }
 
-      let upiError = '';
-      if (upi) {
-        const upiPattern = /^[a-z0-9.\-_]{2,}@[a-z]{2,}$/i;
-        if (!upiPattern.test(upi)) upiError = 'Enter valid UPI ID (example@bank).';
-      }
-
-      let accountantEmailError = '';
-      let accountantPhoneError = '';
-      if (inviteNow) {
-        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!accountantEmail) accountantEmailError = 'Accountant email is required to send invite.';
-        else if (!emailPattern.test(accountantEmail)) accountantEmailError = 'Enter a valid accountant email.';
-        if (accountantPhone) {
-          const cleanPhone = accountantPhone.replace(/[^\d]/g, '');
-          if (cleanPhone.length < 8 || cleanPhone.length > 15) {
-            accountantPhoneError = 'Enter a valid phone number.';
-          }
-        }
-      }
-
-      const step1Valid = !errors.name && !errors.state && !errors.address;
-      const step2Valid = !gstinError && !upiError && !accountantEmailError && !accountantPhoneError;
-      const allValid = step1Valid && step2Valid;
+      const businessValid = !errors.name && !errors.owner && !errors.mobile && !errors.state && !gstinError;
+      const invoiceValid = !errors.prefix;
+      const allValid = businessValid && invoiceValid;
 
       if (showErrors) {
         setFieldError(gsBusinessName, gsBusinessNameError, errors.name);
+        setFieldError(gsOwnerName, gsOwnerNameError, errors.owner);
+        setFieldError(gsMobile, gsMobileError, errors.mobile);
         setFieldError(gsState, gsStateError, errors.state);
-        setFieldError(gsAddress, gsAddressError, errors.address);
         setFieldError(gsGstin, gsGstinError, gstinError);
-        setFieldError(gsUpi, gsUpiError, upiError);
-        setFieldError(gsAccountantEmail, gsAccountantEmailError, accountantEmailError);
-        setFieldError(gsAccountantPhone, gsAccountantPhoneError, accountantPhoneError);
+        setFieldError(gsInvoicePrefix, document.getElementById('gs-invoice-prefix-error'), errors.prefix);
       }
 
-      return { step1Valid, step2Valid, allValid };
+      return { businessValid, invoiceValid, allValid };
     }
 
     function setGetStartedStepNote() {
       if (!gsStepNote) return;
       const validation = validateGetStartedFields(false);
-      document.querySelectorAll('[data-gs-finish]').forEach((btn) => {
-        btn.disabled = !validation.allValid;
-      });
-      if (validation.step1Valid && validation.step2Valid) {
-        gsStepNote.textContent = 'Setup ready. Choose how you want to proceed.';
-      } else if (validation.step1Valid) {
-        gsStepNote.textContent = 'Step 1 done. Complete billing preferences.';
+      if (currentFirstOnboardingStep === 'business') {
+        gsStepNote.textContent = validation.businessValid ? 'Step 1 of 3 ready' : 'Step 1 of 3';
+      } else if (currentFirstOnboardingStep === 'branding') {
+        gsStepNote.textContent = 'Step 2 of 3';
+      } else if (currentFirstOnboardingStep === 'invoice') {
+        gsStepNote.textContent = validation.invoiceValid ? 'Step 3 of 3 ready' : 'Step 3 of 3';
+      } else if (currentFirstOnboardingStep === 'success') {
+        gsStepNote.textContent = 'Setup complete';
       } else {
-        gsStepNote.textContent = 'Step 1 incomplete';
+        gsStepNote.textContent = 'Welcome';
       }
     }
 
-    function setGetStartedStep(stepNo) {
-      const safeStep = stepNo === 2 ? 2 : 1;
-      if (currentGetStartedStep !== safeStep) {
-        currentGetStartedStep = safeStep;
-        trackOnboardingEvent('step_changed', { step: safeStep });
-      }
-      const validation = validateGetStartedFields(false);
+    function setFirstOnboardingStep(stepId) {
+      const safeStep = ONBOARDING_STEP_IDS.includes(stepId) ? stepId : 'welcome';
+      currentFirstOnboardingStep = safeStep;
+      ftStepPanes.forEach((pane) => {
+        pane.classList.toggle('active', pane.dataset.onboardingStep === safeStep);
+      });
+      const progressMap = {
+        welcome: 0,
+        business: 1,
+        branding: 2,
+        invoice: 3,
+        success: 3
+      };
+      const activeProgress = progressMap[safeStep] || 0;
       gsWizardPills.forEach((pill) => {
         const pillNo = Number(pill.dataset.wizardPill);
-        pill.classList.toggle('active', pillNo === safeStep);
-        pill.classList.toggle('done', (pillNo === 1 && validation.step1Valid) || (pillNo === 2 && validation.step2Valid));
-      });
-      gsWizardSteps.forEach((step) => {
-        step.classList.toggle('active', Number(step.dataset.wizardStep) === safeStep);
+        pill.classList.toggle('active', pillNo === activeProgress);
+        pill.classList.toggle('done', activeProgress > pillNo || safeStep === 'success');
       });
       setGetStartedStepNote();
+      trackOnboardingEvent('step_changed', { step: safeStep });
     }
 
-    function applyGetStartedValues(options = {}) {
-      const { requireAll = true } = options;
+    function updateInvoicePrefixPreview() {
+      if (!gsInvoicePrefix || !gsInvoicePreview) return;
+      const prefix = String(gsInvoicePrefix.value || 'INV-').trim() || 'INV-';
+      gsInvoicePreview.textContent = `${prefix}0001`;
+    }
+
+    function applyGetStartedBusinessValues() {
       const validation = validateGetStartedFields(true);
-      const validForSave = requireAll ? validation.allValid : validation.step1Valid;
-      if (!validForSave) {
-        trackOnboardingEvent('validation_failed', {
-          stage: requireAll ? 'finish' : 'step1',
-          step1Valid: validation.step1Valid,
-          step2Valid: validation.step2Valid
-        });
-        setGetStartedStep(validation.step1Valid ? 2 : 1);
+      if (!validation.businessValid) {
+        trackOnboardingEvent('validation_failed', { stage: 'business' });
         return false;
       }
-      const businessName = (gsBusinessName?.value || '').trim();
-      const gstMode = gsGstMode?.value || 'gst';
-      const inviteNow = !!gsInviteAccountant?.checked;
-      const accountantName = (gsAccountantName?.value || '').trim();
-      const accountantEmail = (gsAccountantEmail?.value || '').trim().toLowerCase();
-      const accountantPhone = (gsAccountantPhone?.value || '').trim();
-      state.company.name = businessName;
-      state.company.type = gsBusinessType?.value || state.company.type || 'services';
+      state.company.name = (gsBusinessName?.value || '').trim();
+      state.company.ownerName = (gsOwnerName?.value || '').trim();
+      state.company.phone = (gsMobile?.value || '').trim();
       state.company.state = (gsState?.value || '').trim();
-      state.company.city = (gsCity?.value || '').trim();
-      state.company.address = (gsAddress?.value || '').trim();
-      if (requireAll) {
-        state.company.defaultSlab = gsDefaultSlab?.value || state.company.defaultSlab || '18';
-        state.company.gstin = gstMode === 'gst' ? (gsGstin?.value || '').trim() : '';
-        state.company.bank = {
-          ...(state.company.bank || {}),
-          upi: (gsUpi?.value || '').trim()
-        };
-        state.company.accountant = {
-          ...(state.company.accountant || {}),
-          inviteAfterSetup: inviteNow,
-          name: inviteNow ? accountantName : '',
-          email: inviteNow ? accountantEmail : '',
-          phone: inviteNow ? accountantPhone : ''
-        };
-      }
+      state.company.gstin = (gsGstin?.value || '').trim().toUpperCase();
       syncSetupFromCompany();
       renderTopCompanyIdentity();
       renderOnboardingCard();
       saveState();
-      setGetStartedStepNote();
       return true;
     }
 
-    function finishGetStarted(target) {
-      if (!applyGetStartedValues({ requireAll: true })) return;
-      localStorage.setItem('metrox_onboarding_v2_done', '1');
-      trackOnboardingEvent('onboarding_finished', { target });
-      const promptInviteIfNeeded = () => {
+    async function applyOptionalBrandingUploads() {
+      const applyFile = async (input, key, statusEl) => {
+        const file = input?.files?.[0];
+        if (!file) return;
+        if (!String(file.type || '').startsWith('image/')) {
+          if (statusEl) statusEl.textContent = 'Image files only';
+          return;
+        }
+        if (Number(file.size || 0) > 1500000) {
+          if (statusEl) statusEl.textContent = 'Skipped: file is over 1.5 MB';
+          return;
+        }
         try {
-          const INVITE_PROMPT_KEY = 'metrox_onboarding_invite_prompt_seen';
-          const acc = state.company?.accountant || {};
-          const configuredInvite = !!acc.inviteAfterSetup && !!String(acc.email || '').trim();
-          if (configuredInvite) {
-            localStorage.setItem('metrox_invite_prefill_email', String(acc.email || '').trim().toLowerCase());
-            localStorage.setItem('metrox_invite_prefill_source', 'onboarding_2_3');
-            trackOnboardingEvent('invite_prefill_ready', { source: 'onboarding_2_3' });
-            inviteAccountantBtn?.click();
-            return;
-          }
-          if (localStorage.getItem(INVITE_PROMPT_KEY) === '1') return;
-          localStorage.setItem(INVITE_PROMPT_KEY, '1');
-          if (confirm('Do you want to invite your accountant now?')) {
-            trackOnboardingEvent('invite_prompt_accepted', {});
-            inviteAccountantBtn?.click();
-          } else {
-            trackOnboardingEvent('invite_prompt_skipped', {});
-          }
-        } catch (_) {}
+          state.company[key] = await fileToDataUrl(file);
+          if (statusEl) statusEl.textContent = 'Uploaded';
+        } catch (_) {
+          if (statusEl) statusEl.textContent = 'Could not read file';
+        }
       };
+      await applyFile(gsLogo, 'logo', gsLogoStatus);
+      await applyFile(gsSignature, 'signature', gsSignatureStatus);
+      renderTopCompanyIdentity();
+      renderOnboardingCard();
+      saveState();
+    }
+
+    function applyInvoiceSettingsValues() {
+      const validation = validateGetStartedFields(true);
+      if (!validation.invoiceValid) {
+        trackOnboardingEvent('validation_failed', { stage: 'invoice' });
+        return false;
+      }
+      const prefix = (gsInvoicePrefix?.value || '').trim() || 'INV-';
+      state.company.invoiceNumber = {
+        ...(state.company.invoiceNumber || {}),
+        prefix,
+        next: '0001',
+        start: '0001',
+        pad: 4
+      };
+      syncSetupFromCompany();
+      renderOnboardingCard();
+      saveState();
+      return true;
+    }
+
+    function finishGetStarted(target = 'dashboard') {
+      if (!applyInvoiceSettingsValues()) return;
+      setOnboardingCompleted(true);
+      saveState();
+      renderOnboardingCard();
+      trackOnboardingEvent('onboarding_finished', { target });
       if (target === 'invoices') {
         showScreen('invoices', 'Invoices');
-        setTimeout(promptInviteIfNeeded, 250);
-        return;
-      }
-      if (target === 'settings') {
-        showScreen('settings', 'Settings', { settingsPage: 'account' });
-        setTimeout(promptInviteIfNeeded, 250);
         return;
       }
       showScreen('dashboard', 'Dashboard');
-      setTimeout(promptInviteIfNeeded, 250);
     }
 
     function applyRoleAccessUI() {
@@ -29258,6 +29407,10 @@
       if (checkRouteAccess(targetId)) {
         return;
       }
+      if (targetId === 'dashboard' && shouldShowFirstTimeOnboarding()) {
+        targetId = 'get-started';
+        labelOverride = 'Get Started';
+      }
       if (!canAccessScreen(targetId)) {
         alert('Access denied for this section.');
         return;
@@ -29375,12 +29528,6 @@
         showScreen(item.dataset.screen, labelOverride, { settingsPage });
       });
     });
-
-    if (reportsUpgradeCta) {
-      reportsUpgradeCta.addEventListener('click', () => {
-        showScreen('settings', 'Settings', { settingsPage: 'billing' });
-      });
-    }
 
     function setSalesTransactionPage(pageId) {
       const safeId = pageId || 'sales-invoice';
@@ -29845,78 +29992,94 @@
       });
     }
 
+    const skipFirstOnboarding = () => {
+      setOnboardingCompleted(true);
+      saveState();
+      trackOnboardingEvent('onboarding_skipped', {});
+      showScreen('dashboard', 'Dashboard');
+    };
+    if (ftStartSetupBtn) ftStartSetupBtn.addEventListener('click', () => setFirstOnboardingStep('business'));
+    if (ftSkipDashboardBtn) ftSkipDashboardBtn.addEventListener('click', skipFirstOnboarding);
+    if (skipGetStartedBtn) skipGetStartedBtn.addEventListener('click', skipFirstOnboarding);
     if (gsNextBtn) {
       gsNextBtn.addEventListener('click', () => {
-        const validation = validateGetStartedFields(true);
-        if (!validation.step1Valid) {
-          trackOnboardingEvent('step1_continue_blocked', {});
-          setGetStartedStep(1);
-          return;
-        }
-        if (!applyGetStartedValues({ requireAll: false })) return;
-        trackOnboardingEvent('step1_completed', {});
-        setGetStartedStep(2);
+        if (!applyGetStartedBusinessValues()) return;
+        trackOnboardingEvent('business_step_completed', {});
+        setFirstOnboardingStep('branding');
       });
     }
-    if (gsBackBtn) {
-      gsBackBtn.addEventListener('click', () => {
-        trackOnboardingEvent('step2_back_clicked', {});
-        setGetStartedStep(1);
+    if (gsBackBtn) gsBackBtn.addEventListener('click', () => setFirstOnboardingStep('welcome'));
+    if (ftBrandingBackBtn) ftBrandingBackBtn.addEventListener('click', () => setFirstOnboardingStep('business'));
+    if (ftBrandingSkipBtn) {
+      ftBrandingSkipBtn.addEventListener('click', () => {
+        trackOnboardingEvent('branding_skipped', {});
+        setFirstOnboardingStep('invoice');
       });
     }
-    if (skipGetStartedBtn) {
-      skipGetStartedBtn.addEventListener('click', () => {
-        localStorage.setItem('metrox_onboarding_v2_done', '1');
-        trackOnboardingEvent('onboarding_skipped', {});
-        showScreen('dashboard', 'Dashboard');
+    if (ftBrandingNextBtn) {
+      ftBrandingNextBtn.addEventListener('click', async () => {
+        await applyOptionalBrandingUploads();
+        trackOnboardingEvent('branding_step_completed', {});
+        setFirstOnboardingStep('invoice');
       });
     }
-    document.querySelectorAll('[data-gs-finish]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        finishGetStarted(btn.dataset.gsFinish || 'dashboard');
+    if (ftInvoiceBackBtn) ftInvoiceBackBtn.addEventListener('click', () => setFirstOnboardingStep('branding'));
+    if (ftCompleteSetupBtn) {
+      ftCompleteSetupBtn.addEventListener('click', () => {
+        if (!applyInvoiceSettingsValues()) return;
+        setOnboardingCompleted(true);
+        saveState();
+        renderOnboardingCard();
+        trackOnboardingEvent('setup_completed', {});
+        setFirstOnboardingStep('success');
       });
-    });
+    }
+    if (ftCreateFirstInvoiceBtn) ftCreateFirstInvoiceBtn.addEventListener('click', () => finishGetStarted('invoices'));
+    if (ftGoDashboardBtn) ftGoDashboardBtn.addEventListener('click', () => finishGetStarted('dashboard'));
 
     const gsLiveInputs = [
-      gsBusinessName, gsState, gsAddress, gsGstMode, gsGstin, gsUpi,
-      gsInviteAccountant, gsAccountantName, gsAccountantEmail, gsAccountantPhone
+      gsBusinessName, gsOwnerName, gsMobile, gsState, gsGstin, gsInvoicePrefix
     ];
     gsLiveInputs.forEach((el) => {
       if (!el) return;
       el.addEventListener('input', () => {
         validateGetStartedFields(true);
+        updateInvoicePrefixPreview();
         setGetStartedStepNote();
-        setGetStartedStep(document.querySelector('.wizard-step-pane.active')?.dataset.wizardStep === '2' ? 2 : 1);
       });
       el.addEventListener('change', () => {
-        if (el === gsInviteAccountant) {
-          const enabled = !!gsInviteAccountant.checked;
-          trackOnboardingEvent('invite_accountant_toggle', { enabled });
-          if (gsAccountantName) gsAccountantName.disabled = !enabled;
-          if (gsAccountantEmail) gsAccountantEmail.disabled = !enabled;
-          if (gsAccountantPhone) gsAccountantPhone.disabled = !enabled;
-          if (!enabled) {
-            if (gsAccountantName) gsAccountantName.value = '';
-            if (gsAccountantEmail) gsAccountantEmail.value = '';
-            if (gsAccountantPhone) gsAccountantPhone.value = '';
-            setFieldError(gsAccountantEmail, gsAccountantEmailError, '');
-            setFieldError(gsAccountantPhone, gsAccountantPhoneError, '');
-          }
-        }
-        if (el === gsGstMode) {
-          const isGst = gsGstMode.value === 'gst';
-          if (gsGstin) {
-            gsGstin.disabled = !isGst;
-            if (!isGst) {
-              gsGstin.value = '';
-              setFieldError(gsGstin, gsGstinError, '');
-            }
-          }
-        }
         validateGetStartedFields(true);
+        updateInvoicePrefixPreview();
         setGetStartedStepNote();
       });
     });
+    [gsLogo, gsSignature].forEach((input) => {
+      if (!input) return;
+      input.addEventListener('change', () => {
+        const statusEl = input === gsLogo ? gsLogoStatus : gsSignatureStatus;
+        const file = input.files?.[0];
+        if (statusEl) statusEl.textContent = file ? file.name : 'Optional';
+      });
+    });
+    if (firstInvoiceDownloadBtn) {
+      firstInvoiceDownloadBtn.addEventListener('click', () => {
+        if (firstInvoiceCelebrationInvoiceId) exportInvoice(firstInvoiceCelebrationInvoiceId, false, true);
+      });
+    }
+    if (firstInvoiceWhatsappBtn) {
+      firstInvoiceWhatsappBtn.addEventListener('click', shareFirstInvoiceViaWhatsapp);
+    }
+    if (firstInvoiceCreateAnotherBtn) {
+      firstInvoiceCreateAnotherBtn.addEventListener('click', () => {
+        closeFirstInvoiceCelebration();
+        showScreen('invoices', 'Invoices');
+      });
+    }
+    if (firstInvoiceModal) {
+      firstInvoiceModal.addEventListener('click', (event) => {
+        if (event.target === firstInvoiceModal) closeFirstInvoiceCelebration();
+      });
+    }
 
     if (newInvoiceBtn) {
       newInvoiceBtn.addEventListener('click', () => {
@@ -35913,6 +36076,60 @@
         const url = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`;
         window.location.href = url;
       }
+    }
+
+    let firstInvoiceCelebrationInvoiceId = '';
+
+    function showFirstInvoiceCelebration(invoiceId) {
+      firstInvoiceCelebrationInvoiceId = String(invoiceId || '').trim();
+      if (!firstInvoiceModal || !firstInvoiceCelebrationInvoiceId) return;
+      firstInvoiceModal.classList.add('active');
+      firstInvoiceModal.setAttribute('aria-hidden', 'false');
+      trackOnboardingEvent('first_invoice_celebration_shown', { invoiceId: firstInvoiceCelebrationInvoiceId });
+    }
+
+    function closeFirstInvoiceCelebration() {
+      if (!firstInvoiceModal) return;
+      firstInvoiceModal.classList.remove('active');
+      firstInvoiceModal.setAttribute('aria-hidden', 'true');
+    }
+
+    function shareFirstInvoiceViaWhatsapp() {
+      const invoice = (state.invoices || []).find((item) => String(item.id || '') === firstInvoiceCelebrationInvoiceId);
+      if (!invoice) return;
+      const message = `Hi ${invoice.customer || 'there'}, your invoice ${invoice.id || ''} for ${formatCurrency(invoice.total || 0)} is ready.`;
+      const phone = resolveCustomerPhone(invoice).replace(/[^\d]/g, '');
+      const url = phone
+        ? `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
+        : `https://wa.me/?text=${encodeURIComponent(message)}`;
+      if (!openUrlInNewTab(url)) {
+        alert('Could not open WhatsApp in a new tab. Please allow pop-ups for this site and try again.');
+      }
+    }
+
+    function updateTrialActiveBanner() {
+      const banner = document.getElementById('trial-active-banner');
+      const daysEl = document.getElementById('trial-active-days');
+      if (!banner) return;
+      const businessData = getUserDataSnapshot() || {};
+      const plan = normalizePlanKey(businessData.plan_type || businessData.current_plan || window.APP_PLAN || 'trial');
+      const status = String(businessData.plan_status || businessData.subscription_status || 'active').trim().toLowerCase();
+      const trialEndMs = parseOnboardingDateMs(businessData.trial_ends_at || businessData.subscription_end_date || '');
+      const activeStatuses = new Set(['active', 'trial', 'trial_active', 'grace', 'enabled', 'ok', 'current']);
+      const isActiveTrial = plan === 'trial' && activeStatuses.has(status || 'active');
+      if (!isActiveTrial) {
+        banner.hidden = true;
+        return;
+      }
+      const daysLeft = trialEndMs > 0
+        ? Math.max(0, Math.ceil((trialEndMs - Date.now()) / 86400000))
+        : null;
+      if (daysEl) {
+        daysEl.textContent = daysLeft == null
+          ? 'Your free trial is active.'
+          : `${daysLeft} day${daysLeft === 1 ? '' : 's'} remaining.`;
+      }
+      banner.hidden = false;
     }
 
     function updateDashboard() {
@@ -46976,7 +47193,6 @@
     function applyReportsPlanLock() {
       const reportsEnabled = hasStrictReportsAccess();
       if (reportsShell) reportsShell.classList.toggle('feature-locked-blur', !reportsEnabled);
-      if (reportsLockOverlay) reportsLockOverlay.hidden = reportsEnabled;
       if (reportsNavItem) reportsNavItem.classList.toggle('feature-nav-locked', !reportsEnabled);
       if (reportsNavLabel) {
         const baseLabel = reportsNavLabel.dataset.baseLabel || reportsNavLabel.textContent.replace(' 🔒', '').trim() || 'Reports';
@@ -51500,6 +51716,7 @@
       const payload = {
         auth: state.auth,
         users: state.users,
+        onboardingCompleted: state.onboardingCompleted === true,
         invoices: state.invoices,
         invoiceCounter: state.invoiceCounter,
         quotations: state.quotations,
@@ -51645,6 +51862,7 @@
         const hasOwn = (obj, key) => Object.prototype.hasOwnProperty.call(obj || {}, key);
         state.auth = { ...state.auth, ...(data.auth || {}) };
         state.users = Array.isArray(data.users) && data.users.length ? data.users : state.users;
+        state.onboardingCompleted = data.onboardingCompleted === true || state.onboardingCompleted === true;
         state.invoices = Array.isArray(data.invoices) ? data.invoices : [];
         state.invoiceCounter = Number(data.invoiceCounter) || 2409;
         state.quotations = Array.isArray(data.quotations) ? data.quotations : [];
@@ -56444,6 +56662,7 @@
         );
 
         const oldId = String(form.dataset.editing || '').trim();
+        const wasFirstInvoice = !isEditing && (state.invoices || []).length === 0;
         const manualId = String(data.get('invoiceId') || '').trim();
         const bankAccountId = String(data.get('bankAccountId') || '').trim() || getResolvedDefaultInvoiceBankId();
         const bankSnapshot = getBillingBankSnapshot(bankAccountId);
@@ -56598,6 +56817,9 @@
         if (typeof pushReminderToast === 'function') {
           pushReminderToast(successTitle, successMessage, 'success');
         }
+        if (wasFirstInvoice) {
+          showFirstInvoiceCelebration(id);
+        }
       } catch (error) {
         const errMessage = String(error?.message || 'Unexpected error. Please try again.');
         console.error('Invoice generation failed:', error);
@@ -56743,11 +56965,10 @@
     initializeReportsCatalog();
     applyPlanGates();
     startReminderEngine();
-    const ONBOARDING_V2_DONE_KEY = 'metrox_onboarding_v2_done';
-    const hasMinimumProfile = !!String(state.company?.name || '').trim() && !!String(state.company?.address || '').trim();
-    const shouldStartOnboarding = localStorage.getItem(ONBOARDING_V2_DONE_KEY) !== '1'
-      && state.invoices.length === 0
-      && !hasMinimumProfile;
+    if (isOnboardingCompleted()) {
+      state.onboardingCompleted = true;
+    }
+    const shouldStartOnboarding = shouldShowFirstTimeOnboarding();
     if (!window.location.hash) {
       setRouteHash(shouldStartOnboarding ? 'get-started' : 'dashboard', currentSettingsPage);
     }
@@ -56797,7 +57018,7 @@
       const ONBOARDING_PROMPT_KEY = 'metrox_onboarding_prompt_v2_seen';
       const steps = getOnboardingSteps();
       const doneCount = steps.filter((s) => s.done).length;
-      const shouldPrompt = doneCount < steps.length && state.invoices.length === 0;
+      const shouldPrompt = doneCount < steps.length && state.invoices.length === 0 && !shouldStartOnboarding;
       const activeScreen = document.querySelector('.screen.active')?.id || '';
       if (shouldPrompt && activeScreen !== 'get-started' && localStorage.getItem(ONBOARDING_PROMPT_KEY) !== '1') {
         openOnboardingModal();
