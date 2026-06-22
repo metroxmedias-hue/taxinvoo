@@ -1,0 +1,72 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function businessRef(businessId) {
+      return /databases/$(database)/documents/businesses/$(businessId);
+    }
+
+    function memberRef(businessId, uid) {
+      return /databases/$(database)/documents/businesses/$(businessId)/members/$(uid);
+    }
+
+    function isBusinessOwner(businessId) {
+      return signedIn()
+        && exists(businessRef(businessId))
+        && get(businessRef(businessId)).data.ownerUid == request.auth.uid;
+    }
+
+    function isBusinessOwnerAfterWrite(businessId) {
+      return signedIn()
+        && getAfter(businessRef(businessId)).data.ownerUid == request.auth.uid;
+    }
+
+    function isBootstrapBusinessDoc(businessId) {
+      return businessId == '__bootstrap__';
+    }
+
+    function isBusinessMember(businessId) {
+      return signedIn() && (
+        isBusinessOwner(businessId)
+        || (
+          exists(memberRef(businessId, request.auth.uid))
+          && get(memberRef(businessId, request.auth.uid)).data.uid == request.auth.uid
+        )
+      );
+    }
+
+    match /users/{userId} {
+      allow read, write: if signedIn() && request.auth.uid == userId;
+
+      match /businesses/{businessId} {
+        allow read, write: if signedIn() && request.auth.uid == userId;
+      }
+    }
+
+    match /business_identity/{identityId} {
+      allow read, write: if signedIn();
+    }
+
+    match /businesses/{businessId} {
+      allow read: if signedIn() && (isBusinessMember(businessId) || isBootstrapBusinessDoc(businessId));
+      allow create: if signedIn()
+        && (
+          isBootstrapBusinessDoc(businessId)
+          || request.resource.data.ownerUid == request.auth.uid
+        );
+      allow update, delete: if signedIn() && (isBusinessOwner(businessId) || isBootstrapBusinessDoc(businessId));
+
+      match /members/{uid} {
+        allow read: if signedIn() && (request.auth.uid == uid || isBusinessOwner(businessId));
+        allow create, update, delete: if isBusinessOwner(businessId)
+          || (isBusinessOwnerAfterWrite(businessId)
+            && signedIn()
+            && request.auth.uid == uid
+            && request.resource.data.uid == request.auth.uid);
+      }
+    }
+  }
+}

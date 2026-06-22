@@ -17,6 +17,8 @@ import {
   userDocPath
 } from "./firestore-paths.js";
 
+const ROOT_BOOTSTRAP_DOC_ID = "__bootstrap__";
+
 const OWNER_PERMISSIONS = {
   manageInvoices: true,
   managePayments: true,
@@ -97,8 +99,29 @@ function buildOwnerMembership(user) {
   };
 }
 
+async function ensureRootCollectionBootstrapDoc(pathSegments, label) {
+  const ref = doc(db, ...pathSegments);
+  const snap = await getDoc(ref);
+  if (snap.exists()) return true;
+  await setDoc(ref, {
+    bootstrap: true,
+    collection: label,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  }, { merge: true });
+  return true;
+}
+
+export async function ensureBusinessRootBootstrapDocs() {
+  await Promise.all([
+    ensureRootCollectionBootstrapDoc(["businesses", ROOT_BOOTSTRAP_DOC_ID], "businesses"),
+    ensureRootCollectionBootstrapDoc(["business_identity", ROOT_BOOTSTRAP_DOC_ID], "business_identity")
+  ]);
+}
+
 export async function createOrResolveBusinessV2(user, payload = {}) {
   if (!user?.uid) throw new Error("User is required to create a business.");
+  await ensureBusinessRootBootstrapDocs();
 
   const identityId = buildIdentityId(payload, user.uid);
   const identityRef = doc(db, ...businessIdentityDocPath(identityId));

@@ -34320,6 +34320,7 @@
     const LAST_GOOD_KEY = 'metrox_taxinvoo_last_good_state';
     const SCOPED_STATE_KEY_SEPARATOR = '__';
     const LOCAL_INVITES_KEY_PREFIX = 'metrox_invites_local_';
+    const ROOT_BOOTSTRAP_DOC_ID = '__bootstrap__';
     let currentBusinessId = null;
     let cloudSyncTimer = null;
 
@@ -34337,6 +34338,41 @@
         backup: `${BACKUP_KEY}${SCOPED_STATE_KEY_SEPARATOR}${id}`,
         lastGood: `${LAST_GOOD_KEY}${SCOPED_STATE_KEY_SEPARATOR}${id}`
       };
+    }
+
+    async function ensureRootCollectionBootstrapDoc(collectionName) {
+      const bootstrapRef = doc(db, collectionName, ROOT_BOOTSTRAP_DOC_ID);
+      try {
+        const bootstrapSnap = await getDoc(bootstrapRef);
+        if (bootstrapSnap.exists()) return true;
+        await setDoc(bootstrapRef, {
+          bootstrap: true,
+          collection: collectionName,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+        console.log('[multi-business] Root collection bootstrap created:', {
+          path: bootstrapRef.path,
+          collection: collectionName
+        });
+        return true;
+      } catch (error) {
+        console.error('[multi-business] Root collection bootstrap failed:', {
+          path: bootstrapRef.path,
+          collection: collectionName,
+          code: error?.code,
+          message: error?.message,
+          error
+        });
+        throw error;
+      }
+    }
+
+    async function ensureRootFirestoreCollections() {
+      await Promise.all([
+        ensureRootCollectionBootstrapDoc('businesses'),
+        ensureRootCollectionBootstrapDoc('business_identity')
+      ]);
     }
 
     const inviteBtn = document.getElementById('invite-accountant-btn');
@@ -35370,6 +35406,7 @@
         return;
       }
       try {
+        await ensureRootFirestoreCollections();
         const userSnap = await getDoc(doc(db, 'users', user.uid));
         const userData = userSnap.exists() ? userSnap.data() : null;
         console.log("FULL USER DATA:", userData);
@@ -35461,7 +35498,12 @@
         }
         applySoftLockGuards();
       } catch (err) {
-        console.warn('Company sync failed:', err);
+        console.error('Company sync failed:', {
+          error: err,
+          code: err?.code,
+          message: err?.message,
+          firebaseError: err?.code ? `${err.code}: ${err.message || 'Firestore operation failed.'}` : (err?.message || 'Firestore operation failed.')
+        });
         currentBusinessId = resolveRealtimeBusinessId();
         try { startManageUsersRealtimeSync(); } catch (_) {}
         try { if (typeof window.renderManageUsersPanel === 'function') window.renderManageUsersPanel(); } catch (_) {}

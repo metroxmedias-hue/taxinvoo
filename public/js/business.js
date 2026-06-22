@@ -2,7 +2,7 @@ import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebase
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 import { userDocPath } from "./firestore-paths.js";
-import { createOrResolveBusinessV2 } from "./business-v2.js";
+import { createOrResolveBusinessV2, ensureBusinessRootBootstrapDocs } from "./business-v2.js";
 import {
   ensureTrialSubscription,
   ensureUserRecord,
@@ -46,17 +46,11 @@ function mockCodexCreateBusiness(payload) {
 
 function formatFirestoreError(err) {
   const code = String(err?.code || '').trim();
-  if (code === 'permission-denied') {
-    return 'Permission denied by Firestore rules. Please allow create/write for your logged-in user.';
-  }
-  if (code === 'unauthenticated') {
-    return 'Session expired. Please login again and retry.';
-  }
-  if (code === 'resource-exhausted' || code === 'invalid-argument') {
-    return 'Business payload is too large for Firestore. Retry without logo and upload it later in Settings.';
-  }
   const message = String(err?.message || '').trim();
-  return message ? `Failed to save business: ${message}` : 'Failed to save business. Please retry.';
+  if (code || message) {
+    return code ? `${code}: ${message || 'Firestore operation failed.'}` : message;
+  }
+  return 'Firestore operation failed.';
 }
 
 function safeText(value, maxLen) {
@@ -125,6 +119,7 @@ form.addEventListener('submit', async (e) => {
   }
 
   try {
+    await ensureBusinessRootBootstrapDocs();
     const now = new Date();
     const trialEnd = new Date();
     trialEnd.setDate(now.getDate() + 3);

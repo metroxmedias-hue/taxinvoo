@@ -28818,23 +28818,29 @@
     }
 
     function businessFirestoreDataToProfile(businessId, data = {}) {
-      const id = String(businessId || data.business_id || data.businessId || '').trim();
+      const source = data && typeof data === 'object' ? data : {};
+      const companySource = source.company && typeof source.company === 'object' ? source.company : {};
+      const id = String(businessId || source.business_id || source.businessId || '').trim();
       if (!id) return null;
       const company = {
         ...cloneObject(DEFAULT_COMPANY_SNAPSHOT, {}),
-        name: String(data.name || data.legalName || data.businessName || '').trim(),
-        phone: String(data.phone || data.mobile || '').trim(),
-        email: String(data.email || '').trim(),
-        gstin: String(data.gstin || '').trim(),
-        type: String(data.type || data.business_type || 'services').trim(),
-        industryType: String(data.industryType || data.industry_type || '').trim(),
-        registrationType: String(data.registrationType || data.registration_type || '').trim(),
-        state: String(data.state || '').trim(),
-        city: String(data.city || '').trim(),
-        pincode: String(data.pincode || '').trim(),
-        address: String(data.address || '').trim(),
-        logo: String(data.logo || '').trim(),
-        financial_year_start: String(data.financial_year_start || '').trim()
+        ...companySource,
+        bank: { ...DEFAULT_COMPANY_SNAPSHOT.bank, ...(companySource.bank || {}) },
+        theme: { ...DEFAULT_COMPANY_SNAPSHOT.theme, ...(companySource.theme || {}) },
+        invoiceNumber: { ...DEFAULT_COMPANY_SNAPSHOT.invoiceNumber, ...(companySource.invoiceNumber || {}) },
+        name: String(source.name || source.legalName || source.businessName || source.business_name || companySource.name || '').trim(),
+        phone: String(source.phone || source.mobile || companySource.phone || '').trim(),
+        email: String(source.email || companySource.email || '').trim(),
+        gstin: String(source.gstin || companySource.gstin || '').trim(),
+        type: String(source.type || source.business_type || companySource.type || 'services').trim(),
+        industryType: String(source.industryType || source.industry_type || companySource.industryType || '').trim(),
+        registrationType: String(source.registrationType || source.registration_type || companySource.registrationType || '').trim(),
+        state: String(source.state || companySource.state || '').trim(),
+        city: String(source.city || companySource.city || '').trim(),
+        pincode: String(source.pincode || companySource.pincode || '').trim(),
+        address: String(source.address || companySource.address || '').trim(),
+        logo: String(source.logo || companySource.logo || '').trim(),
+        financial_year_start: String(source.financial_year_start || companySource.financial_year_start || '').trim()
       };
       return sanitizeBusinessProfile({
         id,
@@ -28848,10 +28854,11 @@
       const firestoreProfiles = (Array.isArray(rows) ? rows : [])
         .map((row) => businessFirestoreDataToProfile(row?.businessId || row?.id, row?.businessData || row?.data || row))
         .filter(Boolean);
-      console.log('[multi-business] businesses returned from Firestore:', firestoreProfiles.map((profile) => ({
-        id: profile.id,
-        name: profile.name
-      })));
+      console.log('[multi-business] switcher merge input:', {
+        businessCount: firestoreProfiles.length,
+        businessIds: firestoreProfiles.map((profile) => profile.id),
+        businessNames: firestoreProfiles.map((profile) => profile.name)
+      });
       if (!firestoreProfiles.length) return businessProfiles;
       const preferredId = String(preferredBusinessId || activeBusinessProfileId || localStorage.getItem(ACTIVE_BUSINESS_PROFILE_KEY) || '').trim();
       const merged = new Map();
@@ -28869,7 +28876,12 @@
       } else if (!activeBusinessProfileId || !businessProfiles.some((profile) => profile.id === activeBusinessProfileId)) {
         activeBusinessProfileId = businessProfiles[0]?.id || '';
       }
-      console.log('[multi-business] activeBusinessId:', activeBusinessProfileId || '(none)');
+      console.log('[multi-business] switcher merge output:', {
+        activeBusinessId: activeBusinessProfileId || '(none)',
+        businessCount: businessProfiles.length,
+        businessIds: businessProfiles.map((profile) => profile.id),
+        businessNames: businessProfiles.map((profile) => profile.name)
+      });
       persistBusinessProfiles();
       return businessProfiles;
     }
@@ -28892,20 +28904,14 @@
         byId.set(profile.id, choosePreferredBusinessProfile(existing, profile, preferredActiveId));
       });
 
-      const byIdentity = new Map();
-      const withoutIdentity = [];
-      Array.from(byId.values()).forEach((profile) => {
-        const key = getBusinessProfileIdentityKey(profile);
-        if (!key) {
-          withoutIdentity.push(profile);
-          return;
-        }
-        const existing = byIdentity.get(key);
-        byIdentity.set(key, choosePreferredBusinessProfile(existing, profile, preferredActiveId));
-      });
-
-      let out = [...byIdentity.values(), ...withoutIdentity];
+      let out = Array.from(byId.values());
       if (out.length > 1 && out.some((profile) => hasMeaningfulBusinessProfileData(profile))) {
+        const beforeFilter = out.map((profile) => ({
+          id: String(profile?.id || '').trim(),
+          name: String(profile?.name || profile?.company?.name || '').trim(),
+          meaningful: hasMeaningfulBusinessProfileData(profile),
+          storedRecordCount: getBusinessProfileStoredRecordCount(profile?.id)
+        }));
         out = out.filter((profile) => {
           if (!profile) return false;
           const id = String(profile.id || '').trim();
@@ -28913,6 +28919,16 @@
           if (hasMeaningfulBusinessProfileData(profile)) return true;
           return getBusinessProfileStoredRecordCount(id) > 0;
         });
+        const keptIds = new Set(out.map((profile) => String(profile?.id || '').trim()));
+        const dropped = beforeFilter.filter((profile) => !keptIds.has(profile.id));
+        if (dropped.length) {
+          console.warn('[multi-business] switcher normalization dropped profiles:', {
+            preferredActiveId: preferredActiveId || '(none)',
+            beforeCount: beforeFilter.length,
+            afterCount: out.length,
+            dropped
+          });
+        }
       }
       if (!out.length) {
         if (!preferredActiveId && !hasStateSeed) return [];
@@ -29149,6 +29165,12 @@
 
     function renderBusinessSwitchList() {
       if (!businessSwitchList) return;
+      console.log('[multi-business] switcher render input:', {
+        activeBusinessId: activeBusinessProfileId || '(none)',
+        businessCount: businessProfiles.length,
+        businessIds: businessProfiles.map((profile) => String(profile.id || '').trim()),
+        businessNames: businessProfiles.map((profile) => String(profile.name || profile.company?.name || '').trim())
+      });
       if (!businessProfiles.length) {
         businessSwitchList.innerHTML = '<div class="muted">No businesses found.</div>';
         return;
@@ -57595,38 +57617,19 @@
             if (typeof window.ensureBusinessCanonicalWrite === 'function') {
               await window.ensureBusinessCanonicalWrite({ profile, company, ownerUid });
             } else {
-              console.warn('[multi-business] Canonical writer unavailable; using legacy business write only.');
-              const businessDocRef = doc(db, 'users', ownerUid, 'businesses', profile.id);
-              const businessDocSnap = await getDoc(businessDocRef);
-              if (!businessDocSnap.exists()) {
-                const now = new Date();
-                const trialEnd = new Date();
-                trialEnd.setDate(now.getDate() + 3);
-                await setDoc(businessDocRef, {
-                  business_id: profile.id,
-                  name: company.name || name,
-                  phone: company.phone || '',
-                  type: company.type || 'retailer',
-                  industry_type: company.industryType || '',
-                  registration_type: company.registrationType || '',
-                  invoice_count: 0,
-                  setup_completed: true,
-                  plan_type: 'trial',
-                  plan_status: 'active',
-                  trial_starts_at: now.toISOString(),
-                  trial_ends_at: trialEnd.toISOString(),
-                  is_active: true,
-                  created_at: serverTimestamp(),
-                  updated_at: serverTimestamp()
-                }, { merge: true });
-              }
+              throw new Error('Canonical business writer unavailable.');
             }
             if (typeof window.refreshBusinessProfilesFromFirestore === 'function') {
               await window.refreshBusinessProfilesFromFirestore(profile.id);
             }
           } catch (err) {
-            console.warn('[multi-business] Business creation sync failed:', err);
-            if (businessCreateError) businessCreateError.textContent = 'Failed to create business. Please try again.';
+            console.error('[multi-business] Business creation sync failed:', {
+              error: err,
+              code: err?.code,
+              message: err?.message,
+              firebaseError: formatExactFirebaseError(err)
+            });
+            if (businessCreateError) businessCreateError.textContent = formatExactFirebaseError(err);
             return;
           }
           saveState();
@@ -57979,6 +57982,7 @@
     const ACTIVE_BUSINESS_PROFILE_KEY = 'metrox_active_business_profile_v1';
     const SCOPED_STATE_KEY_SEPARATOR = '__';
     const LOCAL_INVITES_KEY_PREFIX = 'metrox_invites_local_';
+    const ROOT_BOOTSTRAP_DOC_ID = '__bootstrap__';
     let currentBusinessId = null;
     let cloudSyncTimer = null;
 
@@ -57987,49 +57991,192 @@
     }
 
     function getBusinessName(data = {}) {
-      return String(data?.name || data?.legalName || data?.businessName || 'Business').trim() || 'Business';
+      const source = data && typeof data === 'object' ? data : {};
+      const company = source.company && typeof source.company === 'object' ? source.company : {};
+      return String(source.name || source.legalName || source.businessName || source.business_name || company.name || 'Business').trim() || 'Business';
+    }
+
+    function formatExactFirebaseError(err) {
+      const code = String(err?.code || '').trim();
+      const message = String(err?.message || '').trim();
+      if (code || message) {
+        return code ? `${code}: ${message || 'Firestore operation failed.'}` : message;
+      }
+      return 'Firestore operation failed.';
+    }
+
+    async function ensureRootCollectionBootstrapDoc(collectionName) {
+      const bootstrapRef = doc(db, collectionName, ROOT_BOOTSTRAP_DOC_ID);
+      try {
+        const bootstrapSnap = await getDoc(bootstrapRef);
+        if (bootstrapSnap.exists()) return true;
+        await setDoc(bootstrapRef, {
+          bootstrap: true,
+          collection: collectionName,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+        console.log('[multi-business] Root collection bootstrap created:', {
+          path: bootstrapRef.path,
+          collection: collectionName
+        });
+        return true;
+      } catch (error) {
+        console.error('[multi-business] Root collection bootstrap failed:', {
+          path: bootstrapRef.path,
+          collection: collectionName,
+          code: error?.code,
+          message: error?.message,
+          error
+        });
+        throw error;
+      }
+    }
+
+    async function ensureRootFirestoreCollections() {
+      await Promise.all([
+        ensureRootCollectionBootstrapDoc('businesses'),
+        ensureRootCollectionBootstrapDoc('business_identity')
+      ]);
+    }
+
+    async function bootstrapCanonicalBusinessRootsFromLegacyRows(user, rows = []) {
+      const uid = normalizeBusinessId(user?.uid);
+      if (!uid || !Array.isArray(rows) || !rows.length) return;
+      for (const row of rows) {
+        const businessId = normalizeBusinessId(row?.businessId);
+        if (!businessId) continue;
+        const legacyBusinessData = row?.businessData && typeof row.businessData === 'object' ? row.businessData : {};
+        const ownerUid = normalizeBusinessId(legacyBusinessData.ownerUid || legacyBusinessData.owner_uid || uid) || uid;
+        const businessRef = doc(db, 'businesses', businessId);
+        const memberRef = doc(db, 'businesses', businessId, 'members', uid);
+        const businessPayload = {
+          ...legacyBusinessData,
+          businessId,
+          business_id: businessId,
+          ownerUid,
+          owner_uid: ownerUid,
+          name: getBusinessName(legacyBusinessData),
+          schemaVersion: Number(legacyBusinessData.schemaVersion || 2) || 2,
+          updated_at: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        };
+        const memberPayload = {
+          uid,
+          email: String(user?.email || legacyBusinessData.email || '').trim(),
+          role: 'owner',
+          status: 'active',
+          permissions: { manageSettings: true, manageUsers: true, viewReports: true, exportData: true },
+          created_at: serverTimestamp(),
+          updated_at: serverTimestamp(),
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        };
+        try {
+          const businessSnap = await getDoc(businessRef);
+          if (!businessSnap.exists()) {
+            console.log('[multi-business] bootstrapping missing canonical business doc from legacy source:', {
+              path: businessRef.path,
+              businessId
+            });
+            await setDoc(businessRef, businessPayload, { merge: true });
+            console.log('[multi-business] bootstrapped canonical business doc:', {
+              path: businessRef.path,
+              businessId
+            });
+          }
+        } catch (error) {
+          console.error('[multi-business] Failed bootstrapping canonical business doc:', {
+            path: businessRef.path,
+            businessId,
+            code: error?.code,
+            message: error?.message,
+            error
+          });
+        }
+        try {
+          const memberSnap = await getDoc(memberRef);
+          if (!memberSnap.exists()) {
+            console.log('[multi-business] bootstrapping missing canonical member doc from legacy source:', {
+              path: memberRef.path,
+              businessId,
+              uid
+            });
+            await setDoc(memberRef, memberPayload, { merge: true });
+            console.log('[multi-business] bootstrapped canonical member doc:', {
+              path: memberRef.path,
+              businessId,
+              uid
+            });
+          }
+        } catch (error) {
+          console.error('[multi-business] Failed bootstrapping canonical member doc:', {
+            path: memberRef.path,
+            businessId,
+            uid,
+            code: error?.code,
+            message: error?.message,
+            error
+          });
+        }
+      }
     }
 
     async function fetchMembershipBusinessesForUser(user, preferredBusinessId = '') {
       const uid = normalizeBusinessId(user?.uid);
       if (!uid) return [];
-      let memberSnap = null;
-      const membershipQuery = query(collectionGroup(db, 'members'), where('uid', '==', uid));
+      let businessSnap = null;
+      const businessRef = collection(db, 'users', uid, 'businesses');
+      console.log('[multi-business] running direct business list query:', {
+        collection: 'users/{uid}/businesses',
+        uid
+      });
       try {
-        memberSnap = await getDocsFromServer(membershipQuery);
+        businessSnap = await getDocsFromServer(businessRef);
       } catch (err) {
-        console.warn('[multi-business] Server membership lookup failed; falling back to cache:', err);
-        memberSnap = await getDocs(membershipQuery);
+        console.warn('[multi-business] Direct business list server lookup failed; falling back to cache:', err);
+        try {
+          businessSnap = await getDocs(businessRef);
+        } catch (cacheErr) {
+          console.error('[multi-business] Direct business list cache lookup failed:', cacheErr);
+          throw cacheErr;
+        }
       }
-      const memberDocs = memberSnap?.docs || [];
-      console.log('[multi-business] membership records found:', memberDocs.map((row) => {
-        const businessId = row.ref?.parent?.parent?.id || '';
-        return { businessId, memberId: row.id, ...(row.data?.() || {}) };
-      }));
-      const rows = [];
-      for (const memberDoc of memberDocs) {
-        const businessRef = memberDoc.ref?.parent?.parent || null;
-        const businessId = normalizeBusinessId(businessRef?.id);
-        if (!businessRef || !businessId) continue;
-        const businessSnap = await getDoc(businessRef);
-        if (!businessSnap.exists()) continue;
-        const businessData = { ...(businessSnap.data() || {}), business_id: businessId };
-        rows.push({
+      const businessDocs = businessSnap?.docs || [];
+      const membershipRows = businessDocs.map((row) => {
+        const businessId = row.id || '';
+        const businessData = { ...(row.data?.() || {}), business_id: businessId };
+        return {
+          path: row.ref?.path || '',
           businessId,
           businessData,
-          memberData: { id: memberDoc.id, ...(memberDoc.data() || {}) }
-        });
-      }
+          memberData: {
+            uid,
+            role: 'owner',
+            status: 'active'
+          }
+        };
+      });
+      console.log('[multi-business] direct business list output:', {
+        businessCount: membershipRows.length,
+        businessIds: membershipRows.map((row) => row.businessId),
+        businessNames: membershipRows.map((row) => getBusinessName(row.businessData))
+      });
+      const rows = membershipRows.slice();
+      rows.forEach((row) => {
+        row.businessData = { ...(row.businessData || {}), business_id: row.businessId };
+      });
       rows.sort((a, b) => {
         const preferred = normalizeBusinessId(preferredBusinessId);
         if (preferred && a.businessId === preferred) return -1;
         if (preferred && b.businessId === preferred) return 1;
         return getBusinessName(a.businessData).localeCompare(getBusinessName(b.businessData));
       });
-      console.log('[multi-business] businesses returned from Firestore:', rows.map((row) => ({
-        businessId: row.businessId,
-        name: getBusinessName(row.businessData)
-      })));
+      console.log('[multi-business] businesses returned from direct legacy source:', {
+        businessCount: rows.length,
+        businessIds: rows.map((row) => row.businessId),
+        businessNames: rows.map((row) => getBusinessName(row.businessData))
+      });
       return rows;
     }
 
@@ -58053,6 +58200,7 @@
       const uid = normalizeBusinessId(ownerUid || user?.uid);
       const businessId = normalizeBusinessId(profile.id || profile.businessId || profile.business_id);
       if (!uid || !businessId) throw new Error('Missing user or business id for canonical business write.');
+      await ensureRootFirestoreCollections();
       const now = new Date();
       const trialEnd = new Date(now);
       trialEnd.setDate(now.getDate() + 3);
@@ -58081,30 +58229,146 @@
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       };
-      await setDoc(doc(db, 'businesses', businessId), payload, { merge: true });
-      await setDoc(doc(db, 'businesses', businessId, 'members', uid), {
-        uid,
-        email: user?.email || '',
-        role: 'owner',
-        status: 'active',
-        permissions: { manageSettings: true, manageUsers: true, viewReports: true, exportData: true },
-        created_at: serverTimestamp(),
-        updated_at: serverTimestamp(),
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      }, { merge: true });
-      await setDoc(doc(db, 'users', uid, 'businesses', businessId), payload, { merge: true });
-      await setDoc(doc(db, 'users', uid), {
-        user_id: uid,
-        uid,
-        email: user?.email || '',
-        activeBusinessId: businessId,
-        business_id: businessId,
-        business_owner_uid: uid,
-        businessIds: arrayUnion(businessId),
-        updated_at: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      }, { merge: true });
+      try {
+        console.log('[multi-business] Writing businesses/{businessId}:', {
+          path: `businesses/${businessId}`,
+          businessId
+        });
+        await setDoc(doc(db, 'businesses', businessId), payload, { merge: true });
+        console.log('[multi-business] Success writing businesses/{businessId}:', {
+          path: `businesses/${businessId}`,
+          businessId
+        });
+      } catch (error) {
+        console.error('[multi-business] Error writing businesses/{businessId}:', {
+          path: `businesses/${businessId}`,
+          code: error?.code,
+          message: error?.message,
+          error
+        });
+        throw error;
+      }
+
+      try {
+        console.log('[multi-business] Writing businesses/{businessId}/members/{uid}:', {
+          path: `businesses/${businessId}/members/${uid}`,
+          businessId,
+          uid
+        });
+        await setDoc(doc(db, 'businesses', businessId, 'members', uid), {
+          uid,
+          email: user?.email || '',
+          role: 'owner',
+          status: 'active',
+          permissions: { manageSettings: true, manageUsers: true, viewReports: true, exportData: true },
+          created_at: serverTimestamp(),
+          updated_at: serverTimestamp(),
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+        console.log('[multi-business] Success writing businesses/{businessId}/members/{uid}:', {
+          path: `businesses/${businessId}/members/${uid}`,
+          businessId,
+          uid
+        });
+      } catch (error) {
+        console.error('[multi-business] Error writing businesses/{businessId}/members/{uid}:', {
+          path: `businesses/${businessId}/members/${uid}`,
+          code: error?.code,
+          message: error?.message,
+          error
+        });
+        throw error;
+      }
+
+      try {
+        const businessVerifyRef = doc(db, 'businesses', businessId);
+        const memberVerifyRef = doc(db, 'businesses', businessId, 'members', uid);
+        console.log('[multi-business] Verifying canonical business docs:', {
+          businessPath: businessVerifyRef.path,
+          memberPath: memberVerifyRef.path
+        });
+        const [businessVerifySnap, memberVerifySnap] = await Promise.all([
+          getDoc(businessVerifyRef),
+          getDoc(memberVerifyRef)
+        ]);
+        const verificationResult = {
+          businessPath: businessVerifyRef.path,
+          businessExists: businessVerifySnap.exists(),
+          memberPath: memberVerifyRef.path,
+          memberExists: memberVerifySnap.exists()
+        };
+        console.log('[multi-business] Canonical business verification result:', verificationResult);
+        if (!businessVerifySnap.exists() || !memberVerifySnap.exists()) {
+          const verificationError = new Error('Canonical verification failed after business creation.');
+          verificationError.code = 'business-verification-failed';
+          verificationError.details = verificationResult;
+          throw verificationError;
+        }
+      } catch (error) {
+        console.error('[multi-business] Canonical business verification failed:', {
+          path: `businesses/${businessId}`,
+          memberPath: `businesses/${businessId}/members/${uid}`,
+          code: error?.code,
+          message: error?.message,
+          error
+        });
+        throw error;
+      }
+
+      try {
+        console.log('[multi-business] Writing users/{uid}/businesses/{businessId}:', {
+          path: `users/${uid}/businesses/${businessId}`,
+          businessId,
+          uid
+        });
+        await setDoc(doc(db, 'users', uid, 'businesses', businessId), payload, { merge: true });
+        console.log('[multi-business] Success writing users/{uid}/businesses/{businessId}:', {
+          path: `users/${uid}/businesses/${businessId}`,
+          businessId,
+          uid
+        });
+      } catch (error) {
+        console.error('[multi-business] Error writing users/{uid}/businesses/{businessId}:', {
+          path: `users/${uid}/businesses/${businessId}`,
+          code: error?.code,
+          message: error?.message,
+          error
+        });
+        throw error;
+      }
+
+      try {
+        console.log('[multi-business] Writing users/{uid}:', {
+          path: `users/${uid}`,
+          businessId,
+          uid
+        });
+        await setDoc(doc(db, 'users', uid), {
+          user_id: uid,
+          uid,
+          email: user?.email || '',
+          activeBusinessId: businessId,
+          business_id: businessId,
+          business_owner_uid: uid,
+          businessIds: arrayUnion(businessId),
+          updated_at: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+        console.log('[multi-business] Success writing users/{uid}:', {
+          path: `users/${uid}`,
+          businessId,
+          uid
+        });
+      } catch (error) {
+        console.error('[multi-business] Error writing users/{uid}:', {
+          path: `users/${uid}`,
+          code: error?.code,
+          message: error?.message,
+          error
+        });
+        throw error;
+      }
       console.log('[multi-business] canonical business write complete:', {
         businessDoc: `businesses/${businessId}`,
         memberDoc: `businesses/${businessId}/members/${uid}`
@@ -59645,6 +59909,7 @@
       }
       releaseAuthGate();
       try {
+        await ensureRootFirestoreCollections();
         const userSnap = await getDoc(doc(db, 'users', user.uid));
         const userData = userSnap.exists() ? userSnap.data() : null;
         console.log("FULL USER DATA:", userData);
@@ -59744,7 +60009,12 @@
         }
         applySoftLockGuards();
       } catch (err) {
-        console.warn('Company sync failed:', err);
+        console.error('Company sync failed:', {
+          error: err,
+          code: err?.code,
+          message: err?.message,
+          firebaseError: formatExactFirebaseError(err)
+        });
         currentBusinessId = resolveRealtimeBusinessId();
         try { startManageUsersRealtimeSync(); } catch (_) {}
         try { refreshUiAfterAuthSync(); } catch (_) {}

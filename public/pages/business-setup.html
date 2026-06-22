@@ -331,6 +331,7 @@
     import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
     import { app, db } from "../js/firebase.js";
     import { businessDocPath, userDocPath } from "../js/firestore-paths.js";
+    import { ensureBusinessRootBootstrapDocs } from "../js/business-v2.js";
     import {
       ensureTrialSubscription,
       ensureUserRecord,
@@ -394,17 +395,11 @@
 
     function formatFirestoreError(err) {
       const code = String(err?.code || '').trim();
-      if (code === 'permission-denied') {
-        return 'Permission denied by Firestore rules. Please allow create/write for your logged-in user.';
-      }
-      if (code === 'unauthenticated') {
-        return 'Session expired. Please login again and retry.';
-      }
-      if (code === 'resource-exhausted' || code === 'invalid-argument') {
-        return 'Business payload is too large for Firestore. Retry without logo and upload it later in Settings.';
-      }
       const message = String(err?.message || '').trim();
-      return message ? `Failed to save business: ${message}` : 'Failed to save business. Please retry.';
+      if (code || message) {
+        return code ? `${code}: ${message || 'Firestore operation failed.'}` : message;
+      }
+      return 'Firestore operation failed.';
     }
 
     function safeText(value, maxLen) {
@@ -425,6 +420,9 @@
         window.location.href = 'login.html';
         return;
       }
+      ensureBusinessRootBootstrapDocs().catch((err) => {
+        console.error('Root collection bootstrap failed:', formatFirestoreError(err), err);
+      });
       if (!user.emailVerified) {
         window.location.href = 'verify-email.html';
       }

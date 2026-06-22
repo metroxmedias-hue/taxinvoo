@@ -1,6 +1,6 @@
 import { auth, db } from "./firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
-import { collection, collectionGroup, doc, getDoc, getDocs, getDocsFromServer, query, where } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+import { collection, doc, getDocs, getDocsFromServer } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 import { invoicesColPath } from "./firestore-paths.js";
 import { setUserData } from "./userState.js";
 import {
@@ -35,35 +35,31 @@ async function loadBusiness(userData) {
   }
   const expectedBusinessId = String(userData?.business_id || "").trim();
   const activeBusinessId = String(userData?.activeBusinessId || expectedBusinessId || "").trim();
-  const membershipQuery = query(collectionGroup(db, "members"), where("uid", "==", auth.currentUser.uid));
   let memberSnap = null;
   try {
-    memberSnap = await getDocsFromServer(membershipQuery);
+    memberSnap = await getDocsFromServer(collection(db, "users", ownerUid, "businesses"));
   } catch (err) {
-    console.warn("[multi-business] Dashboard server membership lookup failed; falling back to cache:", err);
-    memberSnap = await getDocs(membershipQuery);
+    console.warn("[multi-business] Dashboard direct business list server lookup failed; falling back to cache:", err);
+    memberSnap = await getDocs(collection(db, "users", ownerUid, "businesses"));
   }
   const memberDocs = memberSnap?.docs || [];
-  console.log("[multi-business] Dashboard membership records found:", memberDocs.map((row) => ({
-    businessId: row.ref?.parent?.parent?.id || "",
-    memberId: row.id,
+  console.log("[multi-business] Dashboard direct business list found:", memberDocs.map((row) => ({
+    businessId: row.id || "",
+    path: row.ref?.path || "",
     ...(row.data?.() || {})
   })));
   const membershipRows = [];
   for (const memberDoc of memberDocs) {
-    const businessRef = memberDoc.ref?.parent?.parent || null;
-    const businessId = String(businessRef?.id || "").trim();
-    if (!businessRef || !businessId) continue;
-    const businessSnap = await getDoc(businessRef);
-    if (!businessSnap.exists()) continue;
+    const businessId = String(memberDoc.id || "").trim();
+    if (!businessId) continue;
     membershipRows.push({
       businessId,
-      businessData: { ...(businessSnap.data() || {}), business_id: businessId }
+      businessData: { ...(memberDoc.data() || {}), business_id: businessId }
     });
   }
-  console.log("[multi-business] Dashboard businesses returned from Firestore:", membershipRows.map((row) => ({
+  console.log("[multi-business] Dashboard businesses returned from direct legacy source:", membershipRows.map((row) => ({
     businessId: row.businessId,
-    name: row.businessData?.name || "Business"
+    name: row.businessData?.name || row.businessData?.company?.name || "Business"
   })));
   if (membershipRows.length) {
     const selectedRow = membershipRows.find((row) => row.businessId === expectedBusinessId)
