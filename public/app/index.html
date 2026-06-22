@@ -28817,6 +28817,65 @@
       });
     }
 
+    function businessFirestoreDataToProfile(businessId, data = {}) {
+      const id = String(businessId || data.business_id || data.businessId || '').trim();
+      if (!id) return null;
+      const company = {
+        ...cloneObject(DEFAULT_COMPANY_SNAPSHOT, {}),
+        name: String(data.name || data.legalName || data.businessName || '').trim(),
+        phone: String(data.phone || data.mobile || '').trim(),
+        email: String(data.email || '').trim(),
+        gstin: String(data.gstin || '').trim(),
+        type: String(data.type || data.business_type || 'services').trim(),
+        industryType: String(data.industryType || data.industry_type || '').trim(),
+        registrationType: String(data.registrationType || data.registration_type || '').trim(),
+        state: String(data.state || '').trim(),
+        city: String(data.city || '').trim(),
+        pincode: String(data.pincode || '').trim(),
+        address: String(data.address || '').trim(),
+        logo: String(data.logo || '').trim(),
+        financial_year_start: String(data.financial_year_start || '').trim()
+      };
+      return sanitizeBusinessProfile({
+        id,
+        name: company.name || 'Business',
+        phone: company.phone,
+        company
+      });
+    }
+
+    function mergeBusinessProfilesFromFirestore(rows = [], preferredBusinessId = '') {
+      const firestoreProfiles = (Array.isArray(rows) ? rows : [])
+        .map((row) => businessFirestoreDataToProfile(row?.businessId || row?.id, row?.businessData || row?.data || row))
+        .filter(Boolean);
+      console.log('[multi-business] businesses returned from Firestore:', firestoreProfiles.map((profile) => ({
+        id: profile.id,
+        name: profile.name
+      })));
+      if (!firestoreProfiles.length) return businessProfiles;
+      const preferredId = String(preferredBusinessId || activeBusinessProfileId || localStorage.getItem(ACTIVE_BUSINESS_PROFILE_KEY) || '').trim();
+      const merged = new Map();
+      businessProfiles.forEach((profile) => {
+        const safeProfile = sanitizeBusinessProfile(profile);
+        merged.set(safeProfile.id, safeProfile);
+      });
+      firestoreProfiles.forEach((profile) => {
+        const existing = merged.get(profile.id);
+        merged.set(profile.id, choosePreferredBusinessProfile(existing, profile, preferredId));
+      });
+      businessProfiles = normalizeBusinessProfiles(Array.from(merged.values()));
+      if (preferredId && businessProfiles.some((profile) => profile.id === preferredId)) {
+        activeBusinessProfileId = preferredId;
+      } else if (!activeBusinessProfileId || !businessProfiles.some((profile) => profile.id === activeBusinessProfileId)) {
+        activeBusinessProfileId = businessProfiles[0]?.id || '';
+      }
+      console.log('[multi-business] activeBusinessId:', activeBusinessProfileId || '(none)');
+      persistBusinessProfiles();
+      return businessProfiles;
+    }
+
+    window.mergeBusinessProfilesFromFirestore = mergeBusinessProfilesFromFirestore;
+
     function normalizeBusinessProfiles(list) {
       const activeFromStorage = String(localStorage.getItem(ACTIVE_BUSINESS_PROFILE_KEY) || '').trim();
       const preferredActiveId = String(activeBusinessProfileId || activeFromStorage || '').trim();
@@ -29121,6 +29180,11 @@
 
     function openBusinessSwitchModal() {
       renderBusinessSwitchList();
+      if (typeof window.refreshBusinessProfilesFromFirestore === 'function') {
+        window.refreshBusinessProfilesFromFirestore()
+          .then(() => renderBusinessSwitchList())
+          .catch((err) => console.warn('[multi-business] Firestore switcher refresh failed:', err));
+      }
       if (businessSwitchModal) businessSwitchModal.classList.add('active');
     }
 
@@ -57528,31 +57592,40 @@
             return;
           }
           try {
-            const businessDocRef = doc(db, 'users', ownerUid, 'businesses', profile.id);
-            const businessDocSnap = await getDoc(businessDocRef);
-            if (!businessDocSnap.exists()) {
-              const now = new Date();
-              const trialEnd = new Date();
-              trialEnd.setDate(now.getDate() + 3);
-              await setDoc(businessDocRef, {
-                business_id: profile.id,
-                name: company.name || name,
-                phone: company.phone || '',
-                type: company.type || 'retailer',
-                industry_type: company.industryType || '',
-                registration_type: company.registrationType || '',
-                invoice_count: 0,
-                setup_completed: true,
-                plan_type: 'trial',
-                plan_status: 'active',
-                trial_starts_at: now.toISOString(),
-                trial_ends_at: trialEnd.toISOString(),
-                is_active: true,
-                created_at: serverTimestamp(),
-                updated_at: serverTimestamp()
-              }, { merge: true });
+            if (typeof window.ensureBusinessCanonicalWrite === 'function') {
+              await window.ensureBusinessCanonicalWrite({ profile, company, ownerUid });
+            } else {
+              console.warn('[multi-business] Canonical writer unavailable; using legacy business write only.');
+              const businessDocRef = doc(db, 'users', ownerUid, 'businesses', profile.id);
+              const businessDocSnap = await getDoc(businessDocRef);
+              if (!businessDocSnap.exists()) {
+                const now = new Date();
+                const trialEnd = new Date();
+                trialEnd.setDate(now.getDate() + 3);
+                await setDoc(businessDocRef, {
+                  business_id: profile.id,
+                  name: company.name || name,
+                  phone: company.phone || '',
+                  type: company.type || 'retailer',
+                  industry_type: company.industryType || '',
+                  registration_type: company.registrationType || '',
+                  invoice_count: 0,
+                  setup_completed: true,
+                  plan_type: 'trial',
+                  plan_status: 'active',
+                  trial_starts_at: now.toISOString(),
+                  trial_ends_at: trialEnd.toISOString(),
+                  is_active: true,
+                  created_at: serverTimestamp(),
+                  updated_at: serverTimestamp()
+                }, { merge: true });
+              }
+            }
+            if (typeof window.refreshBusinessProfilesFromFirestore === 'function') {
+              await window.refreshBusinessProfilesFromFirestore(profile.id);
             }
           } catch (err) {
+            console.warn('[multi-business] Business creation sync failed:', err);
             if (businessCreateError) businessCreateError.textContent = 'Failed to create business. Please try again.';
             return;
           }
@@ -57864,7 +57937,7 @@
   <script type="module">
     import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp, increment, collection, getDocs, getDocsFromServer, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp, increment, collection, collectionGroup, getDocs, getDocsFromServer, onSnapshot, query, where, arrayUnion } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
     import { getUserData, setUserData } from "../js/userState.js";
 
     const firebaseConfig = {
@@ -57880,6 +57953,24 @@
     const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+    Object.assign(window, {
+      auth,
+      db,
+      doc,
+      getDoc,
+      setDoc,
+      updateDoc,
+      serverTimestamp,
+      increment,
+      collection,
+      collectionGroup,
+      getDocs,
+      getDocsFromServer,
+      onSnapshot,
+      query,
+      where,
+      arrayUnion
+    });
     const DISABLE_PLAN_AND_ACCESS_GATES = window.__metroxDisablePlanAndAccessGates !== false;
     const LOGIN_PAGE_URL = '../pages/login.html';
     const STORAGE_KEY = 'metrox_taxinvoo_demo_state';
@@ -57890,6 +57981,136 @@
     const LOCAL_INVITES_KEY_PREFIX = 'metrox_invites_local_';
     let currentBusinessId = null;
     let cloudSyncTimer = null;
+
+    function normalizeBusinessId(value = '') {
+      return String(value || '').trim();
+    }
+
+    function getBusinessName(data = {}) {
+      return String(data?.name || data?.legalName || data?.businessName || 'Business').trim() || 'Business';
+    }
+
+    async function fetchMembershipBusinessesForUser(user, preferredBusinessId = '') {
+      const uid = normalizeBusinessId(user?.uid);
+      if (!uid) return [];
+      let memberSnap = null;
+      const membershipQuery = query(collectionGroup(db, 'members'), where('uid', '==', uid));
+      try {
+        memberSnap = await getDocsFromServer(membershipQuery);
+      } catch (err) {
+        console.warn('[multi-business] Server membership lookup failed; falling back to cache:', err);
+        memberSnap = await getDocs(membershipQuery);
+      }
+      const memberDocs = memberSnap?.docs || [];
+      console.log('[multi-business] membership records found:', memberDocs.map((row) => {
+        const businessId = row.ref?.parent?.parent?.id || '';
+        return { businessId, memberId: row.id, ...(row.data?.() || {}) };
+      }));
+      const rows = [];
+      for (const memberDoc of memberDocs) {
+        const businessRef = memberDoc.ref?.parent?.parent || null;
+        const businessId = normalizeBusinessId(businessRef?.id);
+        if (!businessRef || !businessId) continue;
+        const businessSnap = await getDoc(businessRef);
+        if (!businessSnap.exists()) continue;
+        const businessData = { ...(businessSnap.data() || {}), business_id: businessId };
+        rows.push({
+          businessId,
+          businessData,
+          memberData: { id: memberDoc.id, ...(memberDoc.data() || {}) }
+        });
+      }
+      rows.sort((a, b) => {
+        const preferred = normalizeBusinessId(preferredBusinessId);
+        if (preferred && a.businessId === preferred) return -1;
+        if (preferred && b.businessId === preferred) return 1;
+        return getBusinessName(a.businessData).localeCompare(getBusinessName(b.businessData));
+      });
+      console.log('[multi-business] businesses returned from Firestore:', rows.map((row) => ({
+        businessId: row.businessId,
+        name: getBusinessName(row.businessData)
+      })));
+      return rows;
+    }
+
+    function mergeFirestoreBusinessesIntoSwitcher(rows = [], preferredBusinessId = '') {
+      if (typeof window.mergeBusinessProfilesFromFirestore !== 'function') return;
+      window.mergeBusinessProfilesFromFirestore(rows, preferredBusinessId);
+    }
+
+    window.refreshBusinessProfilesFromFirestore = async function refreshBusinessProfilesFromFirestore(preferredBusinessId = '') {
+      const user = auth.currentUser;
+      if (!user) return [];
+      const activeId = normalizeBusinessId(preferredBusinessId || resolveRealtimeBusinessId());
+      const rows = await fetchMembershipBusinessesForUser(user, activeId);
+      mergeFirestoreBusinessesIntoSwitcher(rows, activeId);
+      console.log('[multi-business] activeBusinessId:', normalizeBusinessId(activeId || rows[0]?.businessId || resolveRealtimeBusinessId()) || '(none)');
+      return rows;
+    };
+
+    window.ensureBusinessCanonicalWrite = async function ensureBusinessCanonicalWrite({ profile = {}, company = {}, ownerUid = '' } = {}) {
+      const user = auth.currentUser;
+      const uid = normalizeBusinessId(ownerUid || user?.uid);
+      const businessId = normalizeBusinessId(profile.id || profile.businessId || profile.business_id);
+      if (!uid || !businessId) throw new Error('Missing user or business id for canonical business write.');
+      const now = new Date();
+      const trialEnd = new Date(now);
+      trialEnd.setDate(now.getDate() + 3);
+      const payload = {
+        businessId,
+        business_id: businessId,
+        ownerUid: uid,
+        owner_uid: uid,
+        name: getBusinessName({ ...company, ...profile }),
+        phone: String(company.phone || profile.phone || '').trim(),
+        type: String(company.type || 'retailer').trim(),
+        industry_type: String(company.industryType || '').trim(),
+        registration_type: String(company.registrationType || '').trim(),
+        invoice_count: 0,
+        setup_completed: true,
+        plan_type: 'trial',
+        plan_status: 'active',
+        current_plan: 'trial',
+        subscription_status: 'active',
+        trial_starts_at: now.toISOString(),
+        trial_ends_at: trialEnd.toISOString(),
+        is_active: true,
+        schemaVersion: 2,
+        created_at: serverTimestamp(),
+        updated_at: serverTimestamp(),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+      await setDoc(doc(db, 'businesses', businessId), payload, { merge: true });
+      await setDoc(doc(db, 'businesses', businessId, 'members', uid), {
+        uid,
+        email: user?.email || '',
+        role: 'owner',
+        status: 'active',
+        permissions: { manageSettings: true, manageUsers: true, viewReports: true, exportData: true },
+        created_at: serverTimestamp(),
+        updated_at: serverTimestamp(),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+      await setDoc(doc(db, 'users', uid, 'businesses', businessId), payload, { merge: true });
+      await setDoc(doc(db, 'users', uid), {
+        user_id: uid,
+        uid,
+        email: user?.email || '',
+        activeBusinessId: businessId,
+        business_id: businessId,
+        business_owner_uid: uid,
+        businessIds: arrayUnion(businessId),
+        updated_at: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+      console.log('[multi-business] canonical business write complete:', {
+        businessDoc: `businesses/${businessId}`,
+        memberDoc: `businesses/${businessId}/members/${uid}`
+      });
+      return { businessId, businessData: payload };
+    };
 
     function resolveRealtimeBusinessId(preferredId = '') {
       const fromCurrent = String(preferredId || currentBusinessId || '').trim();
@@ -58796,6 +59017,47 @@
       const ownerUid = String(userData?.business_owner_uid || userData?.user_id || auth.currentUser?.uid || '').trim();
       if (!ownerUid) return null;
       const expectedBusinessId = String(userData?.business_id || '').trim();
+      const activeBusinessId = String(resolveRealtimeBusinessId() || userData?.activeBusinessId || '').trim();
+      const membershipRows = await fetchMembershipBusinessesForUser(auth.currentUser, expectedBusinessId || activeBusinessId);
+      if (membershipRows.length) {
+        mergeFirestoreBusinessesIntoSwitcher(membershipRows, expectedBusinessId || activeBusinessId);
+        const selectedRow = membershipRows.find((row) => row.businessId === expectedBusinessId)
+          || membershipRows.find((row) => row.businessId === activeBusinessId)
+          || membershipRows[0];
+        const businessDocId = selectedRow.businessId;
+        const businessData = { ...(selectedRow.businessData || {}), business_id: businessDocId };
+        const plan = normalizePlanKey(businessData.plan_type || 'starter');
+        const features = PLAN_FEATURES[plan] || PLAN_FEATURES.starter;
+        window.businessData = businessData;
+        setUserData(businessData);
+        window.APP_PLAN = plan;
+        window.APP_FEATURES = features;
+        window.currentBusinessRef = doc(db, 'businesses', businessDocId);
+        currentBusinessId = businessDocId;
+        console.log('[multi-business] activeBusinessId:', businessDocId);
+        console.log('USER DATA LOADED:', businessData);
+        try {
+          localStorage.setItem('metrox_plan', plan);
+          localStorage.setItem('activeBusinessId', businessDocId);
+          localStorage.setItem(ACTIVE_BUSINESS_PROFILE_KEY, businessDocId);
+        } catch (_) {}
+        if (auth.currentUser?.uid && businessDocId && businessDocId !== expectedBusinessId) {
+          await setDoc(doc(db, 'users', auth.currentUser.uid), {
+            business_id: businessDocId,
+            activeBusinessId: businessDocId,
+            updated_at: serverTimestamp()
+          }, { merge: true });
+        }
+        const hasAccess = checkAccess(businessData);
+        const host = String(window.location.hostname || '').toLowerCase();
+        const isLocalDevHost = ['localhost', '127.0.0.1', '::1'].includes(host)
+          || host.endsWith('.local')
+          || window.location.protocol === 'file:'
+          || window.location.protocol === 'http:';
+        window.APP_ACCESS = hasAccess || isLocalDevHost;
+        if (!hasAccess && !isLocalDevHost) showExpiredBanner();
+        return { businessId: businessDocId, businessData };
+      }
       const businessRef = collection(db, 'users', ownerUid, 'businesses');
       let snap = null;
       try {
@@ -59229,6 +59491,136 @@
       if (gateStyle) gateStyle.remove();
     }
 
+    function persistTenantContextFromBusiness(userId, businessId, ownerUid = userId) {
+      const safeUserId = String(userId || '').trim();
+      const safeBusinessId = String(businessId || '').trim();
+      const safeOwnerUid = String(ownerUid || safeUserId).trim();
+      if (!safeUserId || !safeBusinessId) return;
+      try {
+        localStorage.setItem('metrox_frontend_tenant', JSON.stringify({
+          userId: safeOwnerUid,
+          businessId: safeBusinessId
+        }));
+        localStorage.setItem('activeBusinessId', safeBusinessId);
+        localStorage.setItem(ACTIVE_BUSINESS_PROFILE_KEY, safeBusinessId);
+        console.log('[tenant-restore] Dashboard tenant context persisted:', {
+          authUid: safeUserId,
+          userId: safeOwnerUid,
+          businessId: safeBusinessId
+        });
+      } catch (err) {
+        console.warn('[tenant-restore] Failed to persist dashboard tenant context:', err);
+      }
+    }
+
+    async function restoreBusinessContextAfterAuth(user, userData = {}) {
+      const uid = String(user?.uid || '').trim();
+      if (!uid) return null;
+      const ownerUid = String(userData?.business_owner_uid || uid).trim();
+      const expectedBusinessId = String(userData?.business_id || '').trim();
+      console.log('[tenant-restore] Dashboard checking Firestore businesses:', {
+        uid,
+        ownerUid,
+        expectedBusinessId: expectedBusinessId || '(none)'
+      });
+      const membershipRows = await fetchMembershipBusinessesForUser(user, expectedBusinessId || resolveRealtimeBusinessId());
+      if (membershipRows.length) {
+        mergeFirestoreBusinessesIntoSwitcher(membershipRows, expectedBusinessId || resolveRealtimeBusinessId());
+        const activeLocalBusinessId = String(resolveRealtimeBusinessId() || '').trim();
+        const selected = membershipRows.find((row) => row.businessId === expectedBusinessId)
+          || membershipRows.find((row) => row.businessId === activeLocalBusinessId)
+          || membershipRows[0];
+        const businessId = String(selected?.businessId || '').trim();
+        if (!businessId) return null;
+        persistTenantContextFromBusiness(uid, businessId, ownerUid);
+        if (businessId !== expectedBusinessId || userData?.business_owner_uid !== ownerUid) {
+          const userRef = doc(db, 'users', uid);
+          try {
+            await setDoc(userRef, {
+              user_id: uid,
+              business_id: businessId,
+              activeBusinessId: businessId,
+              business_owner_uid: ownerUid,
+              businessIds: arrayUnion(businessId),
+              updated_at: serverTimestamp()
+            }, { merge: true });
+            console.log('[tenant-restore] Dashboard restored user business pointer:', {
+              uid,
+              ownerUid,
+              businessId
+            });
+          } catch (err) {
+            console.warn('[tenant-restore] Could not restore user business pointer:', err);
+          }
+        }
+        console.log('[multi-business] activeBusinessId:', businessId);
+        return {
+          businessId,
+          ownerUid,
+          businessData: { ...(selected.businessData || {}), business_id: businessId },
+          userData: {
+            ...(userData || {}),
+            user_id: uid,
+            business_id: businessId,
+            activeBusinessId: businessId,
+            business_owner_uid: ownerUid
+          }
+        };
+      }
+      let snap = null;
+      const businessRef = collection(db, 'users', ownerUid, 'businesses');
+      try {
+        snap = await getDocsFromServer(businessRef);
+      } catch (err) {
+        console.warn('[tenant-restore] Server business lookup failed; falling back to cache:', err);
+        snap = await getDocs(businessRef);
+      }
+      console.log('[tenant-restore] Dashboard business lookup result:', { count: snap?.size || 0 });
+      if (!snap || snap.empty) return null;
+      const docs = snap.docs || [];
+      const preferredDoc = expectedBusinessId
+        ? docs.find((row) => row.id === expectedBusinessId) || null
+        : null;
+      const activeLocalBusinessId = String(resolveRealtimeBusinessId() || '').trim();
+      const activeLocalDoc = activeLocalBusinessId
+        ? docs.find((row) => row.id === activeLocalBusinessId) || null
+        : null;
+      const paidActiveDoc = docs.find((row) => checkUserAccess(row.data() || {}) === 'full_access') || null;
+      const selected = preferredDoc || activeLocalDoc || paidActiveDoc || docs[0];
+      const businessId = String(selected?.id || '').trim();
+      if (!businessId) return null;
+      persistTenantContextFromBusiness(uid, businessId, ownerUid);
+      if (businessId !== expectedBusinessId || userData?.business_owner_uid !== ownerUid) {
+        const userRef = doc(db, 'users', uid);
+        try {
+          await setDoc(userRef, {
+            user_id: uid,
+            business_id: businessId,
+            business_owner_uid: ownerUid,
+            updated_at: serverTimestamp()
+          }, { merge: true });
+          console.log('[tenant-restore] Dashboard restored user business pointer:', {
+            uid,
+            ownerUid,
+            businessId
+          });
+        } catch (err) {
+          console.warn('[tenant-restore] Could not restore user business pointer:', err);
+        }
+      }
+      return {
+        businessId,
+        ownerUid,
+        businessData: selected.data ? { ...(selected.data() || {}), business_id: businessId } : null,
+        userData: {
+          ...(userData || {}),
+          user_id: uid,
+          business_id: businessId,
+          business_owner_uid: ownerUid
+        }
+      };
+    }
+
     onAuthStateChanged(auth, async (user) => {
       signedInEmail = user?.email || '';
       if (!user) {
@@ -59256,17 +59648,22 @@
         const userSnap = await getDoc(doc(db, 'users', user.uid));
         const userData = userSnap.exists() ? userSnap.data() : null;
         console.log("FULL USER DATA:", userData);
-        const businessId = String(userData?.business_id || resolveRealtimeBusinessId()).trim();
+        const restoredContext = await restoreBusinessContextAfterAuth(user, userData || {});
+        const resolvedUserData = restoredContext?.userData || userData || {};
+        const businessId = String(restoredContext?.businessId || resolvedUserData?.business_id || resolveRealtimeBusinessId()).trim();
         if (!businessId) {
+          console.warn('[tenant-restore] No businesses found for authenticated user; setup may be required.', {
+            uid: user.uid
+          });
           setUserData(null);
           currentBusinessId = null;
           try { if (typeof window.renderManageUsersPanel === 'function') window.renderManageUsersPanel(); } catch (_) {}
           return;
         }
-        const role = (userData?.role || 'owner').toLowerCase();
+        const role = (resolvedUserData?.role || 'owner').toLowerCase();
         const rolePermissionsRaw = role === 'owner'
           ? { ...OWNER_PERMISSIONS }
-          : { ...ACCOUNTANT_DEFAULT_PERMISSIONS, ...(userData?.permissions || {}) };
+          : { ...ACCOUNTANT_DEFAULT_PERMISSIONS, ...(resolvedUserData?.permissions || {}) };
         const resolvedProfile = resolveAccessProfile({ role, permissions: rolePermissionsRaw });
         localStorage.setItem('metrox_access_profile', JSON.stringify(resolvedProfile));
         if (typeof window.setRoleAccess === 'function') {
@@ -59274,7 +59671,7 @@
         }
         currentBusinessId = businessId;
         startManageUsersRealtimeSync();
-        const loadedBusiness = await loadBusiness(userData);
+        const loadedBusiness = await loadBusiness(resolvedUserData);
         const businessData = loadedBusiness?.businessData || null;
         console.log("FULL BUSINESS DATA:", businessData);
         if (!businessData) {

@@ -1,6 +1,6 @@
 import { auth, db } from "./firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
-import { collection, doc, getDoc, getDocs, getDocsFromServer } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+import { collection, collectionGroup, doc, getDoc, getDocs, getDocsFromServer, query, where } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 import { getUserData, setUserData } from "./userState.js";
 
 console.log("SETTINGS SCRIPT LOADED ✅");
@@ -54,6 +54,52 @@ async function resolveBusinessContext(uid) {
     || userData.business_id
     || ""
   ).trim();
+
+  const membershipQuery = query(collectionGroup(db, "members"), where("uid", "==", uid));
+  let memberSnap = null;
+  try {
+    memberSnap = await getDocsFromServer(membershipQuery);
+  } catch (err) {
+    console.warn("[multi-business] Account server membership lookup failed; falling back to cache:", err);
+    memberSnap = await getDocs(membershipQuery);
+  }
+  const memberDocs = memberSnap?.docs || [];
+  console.log("[multi-business] Account membership records found:", memberDocs.map((row) => ({
+    businessId: row.ref?.parent?.parent?.id || "",
+    memberId: row.id,
+    ...(row.data?.() || {})
+  })));
+  const membershipRows = [];
+  for (const memberDoc of memberDocs) {
+    const businessRef = memberDoc.ref?.parent?.parent || null;
+    const businessId = String(businessRef?.id || "").trim();
+    if (!businessRef || !businessId) continue;
+    const businessSnap = await getDoc(businessRef);
+    if (!businessSnap.exists()) continue;
+    membershipRows.push({
+      businessId,
+      businessData: { ...(businessSnap.data() || {}), business_id: businessId }
+    });
+  }
+  console.log("[multi-business] Account businesses returned from Firestore:", membershipRows.map((row) => ({
+    businessId: row.businessId,
+    name: row.businessData?.name || "Business"
+  })));
+  if (membershipRows.length) {
+    const paidActiveRow = membershipRows.find((row) => getAccessRank(row.businessData || {}) === 3) || null;
+    let selectedRow = membershipRows.find((row) => row.businessId === expectedBusinessId) || membershipRows[0];
+    if (paidActiveRow && getAccessRank(selectedRow?.businessData || {}) !== 3) {
+      selectedRow = paidActiveRow;
+    }
+    const businessId = selectedRow.businessId;
+    const businessData = selectedRow.businessData || {};
+    setUserData({ ...businessData, business_id: businessId });
+    try {
+      localStorage.setItem("activeBusinessId", businessId);
+    } catch (_) {}
+    console.log("[multi-business] Account activeBusinessId:", businessId);
+    return { businessId, businessData };
+  }
 
   const businessRef = collection(db, "users", uid, "businesses");
   let businessSnap = null;

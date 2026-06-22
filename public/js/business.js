@@ -1,7 +1,8 @@
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
-import { businessDocPath, userDocPath } from "./firestore-paths.js";
+import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+import { userDocPath } from "./firestore-paths.js";
+import { createOrResolveBusinessV2 } from "./business-v2.js";
 import {
   ensureTrialSubscription,
   ensureUserRecord,
@@ -128,7 +129,6 @@ form.addEventListener('submit', async (e) => {
     const trialEnd = new Date();
     trialEnd.setDate(now.getDate() + 3);
     const businessPayload = {
-      business_id: "",
       name: businessName,
       gstin: gstin || '',
       state,
@@ -145,27 +145,9 @@ form.addEventListener('submit', async (e) => {
       created_at: serverTimestamp(),
       updated_at: serverTimestamp()
     };
-    const requestedBusinessId = String(codexResponse.business_id || '').trim();
-    const candidateIds = Array.from(new Set([
-      requestedBusinessId,
-      `biz_${user.uid}`,
-      user.uid
-    ].filter(Boolean)));
-    let businessId = '';
-    let createErr = null;
-    for (const candidateId of candidateIds) {
-      try {
-        const businessRef = doc(db, ...businessDocPath(user.uid, candidateId));
-        const businessSnap = await getDoc(businessRef);
-        if (businessSnap.exists()) continue;
-        await setDoc(businessRef, { ...businessPayload, business_id: candidateId }, { merge: true });
-        businessId = candidateId;
-        break;
-      } catch (err) {
-        createErr = err;
-      }
-    }
-    if (!businessId) throw createErr || new Error('Unable to create business document.');
+    const business = await createOrResolveBusinessV2(user, businessPayload);
+    const businessId = String(business?.businessId || business?.id || '').trim();
+    if (!businessId) throw new Error('Unable to create business document.');
 
     await ensureUserRecord(user, { role: 'owner' });
     await ensureTrialSubscription(user.uid);

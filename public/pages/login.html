@@ -953,6 +953,68 @@
 
     const DASHBOARD_URL = '../app/index.html#/dashboard';
 
+    function restoreLocalTenantContext(userId, businessId, businessOwnerUid = userId) {
+      const safeUserId = String(userId || '').trim();
+      const safeBusinessId = String(businessId || '').trim();
+      const safeOwnerUid = String(businessOwnerUid || safeUserId).trim();
+      if (!safeUserId || !safeBusinessId) return;
+      try {
+        localStorage.setItem('metrox_frontend_tenant', JSON.stringify({
+          userId: safeOwnerUid,
+          businessId: safeBusinessId
+        }));
+        localStorage.setItem('activeBusinessId', safeBusinessId);
+        localStorage.setItem('metrox_active_business_profile_v1', safeBusinessId);
+        console.log('[tenant-restore] Local tenant context restored after login:', {
+          userId: safeOwnerUid,
+          authUid: safeUserId,
+          businessId: safeBusinessId
+        });
+      } catch (err) {
+        console.warn('[tenant-restore] Failed to persist local tenant context:', err);
+      }
+    }
+
+    async function restoreBusinessContextFromFirestore(user, userData = {}) {
+      const uid = String(user?.uid || '').trim();
+      if (!uid) return null;
+      const ownerUid = String(userData?.business_owner_uid || uid).trim();
+      const expectedBusinessId = String(userData?.business_id || '').trim();
+      console.log('[tenant-restore] Checking Firestore businesses after auth:', {
+        uid,
+        ownerUid,
+        expectedBusinessId: expectedBusinessId || '(none)'
+      });
+      try {
+        const snap = await getDocs(collection(db, 'users', ownerUid, 'businesses'));
+        console.log('[tenant-restore] Business lookup result:', { count: snap.size || 0 });
+        if (!snap || snap.empty) return null;
+        const docs = snap.docs || [];
+        const selected = expectedBusinessId
+          ? docs.find((row) => row.id === expectedBusinessId) || docs[0]
+          : docs[0];
+        const businessId = String(selected?.id || '').trim();
+        if (!businessId) return null;
+        restoreLocalTenantContext(uid, businessId, ownerUid);
+        if (userData?.business_id !== businessId || userData?.business_owner_uid !== ownerUid) {
+          await linkUserToBusiness(uid, businessId, ownerUid);
+          console.log('[tenant-restore] User business pointer restored from existing business:', {
+            uid,
+            ownerUid,
+            businessId
+          });
+        }
+        return {
+          business_id: businessId,
+          business_owner_uid: ownerUid,
+          business: selected.data ? selected.data() : null
+        };
+      } catch (err) {
+        console.error('[tenant-restore] Business lookup failed:', err);
+        return null;
+      }
+    }
+
     async function routeAfterAuth(user) {
       if (!user) return;
       if (!user.emailVerified) {
@@ -976,9 +1038,15 @@
       }
 
       if (!userSnap.exists()) {
+        const restored = await restoreBusinessContextFromFirestore(user, {});
+        if (restored?.business_id) {
+          window.location.href = DASHBOARD_URL;
+          return;
+        }
         const claimed = await claimAccountantInvite(user);
         if (claimed?.business_id) {
           await linkUserToBusiness(user.uid, claimed.business_id, claimed.business_owner_uid || user.uid);
+          restoreLocalTenantContext(user.uid, claimed.business_id, claimed.business_owner_uid || user.uid);
           window.location.href = DASHBOARD_URL;
           return;
         }
@@ -997,11 +1065,28 @@
       }
       const userData = context?.user || userSnap.data() || {};
       const businessData = context?.business || null;
+      const restored = await restoreBusinessContextFromFirestore(user, userData);
+      const effectiveUserData = restored?.business_id
+        ? {
+            ...userData,
+            business_id: restored.business_id,
+            business_owner_uid: restored.business_owner_uid || userData.business_owner_uid || user.uid
+          }
+        : userData;
+      const effectiveBusinessData = restored?.business || businessData;
+      if (restored?.business_id && !userData.business_id) {
+        window.location.href = DASHBOARD_URL;
+        return;
+      }
+      if (effectiveUserData.business_id) {
+        restoreLocalTenantContext(user.uid, effectiveUserData.business_id, effectiveUserData.business_owner_uid || user.uid);
+      }
 
-      if (!userData.business_id) {
+      if (!effectiveUserData.business_id) {
         const claimed = await claimAccountantInvite(user);
         if (claimed?.business_id) {
           await linkUserToBusiness(user.uid, claimed.business_id, claimed.business_owner_uid || user.uid);
+          restoreLocalTenantContext(user.uid, claimed.business_id, claimed.business_owner_uid || user.uid);
           window.location.href = DASHBOARD_URL;
           return;
         }
@@ -1009,9 +1094,10 @@
         return;
       }
 
-      if (businessData && !isBusinessSetupComplete(businessData)) {
-        window.location.href = 'business-setup.html';
-        return;
+      if (effectiveBusinessData && !isBusinessSetupComplete(effectiveBusinessData)) {
+        console.warn('[tenant-restore] Existing business is incomplete, but business document exists; continuing to dashboard.', {
+          businessId: effectiveUserData.business_id
+        });
       }
       window.location.href = DASHBOARD_URL;
     }
@@ -1097,7 +1183,7 @@
         e.preventDefault();
         const user = await getCurrentUserForGuard();
         if (user) {
-          window.location.replace(DASHBOARD_URL);
+          await routeAfterAuth(user);
           return;
         }
         window.location.replace('login.html?view=login');
@@ -1280,8 +1366,8 @@
       const email = document.getElementById('login-email').value.trim();
       const password = document.getElementById('login-password').value;
       try {
-        await signInWithEmailAndPassword(auth, email, password);
-        window.location.replace(DASHBOARD_URL);
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+        await routeAfterAuth(cred.user);
       } catch (err) {
         const message = await resolveLoginErrorMessage(email, err);
         setError(document.getElementById('login-error'), message);
@@ -1448,7 +1534,7 @@
         return;
       }
       if (window.location.pathname.includes('login')) {
-        window.location.replace(DASHBOARD_URL);
+        await routeAfterAuth(user);
         return;
       }
       if (user.emailVerified) {

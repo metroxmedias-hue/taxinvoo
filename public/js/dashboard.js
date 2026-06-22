@@ -1,6 +1,6 @@
 import { auth, db } from "./firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
-import { collection, getDocs, getDocsFromServer } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+import { collection, collectionGroup, doc, getDoc, getDocs, getDocsFromServer, query, where } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 import { invoicesColPath } from "./firestore-paths.js";
 import { setUserData } from "./userState.js";
 import {
@@ -34,6 +34,53 @@ async function loadBusiness(userData) {
     return null;
   }
   const expectedBusinessId = String(userData?.business_id || "").trim();
+  const activeBusinessId = String(userData?.activeBusinessId || expectedBusinessId || "").trim();
+  const membershipQuery = query(collectionGroup(db, "members"), where("uid", "==", auth.currentUser.uid));
+  let memberSnap = null;
+  try {
+    memberSnap = await getDocsFromServer(membershipQuery);
+  } catch (err) {
+    console.warn("[multi-business] Dashboard server membership lookup failed; falling back to cache:", err);
+    memberSnap = await getDocs(membershipQuery);
+  }
+  const memberDocs = memberSnap?.docs || [];
+  console.log("[multi-business] Dashboard membership records found:", memberDocs.map((row) => ({
+    businessId: row.ref?.parent?.parent?.id || "",
+    memberId: row.id,
+    ...(row.data?.() || {})
+  })));
+  const membershipRows = [];
+  for (const memberDoc of memberDocs) {
+    const businessRef = memberDoc.ref?.parent?.parent || null;
+    const businessId = String(businessRef?.id || "").trim();
+    if (!businessRef || !businessId) continue;
+    const businessSnap = await getDoc(businessRef);
+    if (!businessSnap.exists()) continue;
+    membershipRows.push({
+      businessId,
+      businessData: { ...(businessSnap.data() || {}), business_id: businessId }
+    });
+  }
+  console.log("[multi-business] Dashboard businesses returned from Firestore:", membershipRows.map((row) => ({
+    businessId: row.businessId,
+    name: row.businessData?.name || "Business"
+  })));
+  if (membershipRows.length) {
+    const selectedRow = membershipRows.find((row) => row.businessId === expectedBusinessId)
+      || membershipRows.find((row) => row.businessId === activeBusinessId)
+      || membershipRows[0];
+    const businessData = selectedRow.businessData;
+    const features = getPlanFeatures(businessData.plan_type);
+    window.businessData = businessData;
+    setUserData(businessData);
+    window.APP_FEATURES = features;
+    const hasAccess = checkAccess(businessData);
+    window.APP_ACCESS = hasAccess;
+    console.log("[multi-business] Dashboard activeBusinessId:", selectedRow.businessId);
+    console.log("🔥 CORRECT BUSINESS:", businessData);
+    if (!hasAccess) showExpiredBanner();
+    return { businessId: selectedRow.businessId, businessData };
+  }
   const colRef = collection(db, "users", ownerUid, "businesses");
   let snap = null;
   try {
