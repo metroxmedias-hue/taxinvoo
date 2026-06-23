@@ -128,7 +128,6 @@ export async function createOrResolveBusinessV2(user, payload = {}) {
   const userRef = doc(db, ...userDocPath(user.uid));
   const businessRef = doc(collection(db, ...canonicalBusinessesColPath()));
   const memberRef = doc(db, ...businessMemberDocPath(businessRef.id, user.uid));
-  const legacyBusinessRef = doc(db, ...businessDocPath(user.uid, businessRef.id));
 
   return runTransaction(db, async (tx) => {
     const identitySnap = await tx.get(identityRef);
@@ -173,9 +172,6 @@ export async function createOrResolveBusinessV2(user, payload = {}) {
       updatedAt: serverTimestamp(),
       updated_at: serverTimestamp()
     }, { merge: true });
-
-    // Temporary compatibility mirror for screens still reading the legacy business path.
-    tx.set(legacyBusinessRef, businessPayload, { merge: true });
 
     return { id: businessRef.id, businessId: businessRef.id, duplicate: false, ...businessPayload };
   });

@@ -57629,6 +57629,7 @@
               message: err?.message,
               firebaseError: formatExactFirebaseError(err)
             });
+            alert(formatExactFirebaseError(err));
             if (businessCreateError) businessCreateError.textContent = formatExactFirebaseError(err);
             return;
           }
@@ -58200,6 +58201,10 @@
       const uid = normalizeBusinessId(ownerUid || user?.uid);
       const businessId = normalizeBusinessId(profile.id || profile.businessId || profile.business_id);
       if (!uid || !businessId) throw new Error('Missing user or business id for canonical business write.');
+      console.log('[CANONICAL WRITE START]', {
+        businessPath: `businesses/${businessId}`,
+        memberPath: `businesses/${businessId}/members/${uid}`
+      });
       await ensureRootFirestoreCollections();
       const now = new Date();
       const trialEnd = new Date(now);
@@ -58230,17 +58235,13 @@
         updatedAt: serverTimestamp()
       };
       try {
-        console.log('[multi-business] Writing businesses/{businessId}:', {
-          path: `businesses/${businessId}`,
-          businessId
-        });
         await setDoc(doc(db, 'businesses', businessId), payload, { merge: true });
-        console.log('[multi-business] Success writing businesses/{businessId}:', {
+        console.log('[CANONICAL BUSINESS CREATED]', {
           path: `businesses/${businessId}`,
           businessId
         });
       } catch (error) {
-        console.error('[multi-business] Error writing businesses/{businessId}:', {
+        console.error('[CANONICAL VERIFY FAILED]', {
           path: `businesses/${businessId}`,
           code: error?.code,
           message: error?.message,
@@ -58250,11 +58251,6 @@
       }
 
       try {
-        console.log('[multi-business] Writing businesses/{businessId}/members/{uid}:', {
-          path: `businesses/${businessId}/members/${uid}`,
-          businessId,
-          uid
-        });
         await setDoc(doc(db, 'businesses', businessId, 'members', uid), {
           uid,
           email: user?.email || '',
@@ -58266,13 +58262,13 @@
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         }, { merge: true });
-        console.log('[multi-business] Success writing businesses/{businessId}/members/{uid}:', {
+        console.log('[CANONICAL MEMBER CREATED]', {
           path: `businesses/${businessId}/members/${uid}`,
           businessId,
           uid
         });
       } catch (error) {
-        console.error('[multi-business] Error writing businesses/{businessId}/members/{uid}:', {
+        console.error('[CANONICAL VERIFY FAILED]', {
           path: `businesses/${businessId}/members/${uid}`,
           code: error?.code,
           message: error?.message,
@@ -58298,15 +58294,15 @@
           memberPath: memberVerifyRef.path,
           memberExists: memberVerifySnap.exists()
         };
-        console.log('[multi-business] Canonical business verification result:', verificationResult);
         if (!businessVerifySnap.exists() || !memberVerifySnap.exists()) {
           const verificationError = new Error('Canonical verification failed after business creation.');
           verificationError.code = 'business-verification-failed';
           verificationError.details = verificationResult;
           throw verificationError;
         }
+        console.log('[CANONICAL VERIFY PASSED]', verificationResult);
       } catch (error) {
-        console.error('[multi-business] Canonical business verification failed:', {
+        console.error('[CANONICAL VERIFY FAILED]', {
           path: `businesses/${businessId}`,
           memberPath: `businesses/${businessId}/members/${uid}`,
           code: error?.code,
@@ -58329,7 +58325,7 @@
           uid
         });
       } catch (error) {
-        console.error('[multi-business] Error writing users/{uid}/businesses/{businessId}:', {
+        console.error('[CANONICAL VERIFY FAILED]', {
           path: `users/${uid}/businesses/${businessId}`,
           code: error?.code,
           message: error?.message,
@@ -58361,7 +58357,7 @@
           uid
         });
       } catch (error) {
-        console.error('[multi-business] Error writing users/{uid}:', {
+        console.error('[CANONICAL VERIFY FAILED]', {
           path: `users/${uid}`,
           code: error?.code,
           message: error?.message,

@@ -6,8 +6,7 @@ import { createOrResolveBusinessV2, ensureBusinessRootBootstrapDocs } from "./bu
 import {
   ensureTrialSubscription,
   ensureUserRecord,
-  linkUserToBusiness,
-  markBusinessSetupCompleted
+  linkUserToBusiness
 } from "./subscription.js";
 
 const firebaseConfig = {
@@ -147,7 +146,6 @@ form.addEventListener('submit', async (e) => {
     await ensureUserRecord(user, { role: 'owner' });
     await ensureTrialSubscription(user.uid);
     await linkUserToBusiness(user.uid, businessId, user.uid);
-    await markBusinessSetupCompleted(user.uid, businessId);
     await setDoc(doc(db, ...userDocPath(user.uid)), { business_id: businessId, business_owner_uid: user.uid, user_id: user.uid, email: user.email || '' }, { merge: true });
 
     console.log('BUSINESS CREATED:', businessId);
