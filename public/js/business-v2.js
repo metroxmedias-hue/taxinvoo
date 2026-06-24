@@ -17,7 +17,7 @@ import {
   userDocPath
 } from "./firestore-paths.js";
 
-const ROOT_BOOTSTRAP_DOC_ID = "__bootstrap__";
+const ROOT_BOOTSTRAP_DOC_ID = "bootstrap_root";
 
 const OWNER_PERMISSIONS = {
   manageInvoices: true,

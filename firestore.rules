@@ -25,7 +25,7 @@ service cloud.firestore {
     }
 
     function isBootstrapBusinessDoc(businessId) {
-      return businessId == '__bootstrap__';
+      return businessId == 'bootstrap_root';
     }
 
     function isBusinessMember(businessId) {
