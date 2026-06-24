@@ -28817,6 +28817,53 @@
       });
     }
 
+    function cleanupLegacyDemoBusinessStorage() {
+      const demoKeyPatterns = [
+        /^metrox_onboarding_seed$/,
+        /^metrox_fresh_start$/,
+        /^metrox_taxdesk_demo_state(?:__.*)?$/,
+        /^metrox_taxdesk_demo_state_backup(?:__.*)?$/,
+        /^metrox_taxinvoo_demo_state(?:__.*)?$/,
+        /^metrox_taxinvoo_demo_state_backup(?:__.*)?$/,
+        /^metrox_taxinvoo_last_good_state(?:__.*)?$/
+      ];
+      try {
+        Object.keys(localStorage).forEach((key) => {
+          if (demoKeyPatterns.some((pattern) => pattern.test(key))) {
+            localStorage.removeItem(key);
+          }
+        });
+      } catch (err) {
+        console.warn('Legacy demo storage cleanup failed:', err);
+      }
+      try {
+        const raw = localStorage.getItem(BUSINESS_PROFILES_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return;
+        const cleaned = parsed.filter((row) => {
+          const profile = sanitizeBusinessProfile(row);
+          const id = String(profile.id || '').trim();
+          const name = String(profile.name || profile.company?.name || '').trim();
+          const isPlaceholder = isPlaceholderBusinessName(name);
+          const hasMeaningfulData = hasMeaningfulBusinessProfileData(profile) || getBusinessProfileStoredRecordCount(id) > 0;
+          return hasMeaningfulData || !isPlaceholder;
+        });
+        if (cleaned.length) {
+          localStorage.setItem(BUSINESS_PROFILES_KEY, JSON.stringify(cleaned));
+          const active = String(localStorage.getItem(ACTIVE_BUSINESS_PROFILE_KEY) || '').trim();
+          if (!active || !cleaned.some((row) => String(row?.id || '').trim() === active)) {
+            localStorage.setItem(ACTIVE_BUSINESS_PROFILE_KEY, cleaned[0].id);
+          }
+        } else {
+          localStorage.removeItem(BUSINESS_PROFILES_KEY);
+          localStorage.removeItem(ACTIVE_BUSINESS_PROFILE_KEY);
+        }
+      } catch (err) {
+        console.warn('Legacy business profile cleanup failed:', err);
+      }
+    }
+
     function businessFirestoreDataToProfile(businessId, data = {}) {
       const source = data && typeof data === 'object' ? data : {};
       const companySource = source.company && typeof source.company === 'object' ? source.company : {};
@@ -29139,6 +29186,7 @@
     }
 
     function loadBusinessProfiles() {
+      cleanupLegacyDemoBusinessStorage();
       const savedProfiles = cloneObject(parseStoredPayload(localStorage.getItem(BUSINESS_PROFILES_KEY)), []);
       businessProfiles = normalizeBusinessProfiles(savedProfiles);
       if (!businessProfiles.length) {
@@ -59230,6 +59278,49 @@
       const user = auth.currentUser;
       if (!user || !currentBusinessId) return;
       const payload = readLocalPayload(currentBusinessId);
+      const company = payload.company && typeof payload.company === 'object' ? payload.company : {};
+      const businessPayload = {
+        businessId: currentBusinessId,
+        business_id: currentBusinessId,
+        ownerUid: user.uid,
+        owner_uid: user.uid,
+        name: String(company.name || '').trim() || 'Business',
+        legalName: String(company.legalName || company.name || '').trim(),
+        phone: String(company.phone || '').trim(),
+        email: String(company.email || '').trim(),
+        gstin: String(company.gstin || '').trim(),
+        pan: String(company.pan || '').trim(),
+        type: String(company.type || 'services').trim(),
+        industryType: String(company.industryType || '').trim(),
+        registrationType: String(company.registrationType || '').trim(),
+        state: String(company.state || '').trim(),
+        city: String(company.city || '').trim(),
+        pincode: String(company.pincode || '').trim(),
+        address: String(company.address || '').trim(),
+        logo: String(company.logo || '').trim(),
+        schemaVersion: 2,
+        setup_completed: true,
+        updated_at: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+      const memberPayload = {
+        uid: user.uid,
+        businessId: currentBusinessId,
+        email: user.email || '',
+        role: 'owner',
+        status: 'active',
+        permissions: {
+          manageSettings: true,
+          manageUsers: true,
+          viewReports: true,
+          exportData: true
+        },
+        updated_at: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+      await setDoc(doc(db, 'businesses', currentBusinessId), businessPayload, { merge: true });
+      await setDoc(doc(db, 'businesses', currentBusinessId, 'members', user.uid), memberPayload, { merge: true });
+      await setDoc(doc(db, 'users', user.uid, 'businesses', currentBusinessId), businessPayload, { merge: true });
       await setDoc(doc(db, 'businesses', currentBusinessId, 'app_meta', 'state'), {
         owner_uid: user.uid,
         data: payload,
@@ -60030,6 +60121,23 @@
         if (cloudStateSnap.exists()) {
           const cloudState = cloudStateSnap.data() || {};
           const cloudPayload = cloudState.data || {};
+          const cloudCompany = cloudPayload.company && typeof cloudPayload.company === 'object' ? cloudPayload.company : {};
+          const hydratedBusinessData = {
+            ...businessData,
+            name: String(businessData.name || cloudCompany.name || '').trim(),
+            phone: String(businessData.phone || cloudCompany.phone || '').trim(),
+            email: String(businessData.email || cloudCompany.email || '').trim(),
+            gstin: String(businessData.gstin || cloudCompany.gstin || '').trim(),
+            pan: String(businessData.pan || cloudCompany.pan || '').trim(),
+            type: String(businessData.type || cloudCompany.type || '').trim(),
+            industryType: String(businessData.industryType || cloudCompany.industryType || '').trim(),
+            registrationType: String(businessData.registrationType || cloudCompany.registrationType || '').trim(),
+            state: String(businessData.state || cloudCompany.state || '').trim(),
+            city: String(businessData.city || cloudCompany.city || '').trim(),
+            pincode: String(businessData.pincode || cloudCompany.pincode || '').trim(),
+            address: String(businessData.address || cloudCompany.address || '').trim(),
+            logo: String(businessData.logo || cloudCompany.logo || '').trim()
+          };
           const localPayload = readLocalPayload(resolvedBusinessId);
           const chosen = choosePayload(localPayload, cloudPayload, cloudState.updated_at, resolvedBusinessId);
           const syncedPayload = {
@@ -60053,6 +60161,8 @@
             syncedPayload.company.logo = existingLogo;
           }
           writeLocalPayload(syncedPayload, resolvedBusinessId);
+          window.businessData = hydratedBusinessData;
+          setUserData(hydratedBusinessData);
           refreshUiAfterAuthSync();
           if (chosen.source === 'cloud') {
             const hydratedKey = `metrox_cloud_hydrated_${resolvedBusinessId}`;
