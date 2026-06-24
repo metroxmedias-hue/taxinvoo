@@ -26,7 +26,7 @@
             }
           });
         }
-        var isLight = localStorage.getItem('Metrox TaxInvoo_theme') === 'light';
+        var isLight = sessionStorage.getItem('Metrox TaxInvoo_theme') === 'light';
         document.documentElement.classList.toggle('theme-light', isLight);
         document.documentElement.style.colorScheme = isLight ? 'light' : 'dark';
       } catch (_) {}
@@ -27189,7 +27189,7 @@
       return 'starter';
     }
 
-    window.APP_PLAN = normalizePlanKey(window.APP_PLAN || localStorage.getItem('metrox_plan') || 'starter');
+    window.APP_PLAN = normalizePlanKey(window.APP_PLAN || 'starter');
     window.APP_FEATURES = PLAN_FEATURES[window.APP_PLAN] || PLAN_FEATURES.starter;
 
     const OWNER_PERMISSIONS = {
@@ -27274,7 +27274,7 @@
     function getCurrentPlanKey() {
       if (DISABLE_PLAN_AND_ACCESS_GATES) return 'pro';
       const user = getUserDataSnapshot();
-      return normalizePlanKey(user?.plan_type || user?.current_plan || window.APP_PLAN || localStorage.getItem('metrox_plan') || 'starter');
+      return normalizePlanKey(user?.plan_type || user?.current_plan || window.APP_PLAN || 'starter');
     }
 
     function getPlanKeyForAccessCheck() {
@@ -27305,7 +27305,6 @@
       return normalizePlanKey(
         user.plan_type
         || user.current_plan
-        || localStorage.getItem('metrox_plan')
         || window.APP_PLAN
         || 'starter'
       );
@@ -27731,7 +27730,7 @@
     }
 
     function openInvoiceGenerationPage() {
-      localStorage.setItem(INVOICE_FORM_FOCUS_KEY, '1');
+      sessionStorage.setItem(INVOICE_FORM_FOCUS_KEY, '1');
       focusInvoiceFormInApp();
       window.requestAnimationFrame(() => {
         forceInvoiceCreateMode({ preserveValues: false });
@@ -27896,16 +27895,16 @@
     }
 
     function openDeliveryChallanGenerationPage() {
-      localStorage.removeItem(DELIVERY_CHALLAN_EDIT_KEY);
+      sessionStorage.removeItem(DELIVERY_CHALLAN_EDIT_KEY);
       window.location.href = '../pages/delivery-challan-generation.html';
     }
 
     function openEWayBillGenerationPage(prefillChallanId = '') {
-      localStorage.removeItem(EWAY_BILL_EDIT_KEY);
+      sessionStorage.removeItem(EWAY_BILL_EDIT_KEY);
       if (prefillChallanId) {
-        localStorage.setItem(EWAY_BILL_PREFILL_CHALLAN_KEY, String(prefillChallanId));
+        sessionStorage.setItem(EWAY_BILL_PREFILL_CHALLAN_KEY, String(prefillChallanId));
       } else {
-        localStorage.removeItem(EWAY_BILL_PREFILL_CHALLAN_KEY);
+        sessionStorage.removeItem(EWAY_BILL_PREFILL_CHALLAN_KEY);
       }
       window.location.href = '../pages/eway-bill-generation.html';
     }
@@ -27916,8 +27915,8 @@
         return;
       }
       if (!ewayBillId) return;
-      localStorage.setItem(EWAY_BILL_EDIT_KEY, ewayBillId);
-      localStorage.removeItem(EWAY_BILL_PREFILL_CHALLAN_KEY);
+      sessionStorage.setItem(EWAY_BILL_EDIT_KEY, ewayBillId);
+      sessionStorage.removeItem(EWAY_BILL_PREFILL_CHALLAN_KEY);
       window.location.href = '../pages/eway-bill-generation.html';
     }
 
@@ -27959,7 +27958,7 @@
         totalAmount: Number(challan.amount) || 0
       };
       try {
-        localStorage.setItem(DELIVERY_CHALLAN_TO_INVOICE_KEY, JSON.stringify(payload));
+        sessionStorage.setItem(DELIVERY_CHALLAN_TO_INVOICE_KEY, JSON.stringify(payload));
       } catch (_) {}
       openInvoiceGenerationPage();
       window.requestAnimationFrame(() => {
@@ -27973,12 +27972,12 @@
         return;
       }
       if (!challanId) return;
-      localStorage.setItem(DELIVERY_CHALLAN_EDIT_KEY, challanId);
+      sessionStorage.setItem(DELIVERY_CHALLAN_EDIT_KEY, challanId);
       window.location.href = '../pages/delivery-challan-generation.html';
     }
 
     function openProformaGenerationPage() {
-      localStorage.removeItem(PROFORMA_EDIT_KEY);
+      sessionStorage.removeItem(PROFORMA_EDIT_KEY);
       window.location.href = '../pages/proforma-generation.html';
     }
 
@@ -27988,13 +27987,13 @@
         return;
       }
       if (!proformaId) return;
-      localStorage.setItem(PROFORMA_EDIT_KEY, proformaId);
+      sessionStorage.setItem(PROFORMA_EDIT_KEY, proformaId);
       window.location.href = '../pages/proforma-generation.html';
     }
 
     function openPurchaseInvoiceGenerationPage() {
-      localStorage.removeItem(PURCHASE_INVOICE_EDIT_KEY);
-      localStorage.removeItem(PURCHASE_INVOICE_PREFILL_FROM_PO_KEY);
+      sessionStorage.removeItem(PURCHASE_INVOICE_EDIT_KEY);
+      sessionStorage.removeItem(PURCHASE_INVOICE_PREFILL_FROM_PO_KEY);
       window.location.href = '../pages/purchase-invoice-generation.html';
     }
 
@@ -28004,13 +28003,13 @@
         return;
       }
       if (!purchaseId) return;
-      localStorage.setItem(PURCHASE_INVOICE_EDIT_KEY, purchaseId);
-      localStorage.removeItem(PURCHASE_INVOICE_PREFILL_FROM_PO_KEY);
+      sessionStorage.setItem(PURCHASE_INVOICE_EDIT_KEY, purchaseId);
+      sessionStorage.removeItem(PURCHASE_INVOICE_PREFILL_FROM_PO_KEY);
       window.location.href = '../pages/purchase-invoice-generation.html';
     }
 
     function openPaymentOutGenerationPage() {
-      localStorage.removeItem(PAYMENT_OUT_EDIT_KEY);
+      sessionStorage.removeItem(PAYMENT_OUT_EDIT_KEY);
       window.location.href = '../pages/payment-out-generation.html';
     }
 
@@ -28020,12 +28019,12 @@
         return;
       }
       if (!paymentId) return;
-      localStorage.setItem(PAYMENT_OUT_EDIT_KEY, paymentId);
+      sessionStorage.setItem(PAYMENT_OUT_EDIT_KEY, paymentId);
       window.location.href = '../pages/payment-out-generation.html';
     }
 
     function openPurchaseReturnGenerationPage() {
-      localStorage.removeItem(PURCHASE_RETURN_EDIT_KEY);
+      sessionStorage.removeItem(PURCHASE_RETURN_EDIT_KEY);
       window.location.href = '../pages/purchase-return-generation.html';
     }
 
@@ -28035,12 +28034,12 @@
         return;
       }
       if (!returnId) return;
-      localStorage.setItem(PURCHASE_RETURN_EDIT_KEY, returnId);
+      sessionStorage.setItem(PURCHASE_RETURN_EDIT_KEY, returnId);
       window.location.href = '../pages/purchase-return-generation.html';
     }
 
     function openDebitNoteGenerationPage() {
-      localStorage.removeItem(DEBIT_NOTE_EDIT_KEY);
+      sessionStorage.removeItem(DEBIT_NOTE_EDIT_KEY);
       window.location.href = '../pages/debit-note-generation.html';
     }
 
@@ -28050,12 +28049,12 @@
         return;
       }
       if (!debitNoteId) return;
-      localStorage.setItem(DEBIT_NOTE_EDIT_KEY, debitNoteId);
+      sessionStorage.setItem(DEBIT_NOTE_EDIT_KEY, debitNoteId);
       window.location.href = '../pages/debit-note-generation.html';
     }
 
     function openPurchaseOrderGenerationPage() {
-      localStorage.removeItem(PURCHASE_ORDER_EDIT_KEY);
+      sessionStorage.removeItem(PURCHASE_ORDER_EDIT_KEY);
       window.location.href = '../pages/purchase-order-generation.html';
     }
 
@@ -28065,12 +28064,12 @@
         return;
       }
       if (!orderId) return;
-      localStorage.setItem(PURCHASE_ORDER_EDIT_KEY, orderId);
+      sessionStorage.setItem(PURCHASE_ORDER_EDIT_KEY, orderId);
       window.location.href = '../pages/purchase-order-generation.html';
     }
 
     function openQuotationGenerationPage() {
-      localStorage.setItem(QUOTATION_FORM_FOCUS_KEY, '1');
+      sessionStorage.setItem(QUOTATION_FORM_FOCUS_KEY, '1');
       focusQuotationFormInApp();
     }
 
@@ -28190,7 +28189,7 @@
 
     function trackOnboardingEvent(type, details = {}) {
       try {
-        const existing = JSON.parse(localStorage.getItem(ONBOARDING_EVENTS_KEY) || '[]');
+        const existing = JSON.parse(sessionStorage.getItem(ONBOARDING_EVENTS_KEY) || '[]');
         const events = Array.isArray(existing) ? existing : [];
         events.push({
           type: String(type || '').trim() || 'unknown',
@@ -28199,7 +28198,7 @@
           hash: window.location.hash || ''
         });
         if (events.length > 200) events.splice(0, events.length - 200);
-        localStorage.setItem(ONBOARDING_EVENTS_KEY, JSON.stringify(events));
+        sessionStorage.setItem(ONBOARDING_EVENTS_KEY, JSON.stringify(events));
       } catch (_) {}
     }
     window.trackOnboardingEvent = trackOnboardingEvent;
@@ -28213,7 +28212,7 @@
     function getOnboardingStorageKey() {
       let businessId = '';
       try {
-        businessId = String(activeBusinessProfileId || localStorage.getItem(ACTIVE_BUSINESS_PROFILE_KEY) || getUserDataSnapshot()?.business_id || '').trim();
+        businessId = String(activeBusinessProfileId || window.__metroxActiveBusinessId || getUserDataSnapshot()?.business_id || '').trim();
       } catch (_) {}
       return `${ONBOARDING_COMPLETED_KEY}:${businessId || 'default'}`;
     }
@@ -28221,7 +28220,7 @@
     function isOnboardingCompleted() {
       if (state.onboardingCompleted === true) return true;
       try {
-        return localStorage.getItem(getOnboardingStorageKey()) === '1';
+        return sessionStorage.getItem(getOnboardingStorageKey()) === '1';
       } catch (_) {
         return false;
       }
@@ -28232,10 +28231,10 @@
       try {
         const key = getOnboardingStorageKey();
         if (state.onboardingCompleted) {
-          localStorage.setItem(key, '1');
-          localStorage.setItem(ONBOARDING_LEGACY_DONE_KEY, '1');
+          sessionStorage.setItem(key, '1');
+          sessionStorage.setItem(ONBOARDING_LEGACY_DONE_KEY, '1');
         } else {
-          localStorage.removeItem(key);
+          sessionStorage.removeItem(key);
         }
       } catch (_) {}
     }
@@ -28282,8 +28281,7 @@
       const businessId = String(
         businessData.business_id
         || businessData.businessId
-        || localStorage.getItem('activeBusinessId')
-        || localStorage.getItem(ACTIVE_BUSINESS_PROFILE_KEY)
+        || window.__metroxActiveBusinessId
         || ''
       ).trim();
       const businessName = String(state.company?.name || businessData.name || '').trim();
@@ -28601,8 +28599,7 @@
       };
     };
     try {
-      const savedAccess = JSON.parse(localStorage.getItem('metrox_access_profile') || '{}');
-      window.setRoleAccess(resolveAccessProfile(savedAccess));
+      window.setRoleAccess(resolveAccessProfile(window.__metroxAccessProfile || {}));
     } catch (_) {
       window.setRoleAccess({ role: 'owner' });
     }
@@ -28834,7 +28831,13 @@
         /^metrox_taxdesk_demo_state_backup(?:__.*)?$/,
         /^metrox_taxinvoo_demo_state(?:__.*)?$/,
         /^metrox_taxinvoo_demo_state_backup(?:__.*)?$/,
-        /^metrox_taxinvoo_last_good_state(?:__.*)?$/
+        /^metrox_taxinvoo_last_good_state(?:__.*)?$/,
+        /^metrox_business_profiles_v1$/,
+        /^metrox_active_business_profile_v1$/,
+        /^metrox_frontend_tenant$/,
+        /^activeBusinessId$/,
+        /^metrox_access_profile$/,
+        /^metrox_plan$/
       ];
       try {
         Object.keys(localStorage).forEach((key) => {
@@ -28858,16 +28861,8 @@
           const hasMeaningfulData = hasMeaningfulBusinessProfileData(profile) || getBusinessProfileStoredRecordCount(id) > 0;
           return hasMeaningfulData || !isPlaceholder;
         });
-        if (cleaned.length) {
-          localStorage.setItem(BUSINESS_PROFILES_KEY, JSON.stringify(cleaned));
-          const active = String(localStorage.getItem(ACTIVE_BUSINESS_PROFILE_KEY) || '').trim();
-          if (!active || !cleaned.some((row) => String(row?.id || '').trim() === active)) {
-            localStorage.setItem(ACTIVE_BUSINESS_PROFILE_KEY, cleaned[0].id);
-          }
-        } else {
-          localStorage.removeItem(BUSINESS_PROFILES_KEY);
-          localStorage.removeItem(ACTIVE_BUSINESS_PROFILE_KEY);
-        }
+        localStorage.removeItem(BUSINESS_PROFILES_KEY);
+        localStorage.removeItem(ACTIVE_BUSINESS_PROFILE_KEY);
       } catch (err) {
         console.warn('Legacy business profile cleanup failed:', err);
       }
@@ -28916,7 +28911,7 @@
         businessNames: firestoreProfiles.map((profile) => profile.name)
       });
       if (!firestoreProfiles.length) return businessProfiles;
-      const preferredId = String(preferredBusinessId || activeBusinessProfileId || localStorage.getItem(ACTIVE_BUSINESS_PROFILE_KEY) || '').trim();
+      const preferredId = String(preferredBusinessId || activeBusinessProfileId || '').trim();
       const merged = new Map();
       businessProfiles.forEach((profile) => {
         const safeProfile = sanitizeBusinessProfile(profile);
@@ -28945,8 +28940,7 @@
     window.mergeBusinessProfilesFromFirestore = mergeBusinessProfilesFromFirestore;
 
     function normalizeBusinessProfiles(list) {
-      const activeFromStorage = String(localStorage.getItem(ACTIVE_BUSINESS_PROFILE_KEY) || '').trim();
-      const preferredActiveId = String(activeBusinessProfileId || activeFromStorage || '').trim();
+      const preferredActiveId = String(activeBusinessProfileId || '').trim();
       const hasStateSeed = hasMeaningfulBusinessProfileData({ company: state.company });
       const fallbackSeedId = preferredActiveId || makeBusinessId();
       if (!Array.isArray(list) || !list.length) {
@@ -29005,33 +28999,22 @@
       if (!compact.length) {
         businessProfiles = [];
         activeBusinessProfileId = '';
-        try { localStorage.removeItem(BUSINESS_PROFILES_KEY); } catch (_) {}
-        try { localStorage.removeItem(ACTIVE_BUSINESS_PROFILE_KEY); } catch (_) {}
+        window.__metroxBusinessProfiles = [];
+        window.__metroxActiveBusinessId = '';
         return;
       }
       if (!activeBusinessProfileId || !compact.some((row) => row.id === activeBusinessProfileId)) {
         activeBusinessProfileId = String(compact[0].id || '').trim();
       }
       businessProfiles = compact.map((row) => sanitizeBusinessProfile(row));
-      try {
-        localStorage.removeItem(BUSINESS_PROFILES_KEY);
-        localStorage.setItem(BUSINESS_PROFILES_KEY, JSON.stringify(compact));
-      } catch (err) {
-        if (err && String(err.name || '').toLowerCase().includes('quota')) {
-          const minimal = compact.map((row) => ({ id: row.id, name: row.name, phone: row.phone }));
-          localStorage.removeItem(BUSINESS_PROFILES_KEY);
-          localStorage.setItem(BUSINESS_PROFILES_KEY, JSON.stringify(minimal));
-        } else {
-          throw err;
-        }
-      }
-      localStorage.setItem(ACTIVE_BUSINESS_PROFILE_KEY, activeBusinessProfileId);
+      window.__metroxBusinessProfiles = compact;
+      window.__metroxActiveBusinessId = activeBusinessProfileId;
     }
 
     function syncActiveBusinessProfileFromState() {
       const stateName = String(state.company?.name || '').trim();
       if (!businessProfiles.length) {
-        const seedId = String(activeBusinessProfileId || localStorage.getItem(ACTIVE_BUSINESS_PROFILE_KEY) || '').trim();
+        const seedId = String(activeBusinessProfileId || window.__metroxActiveBusinessId || '').trim();
         const hasStateSeed = hasMeaningfulBusinessProfileData({ company: state.company });
         if (!seedId && !hasStateSeed) return;
         businessProfiles = [sanitizeBusinessProfile({ id: seedId || makeBusinessId(), company: state.company })];
@@ -29196,28 +29179,13 @@
 
     function loadBusinessProfiles() {
       cleanupLegacyDemoBusinessStorage();
-      const savedProfiles = cloneObject(parseStoredPayload(localStorage.getItem(BUSINESS_PROFILES_KEY)), []);
-      businessProfiles = normalizeBusinessProfiles(savedProfiles);
+      const cachedProfiles = Array.isArray(window.__metroxBusinessProfiles) ? window.__metroxBusinessProfiles : [];
+      businessProfiles = normalizeBusinessProfiles(cachedProfiles);
       if (!businessProfiles.length) {
         activeBusinessProfileId = '';
-        persistBusinessProfiles();
         return;
       }
-      const savedActiveId = String(localStorage.getItem(ACTIVE_BUSINESS_PROFILE_KEY) || '').trim();
-      activeBusinessProfileId = savedActiveId && businessProfiles.some((row) => row.id === savedActiveId)
-        ? savedActiveId
-        : businessProfiles[0].id;
-      const activeProfile = businessProfiles.find((row) => row.id === activeBusinessProfileId) || businessProfiles[0];
-      if (activeProfile) {
-        const storedMedia = readBusinessMedia(activeProfile.id);
-        const profileCompany = sanitizeBusinessProfile(activeProfile).company;
-        if (!String(profileCompany.logo || '').trim()) profileCompany.logo = storedMedia.logo || '';
-        if (!String(profileCompany.signature || '').trim()) profileCompany.signature = storedMedia.signature || '';
-        if (!String(profileCompany.qr || '').trim()) profileCompany.qr = storedMedia.qr || '';
-        state.company = profileCompany;
-        persistBusinessMedia(activeProfile.id, state.company);
-      }
-      persistBusinessProfiles();
+      activeBusinessProfileId = String(window.__metroxActiveBusinessId || businessProfiles[0].id || '').trim();
     }
 
     function renderBusinessSwitchList() {
@@ -29288,7 +29256,7 @@
       const name = (state.company?.name || '').trim() || 'Your Company';
       if (topCompanyName) topCompanyName.textContent = name;
       if (!topCompanyLogo) return;
-      const profileId = String(activeBusinessProfileId || localStorage.getItem('metrox_active_business_profile_v1') || '').trim();
+      const profileId = String(activeBusinessProfileId || window.__metroxActiveBusinessId || '').trim();
       let logo = String(state.company?.logo || '').trim();
       if (!logo) {
         const mediaLogo = String(readBusinessMedia(profileId).logo || '').trim();
@@ -29298,21 +29266,6 @@
         }
       }
       if (!logo) {
-        const legacyKeys = profileId
-          ? [`metrox_taxinvoo_demo_state__${profileId}`, 'metrox_taxinvoo_demo_state']
-          : ['metrox_taxinvoo_demo_state'];
-        for (const key of legacyKeys) {
-          try {
-            const payload = JSON.parse(localStorage.getItem(key) || '{}');
-            const legacyLogo = String(payload?.company?.logo || '').trim();
-            if (legacyLogo) {
-              logo = legacyLogo;
-              state.company.logo = legacyLogo;
-              persistBusinessMedia(profileId, state.company);
-              break;
-            }
-          } catch (_) {}
-        }
       }
       if (logo) {
         if (topCompanyLogoImg) {
@@ -30326,14 +30279,14 @@
       document.documentElement.style.colorScheme = isLight ? 'light' : 'dark';
       document.body.classList.toggle('light', isLight);
       if (themeToggle) themeToggle.textContent = isLight ? 'Dark mode' : 'Light mode';
-      localStorage.setItem('Metrox TaxInvoo_theme', isLight ? 'light' : 'dark');
+      sessionStorage.setItem('Metrox TaxInvoo_theme', isLight ? 'light' : 'dark');
     }
     if (themeToggle) {
       themeToggle.addEventListener('click', () => {
         applyTheme(!document.body.classList.contains('light'));
       });
     }
-    const savedTheme = localStorage.getItem('Metrox TaxInvoo_theme');
+    const savedTheme = sessionStorage.getItem('Metrox TaxInvoo_theme');
     if (savedTheme === 'light') applyTheme(true);
 
     const performLogout = async () => {
@@ -34348,52 +34301,27 @@
       if (!exportKey) return false;
       const text = JSON.stringify(payload || {});
       const exportKeyMatcher = /^Metrox TaxInvoo_.*(?:_export|export_.*|gst_report)$/;
-      const staleLocalKeys = Object.keys(localStorage).filter((k) => k !== exportKey && exportKeyMatcher.test(k));
       const staleSessionKeys = Object.keys(sessionStorage).filter((k) => k !== exportKey && exportKeyMatcher.test(k));
 
       for (const k of staleSessionKeys) {
         try { sessionStorage.removeItem(k); } catch (_) {}
       }
-      for (const k of staleLocalKeys) {
-        try { localStorage.removeItem(k); } catch (_) {}
-      }
 
-      let wroteSession = false;
-      let wroteLocal = false;
       try {
         sessionStorage.setItem(exportKey, text);
-        wroteSession = true;
       } catch (_) {}
-      // Keep localStorage lightweight; large export payloads should stay in session storage only.
-      if (text.length <= 180000) {
-        try {
-          localStorage.setItem(exportKey, text);
-          wroteLocal = true;
-        } catch (_) {}
-      }
-
-      if (wroteSession || wroteLocal) return true;
+      if (sessionStorage.getItem(exportKey) === text) return true;
 
       // Last-chance retry after aggressively clearing stale payload caches.
       for (const k of Object.keys(sessionStorage)) {
         if (!exportKeyMatcher.test(k) || k === exportKey) continue;
         try { sessionStorage.removeItem(k); } catch (_) {}
       }
-      for (const k of Object.keys(localStorage)) {
-        if (!exportKeyMatcher.test(k) || k === exportKey) continue;
-        try { localStorage.removeItem(k); } catch (_) {}
-      }
 
       try {
         sessionStorage.setItem(exportKey, text);
         return true;
       } catch (_) {}
-      if (text.length <= 180000) {
-        try {
-          localStorage.setItem(exportKey, text);
-          return true;
-        } catch (_) {}
-      }
 
       alert('Export failed due to browser storage limit. Please clear older exports and try again.');
       return false;
@@ -35612,7 +35540,7 @@
 
     function getStoredDashboardCaMode() {
       try {
-        return localStorage.getItem(DASHBOARD_CA_MODE_KEY) === '1';
+      return sessionStorage.getItem(DASHBOARD_CA_MODE_KEY) === '1';
       } catch (_) {
         return false;
       }
@@ -35620,7 +35548,7 @@
 
     function persistDashboardCaMode(enabled) {
       try {
-        localStorage.setItem(DASHBOARD_CA_MODE_KEY, enabled ? '1' : '0');
+        sessionStorage.setItem(DASHBOARD_CA_MODE_KEY, enabled ? '1' : '0');
       } catch (_) {}
     }
 
@@ -45345,7 +45273,7 @@
     function saveReportFavourites() {
       const pinnedSet = new Set(PINNED_REPORT_FAVOURITES);
       const customOnly = Array.from(reportFavourites).filter((label) => !pinnedSet.has(label));
-      localStorage.setItem(REPORT_FAVOURITES_KEY, JSON.stringify(customOnly));
+      sessionStorage.setItem(REPORT_FAVOURITES_KEY, JSON.stringify(customOnly));
     }
 
     function getEffectiveReportFavourites() {
@@ -45359,7 +45287,7 @@
       const availableSet = new Set(availableLabels);
       let initial = [];
       try {
-        const parsed = JSON.parse(localStorage.getItem(REPORT_FAVOURITES_KEY) || '[]');
+        const parsed = JSON.parse(sessionStorage.getItem(REPORT_FAVOURITES_KEY) || '[]');
         if (Array.isArray(parsed)) initial = parsed.map(normalizeReportLabel)
           .filter((label) => availableSet.has(label) && !PINNED_REPORT_FAVOURITES.includes(label));
       } catch (_) {
@@ -45371,7 +45299,7 @@
 
     function loadRecentlyUsedReports() {
       try {
-        const parsed = JSON.parse(localStorage.getItem(REPORT_RECENT_KEY) || '[]');
+        const parsed = JSON.parse(sessionStorage.getItem(REPORT_RECENT_KEY) || '[]');
         reportRecentlyUsed = Array.isArray(parsed)
           ? parsed.map((x) => normalizeReportLabel(x)).filter(Boolean).slice(0, 6)
           : [];
@@ -45382,7 +45310,7 @@
 
     function saveRecentlyUsedReports() {
       try {
-        localStorage.setItem(REPORT_RECENT_KEY, JSON.stringify(reportRecentlyUsed.slice(0, 6)));
+        sessionStorage.setItem(REPORT_RECENT_KEY, JSON.stringify(reportRecentlyUsed.slice(0, 6)));
       } catch (_) {}
     }
 
@@ -47621,7 +47549,7 @@
 
     function loadAiCoachMemoryStore() {
       try {
-        const parsed = JSON.parse(localStorage.getItem(AI_COACH_MEMORY_KEY) || '{}');
+        const parsed = JSON.parse(sessionStorage.getItem(AI_COACH_MEMORY_KEY) || '{}');
         aiCoachMemoryStore = parsed && typeof parsed === 'object' ? parsed : {};
       } catch (_) {
         aiCoachMemoryStore = {};
@@ -47640,7 +47568,7 @@
         plan: aiCoachActionPlan.slice(0, 7),
         updatedAt: new Date().toISOString()
       };
-      localStorage.setItem(AI_COACH_MEMORY_KEY, JSON.stringify(aiCoachMemoryStore));
+      sessionStorage.setItem(AI_COACH_MEMORY_KEY, JSON.stringify(aiCoachMemoryStore));
     }
 
     function hydrateAiCoachSession(force = false) {
@@ -47994,7 +47922,7 @@
     }
 
     function getAiCoachEndpoint() {
-      const configured = String(localStorage.getItem(AI_COACH_ENDPOINT_KEY) || '').trim();
+      const configured = String(sessionStorage.getItem(AI_COACH_ENDPOINT_KEY) || '').trim();
       const runtime = String(window.OPENAI_COACH_ENDPOINT || '').trim();
       return configured || runtime;
     }
@@ -48130,11 +48058,11 @@
           if (next === null) return;
           const cleaned = String(next || '').trim();
           if (!cleaned) {
-            localStorage.removeItem(AI_COACH_ENDPOINT_KEY);
+            sessionStorage.removeItem(AI_COACH_ENDPOINT_KEY);
             pushAiCoachChat('bot', 'External AI disconnected. Running built-in coach mode.');
             return;
           }
-          localStorage.setItem(AI_COACH_ENDPOINT_KEY, cleaned);
+          sessionStorage.setItem(AI_COACH_ENDPOINT_KEY, cleaned);
           pushAiCoachChat('bot', 'External AI connected. I will now use your configured endpoint for replies.');
         });
         aiCoachConnectBtn.dataset.bound = '1';
@@ -50730,7 +50658,7 @@
 
     function loadSavedItemCatalog() {
       try {
-        const parsed = JSON.parse(localStorage.getItem(getItemCatalogStorageKey()) || '[]');
+        const parsed = JSON.parse(sessionStorage.getItem(getItemCatalogStorageKey()) || '[]');
         if (!Array.isArray(parsed)) return [];
         return parsed.map(toCatalogEntry).filter(Boolean);
       } catch (_) {
@@ -50740,7 +50668,7 @@
 
     function saveItemCatalog(entries = []) {
       const safe = Array.isArray(entries) ? entries.map(toCatalogEntry).filter(Boolean) : [];
-      localStorage.setItem(getItemCatalogStorageKey(), JSON.stringify(safe));
+      sessionStorage.setItem(getItemCatalogStorageKey(), JSON.stringify(safe));
     }
 
     function collectCatalogFromState() {
@@ -51367,7 +51295,7 @@
     function resolveStorageBusinessId(preferredId = '') {
       const fromPreferred = normalizeBusinessStorageId(preferredId);
       if (fromPreferred) return fromPreferred;
-      const fromActive = normalizeBusinessStorageId(activeBusinessProfileId || localStorage.getItem(ACTIVE_BUSINESS_PROFILE_KEY) || '');
+      const fromActive = normalizeBusinessStorageId(activeBusinessProfileId || window.__metroxActiveBusinessId || currentBusinessId || '');
       if (fromActive) return fromActive;
       const fromList = normalizeBusinessStorageId(Array.isArray(businessProfiles) && businessProfiles.length ? businessProfiles[0].id : '');
       return fromList || '';
@@ -51507,41 +51435,27 @@
     function runOneTimeTrialDataCleanup() {
       if (localStorage.getItem(TRIAL_DATA_CLEANUP_KEY) === '1') return;
 
-      const safeProfiles = Array.isArray(businessProfiles)
-        ? businessProfiles.map((profile) => sanitizeBusinessProfile(profile)).filter((profile) => String(profile?.id || '').trim())
-        : [];
-
-      safeProfiles.forEach((profile) => {
-        const profileId = String(profile.id || '').trim();
-        if (!profileId) return;
-        const keys = getStateStorageKeys(profileId);
-        const emptyPayload = buildEmptyBusinessPayload(buildStorageSafeCompanySnapshot(profile.company), profileId);
-        const serialized = JSON.stringify(emptyPayload);
-        try {
-          localStorage.setItem(keys.primary, serialized);
-          localStorage.setItem(keys.backup, serialized);
-          localStorage.removeItem(keys.lastGood);
-        } catch (_) {}
-      });
-
       const removableLocalMatchers = [
         /^metrox_taxdesk_demo_state(?:_backup)?$/,
         /^metrox_taxinvoo_demo_state(?:__.+)?$/,
         /^metrox_taxinvoo_demo_state_backup(?:__.+)?$/,
         /^metrox_taxinvoo_last_good_state(?:__.+)?$/,
+        /^metrox_taxinvoo_demo_state$/,
+        /^metrox_taxinvoo_demo_state_backup$/,
         /^metrox_item_catalog_v1__/,
         /^metrox_invoice_form_draft__/,
-        /^Metrox TaxInvoo_.*(?:_export|export_.*|gst_report)$/
+        /^Metrox TaxInvoo_.*(?:_export|export_.*|gst_report)$/,
+        /^metrox_business_profiles_v1$/,
+        /^metrox_active_business_profile_v1$/,
+        /^metrox_frontend_tenant$/,
+        /^activeBusinessId$/,
+        /^metrox_access_profile$/
       ];
 
       try {
         Object.keys(localStorage).forEach((key) => {
-          if (key === BUSINESS_PROFILES_KEY || key === ACTIVE_BUSINESS_PROFILE_KEY || key === TRIAL_DATA_CLEANUP_KEY) return;
+          if (key === TRIAL_DATA_CLEANUP_KEY) return;
           if (!removableLocalMatchers.some((matcher) => matcher.test(String(key || '')))) return;
-          if (safeProfiles.some((profile) => {
-            const keys = getStateStorageKeys(profile.id);
-            return key === keys.primary || key === keys.backup || key === keys.lastGood;
-          })) return;
           try { localStorage.removeItem(key); } catch (_) {}
         });
       } catch (_) {}
@@ -51595,84 +51509,16 @@
         localStorage.setItem(BUSINESS_ISOLATION_REPAIR_KEY, '1');
         return;
       }
-
-      const payloadRows = businessProfiles.map((profile, idx) => {
-        const id = String(profile?.id || '').trim();
-        const keys = getStateStorageKeys(id);
-        const payload = parseStoredPayload(localStorage.getItem(keys.primary) || localStorage.getItem(keys.backup));
-        const safeProfile = sanitizeBusinessProfile(profile);
-        const count = countStoredRecords(payload);
-        const fingerprint = count > 0 ? payloadBusinessFingerprint(payload) : '';
-        const payloadName = String(payload?.company?.name || '').trim().toLowerCase();
-        const profileName = String(safeProfile?.name || '').trim().toLowerCase();
-        return {
-          idx,
-          id,
-          keys,
-          payload,
-          count,
-          fingerprint,
-          profile: safeProfile,
-          nameMatches: !!payloadName && !!profileName && payloadName === profileName
-        };
-      }).filter((row) => row.id);
-
-      payloadRows.forEach((row) => {
-        if (!row.payload) return;
-        const owner = String(row.payload?._meta?.business_id || '').trim();
-        if (owner === row.id) return;
-        const nextPayload = {
-          ...row.payload,
-          _meta: {
-            ...(row.payload._meta || {}),
-            business_id: row.id,
-            updated_at: new Date().toISOString()
-          }
-        };
-        const serialized = JSON.stringify(nextPayload);
-        localStorage.setItem(row.keys.primary, serialized);
-        localStorage.setItem(row.keys.backup, serialized);
-        if (countStoredRecords(nextPayload) > 0) {
-          localStorage.setItem(row.keys.lastGood, serialized);
-        }
-        row.payload = nextPayload;
-        row.fingerprint = row.count > 0 ? payloadBusinessFingerprint(nextPayload) : '';
-      });
-
-      const duplicateGroups = new Map();
-      payloadRows.forEach((row) => {
-        if (!row.fingerprint || row.count <= 0) return;
-        const list = duplicateGroups.get(row.fingerprint) || [];
-        list.push(row);
-        duplicateGroups.set(row.fingerprint, list);
-      });
-
-      duplicateGroups.forEach((rows) => {
-        if (!Array.isArray(rows) || rows.length < 2) return;
-        const canonical = rows.find((row) => row.nameMatches) || rows[0];
-        rows.forEach((row) => {
-          if (row.id === canonical.id) return;
-          const nextPayload = buildEmptyBusinessPayload(row.profile.company, row.id);
-          const serialized = JSON.stringify(nextPayload);
-          localStorage.setItem(row.keys.primary, serialized);
-          localStorage.setItem(row.keys.backup, serialized);
-          localStorage.removeItem(row.keys.lastGood);
-        });
-      });
-
       localStorage.setItem(BUSINESS_ISOLATION_REPAIR_KEY, '1');
     }
 
     function ensureBusinessScopedPayload(profileId, companySnapshot, force = false) {
       const id = String(profileId || '').trim();
       if (!id) return;
-      const keys = getStateStorageKeys(id);
-      const existing = parseStoredPayload(localStorage.getItem(keys.primary) || localStorage.getItem(keys.backup));
-      if (!force && existing) return;
+      const existing = readLocalPayload(id);
+      if (!force && existing && payloadCount(existing) > 0) return;
       const payload = buildEmptyBusinessPayload(companySnapshot, id);
-      const serialized = JSON.stringify(payload);
-      localStorage.setItem(keys.primary, serialized);
-      localStorage.setItem(keys.backup, serialized);
+      writeLocalPayload(payload, id);
     }
 
     function countStoredRecords(payload) {
@@ -51768,13 +51614,8 @@
     function readStateShadowPayload(profileId = '') {
       const key = getStateShadowKey(profileId);
       if (!key) return null;
-      const fromSession = (() => {
-        try { return parseStoredPayload(sessionStorage.getItem(key)); } catch (_) { return null; }
-      })();
-      const fromLocal = (() => {
-        try { return parseStoredPayload(localStorage.getItem(key)); } catch (_) { return null; }
-      })();
-      return chooseRicherLocalPayload(fromSession, fromLocal);
+      const shadowStore = window.__metroxStateShadow || {};
+      return parseStoredPayload(JSON.stringify(shadowStore[key] || null));
     }
 
     function persistStateShadow(payload, profileId = '') {
@@ -51782,11 +51623,8 @@
       if (!safePayload) return;
       const key = getStateShadowKey(profileId);
       if (!key) return;
-      const existing = readStateShadowPayload(profileId);
-      const selected = chooseRicherLocalPayload(existing, safePayload);
-      const serialized = JSON.stringify(selected || safePayload);
-      try { sessionStorage.setItem(key, serialized); } catch (_) {}
-      try { localStorage.setItem(key, serialized); } catch (_) {}
+      window.__metroxStateShadow = window.__metroxStateShadow || {};
+      window.__metroxStateShadow[key] = safePayload;
     }
 
     function findBestStoredPayloadAcrossAllKeys() {
@@ -51849,13 +51687,15 @@
 
     function saveState() {
       syncActiveBusinessProfileFromState();
-      const keys = getStateStorageKeys(activeBusinessProfileId);
-      let existingMeta = {};
-      try {
-        existingMeta = JSON.parse(localStorage.getItem(keys.primary) || localStorage.getItem(keys.backup) || '{}')._meta || {};
-      } catch (_) {
-        existingMeta = {};
+      const payload = buildCloudStatePayload(activeBusinessProfileId);
+      persistStateShadow(payload, activeBusinessProfileId);
+      scheduleReminderEngine();
+      if (typeof window.queueCloudStateSync === 'function') {
+        window.queueCloudStateSync();
       }
+    }
+
+    function buildCloudStatePayload(profileId = '') {
       const payload = {
         auth: state.auth,
         users: state.users,
@@ -51886,105 +51726,21 @@
         customers: state.customers,
         company: buildStorageSafeCompanySnapshot(state.company),
         _meta: {
-          ...existingMeta,
-          business_id: resolveStorageBusinessId(activeBusinessProfileId),
+          business_id: resolveStorageBusinessId(profileId || activeBusinessProfileId || currentBusinessId),
           updated_at: new Date().toISOString()
         }
       };
-      const serialized = JSON.stringify(payload);
-      const recordsCount = countStoredRecords(payload);
-      const isQuotaError = (err) => String(err?.name || '').toLowerCase() === 'quotaexceedederror'
-        || /quota/i.test(String(err?.message || ''));
-      try {
-        localStorage.setItem(keys.primary, serialized);
-        localStorage.setItem(keys.backup, serialized);
-        if (recordsCount > 0) {
-          localStorage.setItem(keys.lastGood, serialized);
-        } else {
-          localStorage.removeItem(keys.lastGood);
-        }
-      } catch (err) {
-        if (!isQuotaError(err)) throw err;
-        relieveStoragePressure([keys.primary, keys.backup, keys.lastGood]);
-        try {
-          localStorage.removeItem(keys.lastGood);
-          localStorage.setItem(keys.primary, serialized);
-          localStorage.setItem(keys.backup, serialized);
-        } catch (err2) {
-          if (!isQuotaError(err2)) throw err2;
-          relieveStoragePressure([keys.primary]);
-          try {
-            localStorage.removeItem(keys.backup);
-            localStorage.removeItem(keys.lastGood);
-            localStorage.setItem(keys.primary, serialized);
-          } catch (err3) {
-            if (!isQuotaError(err3)) throw err3;
-            console.warn('State persistence is under heavy browser storage pressure. Latest changes are kept in-memory for this session.');
-          }
-        }
-      }
-      persistStateShadow(payload, activeBusinessProfileId);
-      scheduleReminderEngine();
-      if (typeof window.queueCloudStateSync === 'function') {
-        window.queueCloudStateSync();
-      }
+      payload._meta.business_id = resolveStorageBusinessId(profileId || activeBusinessProfileId || currentBusinessId);
+      return payload;
     }
 
     function loadState(options = {}) {
       const targetBusinessId = resolveStorageBusinessId(options.businessId || activeBusinessProfileId);
-      const keys = getStateStorageKeys(targetBusinessId);
-      if (localStorage.getItem('metrox_fresh_start') === '1') {
-        localStorage.removeItem('metrox_taxdesk_demo_state');
-        localStorage.removeItem('metrox_taxdesk_demo_state_backup');
-        localStorage.removeItem('metrox_taxinvoo_demo_state');
-        localStorage.removeItem('metrox_taxinvoo_demo_state_backup');
-        localStorage.removeItem('metrox_taxinvoo_last_good_state');
-        Object.keys(localStorage).forEach((key) => {
-          if (key.startsWith(`${STORAGE_KEY}${SCOPED_STATE_KEY_SEPARATOR}`)) localStorage.removeItem(key);
-          if (key.startsWith(`${BACKUP_KEY}${SCOPED_STATE_KEY_SEPARATOR}`)) localStorage.removeItem(key);
-          if (key.startsWith(`${LAST_GOOD_KEY}${SCOPED_STATE_KEY_SEPARATOR}`)) localStorage.removeItem(key);
-        });
-        localStorage.removeItem('metrox_fresh_start');
-        return;
-      }
-
-      const parsedScopedRaw = parseStoredPayload(localStorage.getItem(keys.primary));
-      const parsedScopedBackup = parseStoredPayload(localStorage.getItem(keys.backup));
-      const parsedScopedLastGood = parseStoredPayload(localStorage.getItem(keys.lastGood));
-      const scopedRaw = isPayloadOwnedByBusiness(parsedScopedRaw, targetBusinessId) ? parsedScopedRaw : null;
-      const scopedBackup = isPayloadOwnedByBusiness(parsedScopedBackup, targetBusinessId) ? parsedScopedBackup : null;
-      const scopedLastGood = isPayloadOwnedByBusiness(parsedScopedLastGood, targetBusinessId) ? parsedScopedLastGood : null;
-      const allowLegacyFallback = !scopedRaw && (!Array.isArray(businessProfiles) || businessProfiles.length <= 1);
-      const parsedRaw = scopedRaw || (allowLegacyFallback ? parseStoredPayload(localStorage.getItem(STORAGE_KEY)) : null);
-      const parsedBackup = scopedBackup || (allowLegacyFallback ? parseStoredPayload(localStorage.getItem(BACKUP_KEY)) : null);
-      const parsedLastGood = scopedLastGood || (allowLegacyFallback ? parseStoredPayload(localStorage.getItem(LAST_GOOD_KEY)) : null);
-
-      let selected = parsedRaw || parsedBackup || parsedLastGood;
-      const selectedCount = countStoredRecords(selected);
-      const backupCount = countStoredRecords(parsedBackup);
-      const lastGoodCount = countStoredRecords(parsedLastGood);
-      if (backupCount > selectedCount) selected = parsedBackup;
-      if (lastGoodCount > countStoredRecords(selected)) selected = parsedLastGood;
       const shadowPayload = readStateShadowPayload(targetBusinessId);
-      if (shadowPayload && countStoredRecords(shadowPayload) > 0) {
-        selected = chooseRicherLocalPayload(selected, shadowPayload);
-      }
-      const bestAny = findBestStoredPayloadAcrossAllKeys();
-      const allowCrossBusinessFallback = !targetBusinessId || !Array.isArray(businessProfiles) || businessProfiles.length <= 1;
-      if ((!selected || countStoredRecords(selected) === 0) && bestAny?.count > 0 && allowCrossBusinessFallback) {
-        selected = bestAny.payload;
-      }
+      const selected = shadowPayload || null;
       if (!selected) {
         clearOperationalState(options.companyFallback || state.company);
         return;
-      }
-      if (allowLegacyFallback && !scopedRaw) {
-        const migrated = JSON.stringify(selected);
-        localStorage.setItem(keys.primary, migrated);
-        localStorage.setItem(keys.backup, migrated);
-        if (countStoredRecords(selected) > 0) {
-          localStorage.setItem(keys.lastGood, migrated);
-        }
       }
 
       try {
@@ -52118,13 +51874,14 @@
           state.auth.verified = false;
         }
         state.invoices.forEach(setInvoiceStatus);
+        window.__metroxActiveBusinessId = targetBusinessId;
       } catch (err) {
         console.warn('Failed to load saved state', err);
       }
     }
 
     function applyOnboardingSeed() {
-      const raw = localStorage.getItem('metrox_onboarding_seed');
+      const raw = sessionStorage.getItem('metrox_onboarding_seed');
       if (!raw) return;
       try {
         const seed = JSON.parse(raw);
@@ -52140,11 +51897,11 @@
           logo: seededCompany.logo || state.company.logo || '',
           financial_year_start: seededCompany.financial_year_start || state.company.financial_year_start || ''
         };
-        localStorage.removeItem('metrox_onboarding_seed');
+        sessionStorage.removeItem('metrox_onboarding_seed');
         saveState();
       } catch (err) {
         console.warn('Invalid onboarding seed', err);
-        localStorage.removeItem('metrox_onboarding_seed');
+        sessionStorage.removeItem('metrox_onboarding_seed');
       }
     }
 
@@ -53469,7 +53226,7 @@
             amount: Number(target.amount) || 0
           };
           try {
-            localStorage.setItem('metrox_debit_note_prefill_from_purchase_return', JSON.stringify(payload));
+            sessionStorage.setItem('metrox_debit_note_prefill_from_purchase_return', JSON.stringify(payload));
           } catch (_) {}
           openDebitNoteGenerationPage();
         });
@@ -53647,7 +53404,7 @@
           }]
       };
       try {
-        localStorage.setItem(PURCHASE_INVOICE_PREFILL_FROM_PO_KEY, JSON.stringify(prefillPayload));
+        sessionStorage.setItem(PURCHASE_INVOICE_PREFILL_FROM_PO_KEY, JSON.stringify(prefillPayload));
       } catch (_) {}
       if (status === 'draft') order.status = 'sent';
       saveState();
@@ -54849,7 +54606,7 @@
 
     function readPreferredInvoiceTemplate(fallback = 'modern') {
       try {
-        return normalizeInvoiceTemplateChoice(localStorage.getItem(INVOICE_TEMPLATE_PREF_KEY) || fallback);
+        return normalizeInvoiceTemplateChoice(sessionStorage.getItem(INVOICE_TEMPLATE_PREF_KEY) || fallback);
       } catch (_) {
         return normalizeInvoiceTemplateChoice(fallback);
       }
@@ -54858,7 +54615,7 @@
     function writePreferredInvoiceTemplate(templateKey) {
       const normalized = normalizeInvoiceTemplateChoice(templateKey);
       try {
-        localStorage.setItem(INVOICE_TEMPLATE_PREF_KEY, normalized);
+        sessionStorage.setItem(INVOICE_TEMPLATE_PREF_KEY, normalized);
       } catch (_) {}
       return normalized;
     }
@@ -55836,7 +55593,7 @@
 
     function clearInvoiceDraft() {
       try {
-        localStorage.removeItem(getInvoiceDraftStorageKey());
+        sessionStorage.removeItem(getInvoiceDraftStorageKey());
       } catch (_) {}
     }
 
@@ -55929,7 +55686,7 @@
         return;
       }
       try {
-        localStorage.setItem(getInvoiceDraftStorageKey(), JSON.stringify(draft));
+        sessionStorage.setItem(getInvoiceDraftStorageKey(), JSON.stringify(draft));
         const savedTime = new Date(draft.savedAt).toLocaleString('en-IN', {
           day: '2-digit',
           month: 'short',
@@ -55945,7 +55702,7 @@
     function tryRestoreSavedInvoiceDraft() {
       if (!form || form.dataset.editing || invoiceFormHasMeaningfulContent()) return;
       try {
-        const raw = localStorage.getItem(getInvoiceDraftStorageKey());
+        const raw = sessionStorage.getItem(getInvoiceDraftStorageKey());
         if (!raw) return;
         const parsed = JSON.parse(raw);
         if (!parsed || !parsed.fields) return;
@@ -55959,7 +55716,7 @@
       const consume = options.consume !== false;
       let payload = null;
       try {
-        payload = JSON.parse(localStorage.getItem(DELIVERY_CHALLAN_TO_INVOICE_KEY) || 'null');
+        payload = JSON.parse(sessionStorage.getItem(DELIVERY_CHALLAN_TO_INVOICE_KEY) || 'null');
       } catch (_) {
         payload = null;
       }
@@ -55972,7 +55729,7 @@
       const items = Array.isArray(payload.items) ? payload.items : [];
       if (!customerName || !items.length) {
         if (consume) {
-          try { localStorage.removeItem(DELIVERY_CHALLAN_TO_INVOICE_KEY); } catch (_) {}
+          try { sessionStorage.removeItem(DELIVERY_CHALLAN_TO_INVOICE_KEY); } catch (_) {}
         }
         return false;
       }
@@ -56025,7 +55782,7 @@
       if (typeof setInvoiceUiNote === 'function') setInvoiceUiNote('Delivery challan details prefilled. Review and generate invoice when ready.', 'success');
 
       if (consume) {
-        try { localStorage.removeItem(DELIVERY_CHALLAN_TO_INVOICE_KEY); } catch (_) {}
+        try { sessionStorage.removeItem(DELIVERY_CHALLAN_TO_INVOICE_KEY); } catch (_) {}
       }
       return true;
     }
@@ -57116,43 +56873,43 @@
       setRouteHash(shouldStartOnboarding ? 'get-started' : 'dashboard', currentSettingsPage);
     }
     applyRouteFromHash();
-    if (localStorage.getItem(INVOICE_FORM_FOCUS_KEY) === '1') {
-      localStorage.removeItem(INVOICE_FORM_FOCUS_KEY);
+    if (sessionStorage.getItem(INVOICE_FORM_FOCUS_KEY) === '1') {
+      sessionStorage.removeItem(INVOICE_FORM_FOCUS_KEY);
       focusInvoiceFormInApp();
       window.requestAnimationFrame(() => {
         applyDeliveryChallanInvoicePrefill({ consume: true });
       });
     }
-    if (localStorage.getItem(QUOTATION_FORM_FOCUS_KEY) === '1') {
-      localStorage.removeItem(QUOTATION_FORM_FOCUS_KEY);
+    if (sessionStorage.getItem(QUOTATION_FORM_FOCUS_KEY) === '1') {
+      sessionStorage.removeItem(QUOTATION_FORM_FOCUS_KEY);
       focusQuotationFormInApp();
     }
-    if (localStorage.getItem(PAYMENT_IN_FORM_FOCUS_KEY) === '1') {
-      localStorage.removeItem(PAYMENT_IN_FORM_FOCUS_KEY);
+    if (sessionStorage.getItem(PAYMENT_IN_FORM_FOCUS_KEY) === '1') {
+      sessionStorage.removeItem(PAYMENT_IN_FORM_FOCUS_KEY);
       openPaymentInPage();
     }
-    if (localStorage.getItem(SALES_RETURN_FORM_FOCUS_KEY) === '1') {
-      localStorage.removeItem(SALES_RETURN_FORM_FOCUS_KEY);
+    if (sessionStorage.getItem(SALES_RETURN_FORM_FOCUS_KEY) === '1') {
+      sessionStorage.removeItem(SALES_RETURN_FORM_FOCUS_KEY);
       openSalesReturnPage();
     }
-    if (localStorage.getItem(CREDIT_NOTE_FORM_FOCUS_KEY) === '1') {
-      localStorage.removeItem(CREDIT_NOTE_FORM_FOCUS_KEY);
+    if (sessionStorage.getItem(CREDIT_NOTE_FORM_FOCUS_KEY) === '1') {
+      sessionStorage.removeItem(CREDIT_NOTE_FORM_FOCUS_KEY);
       openCreditNotePage();
     }
-    if (localStorage.getItem(DELIVERY_CHALLAN_FORM_FOCUS_KEY) === '1') {
-      localStorage.removeItem(DELIVERY_CHALLAN_FORM_FOCUS_KEY);
+    if (sessionStorage.getItem(DELIVERY_CHALLAN_FORM_FOCUS_KEY) === '1') {
+      sessionStorage.removeItem(DELIVERY_CHALLAN_FORM_FOCUS_KEY);
       openDeliveryChallanPage();
     }
-    if (localStorage.getItem(EWAY_BILL_FORM_FOCUS_KEY) === '1') {
-      localStorage.removeItem(EWAY_BILL_FORM_FOCUS_KEY);
+    if (sessionStorage.getItem(EWAY_BILL_FORM_FOCUS_KEY) === '1') {
+      sessionStorage.removeItem(EWAY_BILL_FORM_FOCUS_KEY);
       openEWayBillPage();
     }
-    if (localStorage.getItem(PROFORMA_FORM_FOCUS_KEY) === '1') {
-      localStorage.removeItem(PROFORMA_FORM_FOCUS_KEY);
+    if (sessionStorage.getItem(PROFORMA_FORM_FOCUS_KEY) === '1') {
+      sessionStorage.removeItem(PROFORMA_FORM_FOCUS_KEY);
       openProformaPage();
-      const queuedProformaConvertId = String(localStorage.getItem(PROFORMA_AUTO_CONVERT_KEY) || '').trim();
+      const queuedProformaConvertId = String(sessionStorage.getItem(PROFORMA_AUTO_CONVERT_KEY) || '').trim();
       if (queuedProformaConvertId) {
-        localStorage.removeItem(PROFORMA_AUTO_CONVERT_KEY);
+        sessionStorage.removeItem(PROFORMA_AUTO_CONVERT_KEY);
         convertProformaToInvoice(queuedProformaConvertId);
       }
     }
@@ -57163,9 +56920,9 @@
       const doneCount = steps.filter((s) => s.done).length;
       const shouldPrompt = doneCount < steps.length && state.invoices.length === 0 && !shouldStartOnboarding;
       const activeScreen = document.querySelector('.screen.active')?.id || '';
-      if (shouldPrompt && activeScreen !== 'get-started' && localStorage.getItem(ONBOARDING_PROMPT_KEY) !== '1') {
+      if (shouldPrompt && activeScreen !== 'get-started' && sessionStorage.getItem(ONBOARDING_PROMPT_KEY) !== '1') {
         openOnboardingModal();
-        localStorage.setItem(ONBOARDING_PROMPT_KEY, '1');
+        sessionStorage.setItem(ONBOARDING_PROMPT_KEY, '1');
       }
     } catch (_) {}
 
@@ -57184,7 +56941,7 @@
       const rawPlan = String(
         businessData.plan_type
         || businessData.current_plan
-        || localStorage.getItem('metrox_plan')
+        || window.APP_PLAN
         || ''
       ).trim().toLowerCase();
       const planKey = rawPlan ? normalizePlanKey(rawPlan) : '';
@@ -58502,17 +58259,17 @@
       if (fromCurrent) return fromCurrent;
       try {
         if (typeof resolveStorageBusinessId === 'function') {
-          return String(resolveStorageBusinessId(activeBusinessProfileId) || '').trim();
+          return String(resolveStorageBusinessId(activeBusinessProfileId || window.__metroxActiveBusinessId || '') || '').trim();
         }
       } catch (_) {}
-      return String(activeBusinessProfileId || localStorage.getItem(ACTIVE_BUSINESS_PROFILE_KEY) || '').trim();
+      return String(activeBusinessProfileId || window.__metroxActiveBusinessId || '').trim();
     }
 
     function getScopedLocalStateKeys(profileId = '') {
       const resolvedProfileId = String(
         profileId
         || activeBusinessProfileId
-        || localStorage.getItem(ACTIVE_BUSINESS_PROFILE_KEY)
+        || window.__metroxActiveBusinessId
         || ''
       ).trim().replace(/[^a-zA-Z0-9_-]/g, '');
       if (!resolvedProfileId) {
@@ -58728,18 +58485,16 @@
 
     function readLocalInvites() {
       if (!resolveRealtimeBusinessId()) return [];
-      try {
-        const raw = localStorage.getItem(localInviteKey()) || '[]';
-        const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed.map((inv) => ({ ...inv, source: 'local' })) : [];
-      } catch (_) {
-        return [];
-      }
+      const key = localInviteKey();
+      window.__metroxLocalInvites = window.__metroxLocalInvites || {};
+      const parsed = window.__metroxLocalInvites[key];
+      return Array.isArray(parsed) ? parsed.map((inv) => ({ ...inv, source: 'local' })) : [];
     }
 
     function writeLocalInvites(invites) {
       if (!resolveRealtimeBusinessId()) return;
-      localStorage.setItem(localInviteKey(), JSON.stringify(Array.isArray(invites) ? invites : []));
+      window.__metroxLocalInvites = window.__metroxLocalInvites || {};
+      window.__metroxLocalInvites[localInviteKey()] = Array.isArray(invites) ? invites : [];
     }
 
     async function writeStateInvites(invites) {
@@ -58813,13 +58568,13 @@
       setInviteError('');
       setInviteHint('');
       try {
-        const prefillEmail = (localStorage.getItem('metrox_invite_prefill_email') || '').trim().toLowerCase();
+        const prefillEmail = (sessionStorage.getItem('metrox_invite_prefill_email') || '').trim().toLowerCase();
         if (prefillEmail && inviteEmail) {
           inviteEmail.value = prefillEmail;
-          const src = localStorage.getItem('metrox_invite_prefill_source') || 'unknown';
+          const src = sessionStorage.getItem('metrox_invite_prefill_source') || 'unknown';
           window.trackOnboardingEvent?.('invite_modal_opened_with_prefill', { source: src });
-          localStorage.removeItem('metrox_invite_prefill_email');
-          localStorage.removeItem('metrox_invite_prefill_source');
+          sessionStorage.removeItem('metrox_invite_prefill_email');
+          sessionStorage.removeItem('metrox_invite_prefill_source');
         }
       } catch (_) {}
       inviteModal.classList.add('active');
@@ -58991,13 +58746,7 @@
 
     function mergeCompanyIntoLocalState(companyPatch, businessId = '') {
       if (!companyPatch || typeof companyPatch !== 'object') return;
-      const keys = getScopedLocalStateKeys(businessId);
-      let payload = {};
-      try {
-        payload = JSON.parse(localStorage.getItem(keys.primary) || localStorage.getItem(STORAGE_KEY) || '{}');
-      } catch (_) {
-        payload = {};
-      }
+      const payload = readLocalPayload(businessId);
       const previousCompany = payload.company && typeof payload.company === 'object' ? payload.company : {};
       const nextCompany = {
         ...(payload.company || {}),
@@ -59008,9 +58757,7 @@
         nextCompany.logo = previousCompany.logo;
       }
       payload.company = nextCompany;
-      const serialized = JSON.stringify(payload);
-      localStorage.setItem(keys.primary, serialized);
-      localStorage.setItem(keys.backup, serialized);
+      writeLocalPayload(payload, businessId);
     }
 
     function hydrateCompanyForms(company) {
@@ -59033,30 +58780,16 @@
     }
 
     function readLocalPayload(businessId = '') {
-      const keys = getScopedLocalStateKeys(businessId);
-      try {
-        const primary = JSON.parse(localStorage.getItem(keys.primary) || localStorage.getItem(STORAGE_KEY) || '{}');
-        if (payloadCount(primary) > 0) return primary;
-      } catch (_) {}
-      try {
-        const backup = JSON.parse(localStorage.getItem(keys.backup) || localStorage.getItem(BACKUP_KEY) || '{}');
-        if (payloadCount(backup) > 0) return backup;
-      } catch (_) {}
-      try {
-        return JSON.parse(localStorage.getItem(keys.lastGood) || localStorage.getItem(LAST_GOOD_KEY) || '{}');
-      } catch (_) {
-        return {};
-      }
+      const key = resolveStorageBusinessId(businessId || activeBusinessProfileId);
+      const shadowStore = window.__metroxStateShadow || {};
+      return cloneObject(shadowStore[key] || {}, {});
     }
 
     function writeLocalPayload(payload, businessId = '') {
-      const keys = getScopedLocalStateKeys(businessId);
-      const serialized = JSON.stringify(payload || {});
-      localStorage.setItem(keys.primary, serialized);
-      localStorage.setItem(keys.backup, serialized);
-      if (payloadCount(payload) > 0) {
-        localStorage.setItem(keys.lastGood, serialized);
-      }
+      const key = resolveStorageBusinessId(businessId || activeBusinessProfileId);
+      if (!key) return;
+      window.__metroxStateShadow = window.__metroxStateShadow || {};
+      window.__metroxStateShadow[key] = cloneObject(payload || {}, {});
     }
 
     function payloadCount(payload) {
@@ -59177,8 +58910,8 @@
         }
         next.unshift(normalized);
         const cleaned = next.filter((row) => !isShadowDuplicateOfTarget(row));
-        localStorage.setItem(BUSINESS_PROFILES_STORAGE_KEY, JSON.stringify(cleaned));
-        localStorage.setItem(ACTIVE_BUSINESS_PROFILE_KEY, id);
+        window.__metroxBusinessProfiles = cleaned;
+        window.__metroxActiveBusinessId = id;
       } catch (err) {
         console.warn('Business profile scope align failed:', err);
       }
@@ -59206,87 +58939,18 @@
     function choosePayload(localPayload, cloudPayload, cloudUpdatedAt, businessId) {
       const localSafe = localPayload && typeof localPayload === 'object' ? localPayload : {};
       const cloudSafe = cloudPayload && typeof cloudPayload === 'object' ? cloudPayload : {};
-      const localCount = payloadCount(localSafe);
-      const cloudCount = payloadCount(cloudSafe);
-      const localDeliveryCount = Array.isArray(localSafe.deliveryChallans) ? localSafe.deliveryChallans.length : 0;
-      const cloudDeliveryCount = Array.isArray(cloudSafe.deliveryChallans) ? cloudSafe.deliveryChallans.length : 0;
-      const localEwayCount = Array.isArray(localSafe.ewayBills) ? localSafe.ewayBills.length : 0;
-      const cloudEwayCount = Array.isArray(cloudSafe.ewayBills) ? cloudSafe.ewayBills.length : 0;
-      const localBusinessId = localSafe?._meta?.business_id || '';
-      const cloudBusinessId = cloudSafe?._meta?.business_id || '';
-      const localUpdatedAtMs = parseIsoMs(localSafe?._meta?.updated_at);
-      const cloudUpdatedAtMs = parseIsoMs(cloudSafe?._meta?.updated_at) || getCloudUpdatedAtMs(cloudUpdatedAt);
-      const collectIds = (arr) => new Set(
-        (Array.isArray(arr) ? arr : [])
-          .map((row) => String(row?.id || '').trim())
-          .filter(Boolean)
-      );
-      const hasAnyMissingIds = (sourceSet, targetSet) => {
-        for (const id of sourceSet) {
-          if (!targetSet.has(id)) return true;
-        }
-        return false;
-      };
-      const localInvoiceIds = collectIds(localSafe.invoices);
-      const cloudInvoiceIds = collectIds(cloudSafe.invoices);
-      const localPaymentIds = collectIds(localSafe.payments);
-      const cloudPaymentIds = collectIds(cloudSafe.payments);
-      const localHasUniqueInvoices = hasAnyMissingIds(localInvoiceIds, cloudInvoiceIds);
-      const cloudHasUniqueInvoices = hasAnyMissingIds(cloudInvoiceIds, localInvoiceIds);
-      const localHasUniquePayments = hasAnyMissingIds(localPaymentIds, cloudPaymentIds);
-      const cloudHasUniquePayments = hasAnyMissingIds(cloudPaymentIds, localPaymentIds);
-
-      if (businessId && localBusinessId && localBusinessId !== businessId) {
+      if (businessId && cloudSafe?._meta?.business_id && String(cloudSafe._meta.business_id) !== String(businessId)) {
         return { source: 'cloud', payload: cloudSafe };
       }
-      if (businessId && cloudBusinessId && cloudBusinessId !== businessId) {
-        return { source: 'local', payload: localSafe };
-      }
-      // Strict anti-loss guard: if local has invoices/payments that cloud does not, keep local.
-      if (localHasUniqueInvoices || localHasUniquePayments) {
-        return { source: 'local', payload: localSafe };
-      }
-      // If only cloud has additional invoices/payments and is newer, allow cloud hydration.
-      if (
-        (cloudHasUniqueInvoices || cloudHasUniquePayments)
-        && cloudUpdatedAtMs > localUpdatedAtMs
-        && cloudCount >= localCount
-      ) {
-        return { source: 'cloud', payload: cloudSafe };
-      }
-      if (
-        (localDeliveryCount > cloudDeliveryCount || localEwayCount > cloudEwayCount)
-        && localUpdatedAtMs >= cloudUpdatedAtMs
-      ) {
-        return { source: 'local', payload: localSafe };
-      }
-      if (
-        (cloudDeliveryCount > localDeliveryCount || cloudEwayCount > localEwayCount)
-        && cloudUpdatedAtMs > localUpdatedAtMs
-      ) {
-        return { source: 'cloud', payload: cloudSafe };
-      }
-      if (localCount >= cloudCount + 1) return { source: 'local', payload: localSafe };
-      if (cloudCount >= localCount + 2 && cloudUpdatedAtMs > localUpdatedAtMs) return { source: 'cloud', payload: cloudSafe };
-      if (Array.isArray(localSafe.invoices) && localSafe.invoices.length > 0 && (!Array.isArray(cloudSafe.invoices) || cloudSafe.invoices.length === 0)) {
-        return { source: 'local', payload: localSafe };
-      }
-      if (Array.isArray(cloudSafe.invoices) && cloudSafe.invoices.length > 0 && (!Array.isArray(localSafe.invoices) || localSafe.invoices.length === 0)) {
-        return { source: 'cloud', payload: cloudSafe };
-      }
-      if (localCount > 0 && cloudCount === 0) return { source: 'local', payload: localSafe };
-      if (cloudCount > 0 && localCount === 0) return { source: 'cloud', payload: cloudSafe };
-      if (localCount > 0 && cloudCount > 0) {
-        if (localUpdatedAtMs >= cloudUpdatedAtMs) return { source: 'local', payload: localSafe };
-        return { source: 'cloud', payload: cloudSafe };
-      }
-      return { source: 'local', payload: localSafe };
+      if (payloadCount(cloudSafe) > 0) return { source: 'cloud', payload: cloudSafe };
+      if (payloadCount(localSafe) > 0) return { source: 'local', payload: localSafe };
+      return { source: 'cloud', payload: cloudSafe };
     }
 
     async function pushLocalStateToCloud() {
       const user = auth.currentUser;
       if (!user || !currentBusinessId) return;
-      const payload = readLocalPayload(currentBusinessId);
+      const payload = buildCloudStatePayload(currentBusinessId);
       const company = payload.company && typeof payload.company === 'object' ? payload.company : {};
       const businessPayload = {
         businessId: currentBusinessId,
@@ -59462,13 +59126,9 @@
         window.APP_FEATURES = features;
         window.currentBusinessRef = doc(db, 'businesses', businessDocId);
         currentBusinessId = businessDocId;
+        window.__metroxActiveBusinessId = businessDocId;
         console.log('[multi-business] activeBusinessId:', businessDocId);
         console.log('USER DATA LOADED:', businessData);
-        try {
-          localStorage.setItem('metrox_plan', plan);
-          localStorage.setItem('activeBusinessId', businessDocId);
-          localStorage.setItem(ACTIVE_BUSINESS_PROFILE_KEY, businessDocId);
-        } catch (_) {}
         if (auth.currentUser?.uid && businessDocId && businessDocId !== expectedBusinessId) {
           await setDoc(doc(db, 'users', auth.currentUser.uid), {
             business_id: businessDocId,
@@ -59526,11 +59186,8 @@
       window.APP_PLAN = plan;
       window.APP_FEATURES = features;
       window.currentBusinessRef = businessDocRef;
+      window.__metroxActiveBusinessId = businessDocId;
       console.log('USER DATA LOADED:', businessData);
-      try {
-        localStorage.setItem('metrox_plan', plan);
-        localStorage.setItem('activeBusinessId', businessDocId);
-      } catch (_) {}
 
       if (auth.currentUser?.uid && businessDocId && businessDocId !== expectedBusinessId) {
         const userRef = doc(db, 'users', auth.currentUser.uid);
@@ -59924,21 +59581,15 @@
       const safeBusinessId = String(businessId || '').trim();
       const safeOwnerUid = String(ownerUid || safeUserId).trim();
       if (!safeUserId || !safeBusinessId) return;
-      try {
-        localStorage.setItem('metrox_frontend_tenant', JSON.stringify({
-          userId: safeOwnerUid,
-          businessId: safeBusinessId
-        }));
-        localStorage.setItem('activeBusinessId', safeBusinessId);
-        localStorage.setItem(ACTIVE_BUSINESS_PROFILE_KEY, safeBusinessId);
-        console.log('[tenant-restore] Dashboard tenant context persisted:', {
-          authUid: safeUserId,
-          userId: safeOwnerUid,
-          businessId: safeBusinessId
-        });
-      } catch (err) {
-        console.warn('[tenant-restore] Failed to persist dashboard tenant context:', err);
-      }
+      window.__metroxTenantContext = {
+        userId: safeOwnerUid,
+        businessId: safeBusinessId
+      };
+      console.log('[tenant-restore] Dashboard tenant context persisted in memory:', {
+        authUid: safeUserId,
+        userId: safeOwnerUid,
+        businessId: safeBusinessId
+      });
     }
 
     async function restoreBusinessContextAfterAuth(user, userData = {}) {
@@ -60057,6 +59708,11 @@
         currentBusinessId = resolveRealtimeBusinessId();
         stopManageUsersRealtimeSync();
         localStorage.removeItem('metrox_access_profile');
+        window.__metroxAccessProfile = null;
+        window.__metroxActiveBusinessId = '';
+        window.__metroxBusinessProfiles = [];
+        window.__metroxStateShadow = {};
+        window.__metroxTenantContext = null;
         if (typeof window.setRoleAccess === 'function') {
           window.setRoleAccess({ role: 'owner' });
         }
@@ -60088,6 +59744,9 @@
           setUserData(null);
           window.businessData = null;
           currentBusinessId = null;
+          window.__metroxActiveBusinessId = '';
+          window.__metroxBusinessProfiles = [];
+          window.__metroxStateShadow = {};
           try {
             setRouteHash('get-started', currentSettingsPage);
             applyRouteFromHash();
@@ -60100,7 +59759,7 @@
           ? { ...OWNER_PERMISSIONS }
           : { ...ACCOUNTANT_DEFAULT_PERMISSIONS, ...(resolvedUserData?.permissions || {}) };
         const resolvedProfile = resolveAccessProfile({ role, permissions: rolePermissionsRaw });
-        localStorage.setItem('metrox_access_profile', JSON.stringify(resolvedProfile));
+        window.__metroxAccessProfile = resolvedProfile;
         if (typeof window.setRoleAccess === 'function') {
           window.setRoleAccess(resolvedProfile);
         }
@@ -60114,6 +59773,9 @@
           setUserData(null);
           window.businessData = null;
           currentBusinessId = null;
+          window.__metroxActiveBusinessId = '';
+          window.__metroxBusinessProfiles = [];
+          window.__metroxStateShadow = {};
           try {
             setRouteHash('get-started', currentSettingsPage);
             applyRouteFromHash();
@@ -60127,6 +59789,9 @@
           setUserData(null);
           window.businessData = null;
           currentBusinessId = null;
+          window.__metroxActiveBusinessId = '';
+          window.__metroxBusinessProfiles = [];
+          window.__metroxStateShadow = {};
           try {
             setRouteHash('get-started', currentSettingsPage);
             applyRouteFromHash();
@@ -60173,43 +59838,32 @@
             address: String(businessData.address || cloudCompany.address || '').trim(),
             logo: String(businessData.logo || cloudCompany.logo || '').trim()
           };
-          const localPayload = readLocalPayload(resolvedBusinessId);
-          const chosen = choosePayload(localPayload, cloudPayload, cloudState.updated_at, resolvedBusinessId);
           const syncedPayload = {
-            ...(chosen.payload || {}),
+            ...(cloudPayload || {}),
             company: {
-              ...(chosen.payload?.company || {}),
+              ...(cloudPayload?.company || {}),
               ...companyPatch,
               bank: {
-                ...(chosen.payload?.company?.bank || {}),
+                ...(cloudPayload?.company?.bank || {}),
                 ...(companyPatch.bank || {})
               }
             },
             _meta: {
-              ...(chosen.payload?._meta || {}),
-              updated_at: chosen.payload?._meta?.updated_at || new Date().toISOString(),
+              ...(cloudPayload?._meta || {}),
+              updated_at: cloudState.updated_at?.toDate?.() ? cloudState.updated_at.toDate().toISOString() : new Date().toISOString(),
               business_id: resolvedBusinessId
             }
           };
-          const existingLogo = String(chosen.payload?.company?.logo || '').trim();
-          if (!safeCloudLogo && existingLogo) {
-            syncedPayload.company.logo = existingLogo;
-          }
           writeLocalPayload(syncedPayload, resolvedBusinessId);
+          persistStateShadow(syncedPayload, resolvedBusinessId);
           window.businessData = hydratedBusinessData;
           setUserData(hydratedBusinessData);
+          try { loadState({ businessId: resolvedBusinessId }); } catch (_) {}
           refreshUiAfterAuthSync();
-          if (chosen.source === 'cloud') {
-            const hydratedKey = `metrox_cloud_hydrated_${resolvedBusinessId}`;
-            if (sessionStorage.getItem(hydratedKey) !== '1') {
-              sessionStorage.setItem(hydratedKey, '1');
-              window.location.reload();
-              return;
-            }
-          } else {
-            await pushLocalStateToCloud();
-          }
+          await pushLocalStateToCloud();
         } else {
+          const fallbackPayload = buildCloudStatePayload(resolvedBusinessId);
+          persistStateShadow(fallbackPayload, resolvedBusinessId);
           await pushLocalStateToCloud();
           refreshUiAfterAuthSync();
         }

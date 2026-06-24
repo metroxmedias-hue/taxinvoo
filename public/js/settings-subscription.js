@@ -46,9 +46,7 @@ async function resolveBusinessContext(uid) {
   const userSnap = await getDoc(doc(db, "users", uid));
   const userData = userSnap.exists() ? (userSnap.data() || {}) : {};
   const expectedBusinessId = String(
-    localStorage.getItem("activeBusinessId")
-    || localStorage.getItem("activeBusinessProfileId")
-    || window.currentBusinessId
+    window.currentBusinessId
     || getUserData()?.business_id
     || window.businessData?.business_id
     || userData.business_id
@@ -90,9 +88,6 @@ async function resolveBusinessContext(uid) {
     const businessId = selectedRow.businessId;
     const businessData = selectedRow.businessData || {};
     setUserData({ ...businessData, business_id: businessId });
-    try {
-      localStorage.setItem("activeBusinessId", businessId);
-    } catch (_) {}
     console.log("[multi-business] Account activeBusinessId:", businessId);
     return { businessId, businessData };
   }
@@ -123,9 +118,6 @@ async function resolveBusinessContext(uid) {
   const businessId = selectedDoc.id;
   const businessData = selectedDoc.data() || {};
   setUserData({ ...businessData, business_id: businessId });
-  try {
-    localStorage.setItem("activeBusinessId", businessId);
-  } catch (_) {}
 
   return { businessId, businessData };
 }

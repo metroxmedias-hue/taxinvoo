@@ -8,7 +8,7 @@
   <meta name="description" content="Metrox TaxInvoo login and signup." />
   <script>
     (function () {
-      var saved = localStorage.getItem("metrox-theme");
+      var saved = sessionStorage.getItem("metrox-theme");
       var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
       var theme = saved || (prefersDark ? "dark" : "light");
       document.documentElement.setAttribute("data-theme", theme);
@@ -733,7 +733,7 @@
     const urlPlan = params.get('plan');
     const authView = (params.get('view') || '').toLowerCase();
     if (urlPlan) {
-      localStorage.setItem('metrox_plan', urlPlan);
+      sessionStorage.setItem('metrox_plan', urlPlan);
     }
 
     function clearDemoState() {
@@ -741,12 +741,12 @@
       localStorage.removeItem('metrox_taxdesk_demo_state_backup');
       localStorage.removeItem('metrox_taxinvoo_demo_state');
       localStorage.removeItem('metrox_taxinvoo_demo_state_backup');
-      localStorage.setItem('metrox_fresh_start', '1');
+      sessionStorage.setItem('metrox_fresh_start', '1');
     }
 
     function getSignupGuardState() {
       try {
-        const raw = localStorage.getItem(SIGNUP_GUARD_STORAGE_KEY);
+        const raw = sessionStorage.getItem(SIGNUP_GUARD_STORAGE_KEY);
         if (!raw) return { last_attempt_at: 0, lock_until: 0, failed_attempts: [], logs: [] };
         const parsed = JSON.parse(raw);
         return {
@@ -762,7 +762,7 @@
 
     function saveSignupGuardState(state) {
       try {
-        localStorage.setItem(SIGNUP_GUARD_STORAGE_KEY, JSON.stringify(state));
+        sessionStorage.setItem(SIGNUP_GUARD_STORAGE_KEY, JSON.stringify(state));
       } catch (_) {}
     }
 
@@ -959,12 +959,12 @@
       const safeOwnerUid = String(businessOwnerUid || safeUserId).trim();
       if (!safeUserId || !safeBusinessId) return;
       try {
-        localStorage.setItem('metrox_frontend_tenant', JSON.stringify({
+        sessionStorage.setItem('metrox_frontend_tenant', JSON.stringify({
           userId: safeOwnerUid,
           businessId: safeBusinessId
         }));
-        localStorage.setItem('activeBusinessId', safeBusinessId);
-        localStorage.setItem('metrox_active_business_profile_v1', safeBusinessId);
+        sessionStorage.setItem('activeBusinessId', safeBusinessId);
+        sessionStorage.setItem('metrox_active_business_profile_v1', safeBusinessId);
         console.log('[tenant-restore] Local tenant context restored after login:', {
           userId: safeOwnerUid,
           authUid: safeUserId,

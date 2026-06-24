@@ -203,12 +203,6 @@ async function syncPaymentToCloudState(payment) {
     data: nextState,
     updated_at: serverTimestamp()
   }, { merge: true });
-
-  try {
-    const serialized = JSON.stringify(nextState);
-    localStorage.setItem('metrox_taxinvoo_demo_state', serialized);
-    localStorage.setItem('metrox_taxinvoo_demo_state_backup', serialized);
-  } catch (_) {}
 }
 
 function updateInvoiceSummary() {

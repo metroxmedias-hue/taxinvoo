@@ -1,5 +1,7 @@
 import apiClient from './apiClient.js';
 
+const customerCache = new Map();
+
 export async function createCustomer(payload) {
   const { data } = await apiClient.post('/customers', payload);
   return data?.data;
@@ -11,16 +13,16 @@ export async function getCustomerById(id) {
 }
 
 export function getCachedCustomers(businessId) {
-  try {
-    const raw = localStorage.getItem(`metrox_cached_customers_${businessId}`);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
+  const key = String(businessId || '').trim();
+  if (!key) return [];
+  const cached = customerCache.get(key);
+  return Array.isArray(cached) ? cached : [];
 }
 
 export function cacheCustomer(businessId, customer) {
-  const current = getCachedCustomers(businessId);
+  const key = String(businessId || '').trim();
+  if (!key || !customer || typeof customer !== 'object') return;
+  const current = getCachedCustomers(key);
   const next = [customer, ...current.filter((c) => c.id !== customer.id)].slice(0, 50);
-  localStorage.setItem(`metrox_cached_customers_${businessId}`, JSON.stringify(next));
+  customerCache.set(key, next);
 }
