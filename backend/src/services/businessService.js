@@ -67,9 +67,10 @@ function buildBusinessData(payload, actorUserId, businessId) {
   };
 }
 
-function buildOwnerMembership(actorUserId, payload = {}) {
+function buildOwnerMembership(actorUserId, businessId, payload = {}) {
   return {
     uid: actorUserId,
+    businessId,
     email: payload.ownerEmail || payload.email || '',
     role: 'owner',
     permissions: {
@@ -118,6 +119,17 @@ export async function createBusiness(payload, actorUserId) {
             updatedAt: FieldValue.serverTimestamp(),
             updated_at: FieldValue.serverTimestamp()
           }, { merge: true });
+          tx.set(businessMemberDocRef(db, existingBusinessId, ownerUid), buildOwnerMembership(ownerUid, existingBusinessId, payload), { merge: true });
+          tx.set(businessDocRef(db, ownerUid, existingBusinessId), {
+            ...(existingSnap.data() || {}),
+            ...payload,
+            businessId: existingBusinessId,
+            business_id: existingBusinessId,
+            ownerUid,
+            owner_uid: ownerUid,
+            updatedAt: FieldValue.serverTimestamp(),
+            updated_at: FieldValue.serverTimestamp()
+          }, { merge: true });
           return { id: existingBusinessId, ...existingSnap.data(), duplicate: true };
         }
       }
@@ -125,7 +137,7 @@ export async function createBusiness(payload, actorUserId) {
     }
 
     const businessData = buildBusinessData(payload, ownerUid, businessRef.id);
-    const membership = buildOwnerMembership(ownerUid, payload);
+    const membership = buildOwnerMembership(ownerUid, businessRef.id, payload);
 
     tx.set(businessRef, businessData);
     tx.set(memberRef, membership);
@@ -154,6 +166,11 @@ export async function createBusiness(payload, actorUserId) {
     return { id: businessRef.id, ...businessData, duplicate: false };
   });
 
+  const businessId = String(result?.id || result?.businessId || '').trim();
+  if (businessId) {
+    console.log('[BUSINESS CREATED]', businessId);
+    console.log('[OWNER MEMBER CREATED]', ownerUid, businessId);
+  }
   return result;
 }
 

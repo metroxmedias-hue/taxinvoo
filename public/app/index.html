@@ -58064,6 +58064,7 @@
         };
         const memberPayload = {
           uid,
+          businessId,
           email: String(user?.email || legacyBusinessData.email || '').trim(),
           role: 'owner',
           status: 'active',
@@ -58123,9 +58124,81 @@
       }
     }
 
+    async function fetchCanonicalMembershipBusinessesForUser(user, preferredBusinessId = '') {
+      const uid = normalizeBusinessId(user?.uid);
+      if (!uid) return [];
+      const rows = [];
+      const memberQuery = query(collectionGroup(db, 'members'), where('uid', '==', uid));
+      let snapshot = null;
+      try {
+        snapshot = await getDocsFromServer(memberQuery);
+      } catch (err) {
+        console.warn('[multi-business] Canonical membership server lookup failed; falling back to cache:', err);
+        try {
+          snapshot = await getDocs(memberQuery);
+        } catch (cacheErr) {
+          console.warn('[multi-business] Canonical membership cache lookup failed:', cacheErr);
+          return [];
+        }
+      }
+
+      const memberDocs = snapshot?.docs || [];
+      for (const memberDoc of memberDocs) {
+        const memberData = { ...(memberDoc.data?.() || {}), id: memberDoc.id };
+        const businessRef = memberDoc.ref?.parent?.parent;
+        const businessId = normalizeBusinessId(memberData.businessId || businessRef?.id || '');
+        if (!businessId) continue;
+        try {
+          const businessSnap = await getDoc(doc(db, 'businesses', businessId));
+          if (!businessSnap.exists()) continue;
+          rows.push({
+            path: memberDoc.ref?.path || '',
+            businessId,
+            businessData: { ...(businessSnap.data() || {}), business_id: businessId },
+            memberData
+          });
+        } catch (err) {
+          console.warn('[multi-business] Failed to hydrate canonical business from membership row:', {
+            businessId,
+            code: err?.code,
+            message: err?.message,
+            error: err
+          });
+        }
+      }
+
+      if (!rows.length) return [];
+      rows.sort((a, b) => {
+        const preferred = normalizeBusinessId(preferredBusinessId);
+        if (preferred && a.businessId === preferred) return -1;
+        if (preferred && b.businessId === preferred) return 1;
+        return getBusinessName(a.businessData).localeCompare(getBusinessName(b.businessData));
+      });
+      console.log('[multi-business] canonical membership query output:', {
+        membershipCount: rows.length,
+        businessIds: rows.map((row) => row.businessId),
+        businessNames: rows.map((row) => getBusinessName(row.businessData))
+      });
+      return rows;
+    }
+
     async function fetchMembershipBusinessesForUser(user, preferredBusinessId = '') {
       const uid = normalizeBusinessId(user?.uid);
       if (!uid) return [];
+      const preferred = normalizeBusinessId(preferredBusinessId);
+      const canonicalRows = await fetchCanonicalMembershipBusinessesForUser(user, preferred);
+      if (canonicalRows.length) {
+        const rows = canonicalRows.slice();
+        rows.forEach((row) => {
+          row.businessData = { ...(row.businessData || {}), business_id: row.businessId };
+        });
+        console.log('[multi-business] businesses returned from canonical membership source:', {
+          businessCount: rows.length,
+          businessIds: rows.map((row) => row.businessId),
+          businessNames: rows.map((row) => getBusinessName(row.businessData))
+        });
+        return rows;
+      }
       let businessSnap = null;
       const businessRef = collection(db, 'users', uid, 'businesses');
       console.log('[multi-business] running direct business list query:', {
@@ -58178,6 +58251,7 @@
         businessIds: rows.map((row) => row.businessId),
         businessNames: rows.map((row) => getBusinessName(row.businessData))
       });
+      await bootstrapCanonicalBusinessRootsFromLegacyRows(user, rows);
       return rows;
     }
 
@@ -58236,10 +58310,7 @@
       };
       try {
         await setDoc(doc(db, 'businesses', businessId), payload, { merge: true });
-        console.log('[CANONICAL BUSINESS CREATED]', {
-          path: `businesses/${businessId}`,
-          businessId
-        });
+        console.log('[BUSINESS CREATED]', businessId);
       } catch (error) {
         console.error('[CANONICAL VERIFY FAILED]', {
           path: `businesses/${businessId}`,
@@ -58253,6 +58324,7 @@
       try {
         await setDoc(doc(db, 'businesses', businessId, 'members', uid), {
           uid,
+          businessId,
           email: user?.email || '',
           role: 'owner',
           status: 'active',
@@ -58262,11 +58334,7 @@
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         }, { merge: true });
-        console.log('[CANONICAL MEMBER CREATED]', {
-          path: `businesses/${businessId}/members/${uid}`,
-          businessId,
-          uid
-        });
+        console.log('[OWNER MEMBER CREATED]', uid, businessId);
       } catch (error) {
         console.error('[CANONICAL VERIFY FAILED]', {
           path: `businesses/${businessId}/members/${uid}`,

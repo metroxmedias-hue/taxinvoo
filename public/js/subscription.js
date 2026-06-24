@@ -336,6 +336,7 @@ export async function markBusinessSetupCompleted(userId, businessId, payload = {
 export async function linkUserToBusiness(userId, businessId, businessOwnerUid = userId) {
   if (!userId || !businessId) return;
   const ref = doc(db, ...userDocPath(userId));
+  const businessRef = doc(db, ...businessDocPath(userId, businessId));
   await setDoc(
     ref,
     {
@@ -343,6 +344,17 @@ export async function linkUserToBusiness(userId, businessId, businessOwnerUid = 
       business_id: businessId,
       business_owner_uid: businessOwnerUid,
       updated_at: serverTimestamp()
+    },
+    { merge: true }
+  );
+  await setDoc(
+    businessRef,
+    {
+      business_id: businessId,
+      businessId,
+      business_owner_uid: businessOwnerUid,
+      updated_at: serverTimestamp(),
+      updatedAt: serverTimestamp()
     },
     { merge: true }
   );

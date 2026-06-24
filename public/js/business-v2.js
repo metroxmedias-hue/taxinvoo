@@ -87,9 +87,10 @@ function buildBusinessPayload(payload, user, businessId) {
   };
 }
 
-function buildOwnerMembership(user) {
+function buildOwnerMembership(user, businessId) {
   return {
     uid: user.uid,
+    businessId,
     email: user.email || "",
     role: "owner",
     permissions: OWNER_PERMISSIONS,
@@ -128,8 +129,9 @@ export async function createOrResolveBusinessV2(user, payload = {}) {
   const userRef = doc(db, ...userDocPath(user.uid));
   const businessRef = doc(collection(db, ...canonicalBusinessesColPath()));
   const memberRef = doc(db, ...businessMemberDocPath(businessRef.id, user.uid));
+  const legacyBusinessRef = doc(db, ...businessDocPath(user.uid, businessRef.id));
 
-  return runTransaction(db, async (tx) => {
+  const result = await runTransaction(db, async (tx) => {
     const identitySnap = await tx.get(identityRef);
     if (identitySnap.exists()) {
       const existingBusinessId = String(identitySnap.data()?.businessId || "").trim();
@@ -148,12 +150,23 @@ export async function createOrResolveBusinessV2(user, payload = {}) {
         updatedAt: serverTimestamp(),
         updated_at: serverTimestamp()
       }, { merge: true });
+      tx.set(doc(db, ...businessMemberDocPath(existingBusinessId, user.uid)), buildOwnerMembership(user, existingBusinessId), { merge: true });
+      tx.set(doc(db, ...businessDocPath(user.uid, existingBusinessId)), {
+        ...(existingSnap.data() || {}),
+        ...payload,
+        businessId: existingBusinessId,
+        business_id: existingBusinessId,
+        business_owner_uid: user.uid,
+        updatedAt: serverTimestamp(),
+        updated_at: serverTimestamp()
+      }, { merge: true });
       return { id: existingBusinessId, businessId: existingBusinessId, duplicate: true, ...(existingSnap.data() || {}) };
     }
 
     const businessPayload = buildBusinessPayload(payload, user, businessRef.id);
     tx.set(businessRef, businessPayload);
-    tx.set(memberRef, buildOwnerMembership(user));
+    tx.set(memberRef, buildOwnerMembership(user, businessRef.id));
+    tx.set(legacyBusinessRef, businessPayload, { merge: true });
     tx.set(identityRef, {
       identityId,
       businessId: businessRef.id,
@@ -175,6 +188,13 @@ export async function createOrResolveBusinessV2(user, payload = {}) {
 
     return { id: businessRef.id, businessId: businessRef.id, duplicate: false, ...businessPayload };
   });
+
+  const businessId = String(result?.businessId || result?.id || "").trim();
+  if (businessId) {
+    console.log('[BUSINESS CREATED]', businessId);
+    console.log('[OWNER MEMBER CREATED]', user.uid, businessId);
+  }
+  return result;
 }
 
 export async function resolveActiveBusinessV2(user, preferredBusinessId = "") {
