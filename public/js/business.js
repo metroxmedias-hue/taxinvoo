@@ -2,7 +2,7 @@ import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebase
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 import { userDocPath } from "./firestore-paths.js";
-import { createOrResolveBusinessV2, ensureBusinessRootBootstrapDocs } from "./business-v2.js";
+import { createOrResolveBusinessV2, ensureBusinessRootBootstrapDocs } from "./business-v2.js?v=20260624-1";
 import {
   ensureTrialSubscription,
   ensureUserRecord,
