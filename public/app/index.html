@@ -28278,8 +28278,17 @@
         setOnboardingCompleted(true);
         return false;
       }
-      const hasStoredProfile = !!String(state.company?.name || '').trim() || !!String(getUserDataSnapshot()?.name || '').trim();
-      return isRecentlyCreatedBusiness() || !hasStoredProfile;
+      const businessData = getUserDataSnapshot() || {};
+      const businessId = String(
+        businessData.business_id
+        || businessData.businessId
+        || localStorage.getItem('activeBusinessId')
+        || localStorage.getItem(ACTIVE_BUSINESS_PROFILE_KEY)
+        || ''
+      ).trim();
+      const businessName = String(state.company?.name || businessData.name || '').trim();
+      const hasRealBusinessRecord = !!businessId && !!businessName && !isPlaceholderBusinessName(businessName);
+      return isRecentlyCreatedBusiness() || !hasRealBusinessRecord;
     }
 
     function getOnboardingSteps() {
@@ -60075,8 +60084,14 @@
           console.warn('[tenant-restore] No businesses found for authenticated user; setup may be required.', {
             uid: user.uid
           });
+          cleanupLegacyDemoBusinessStorage();
           setUserData(null);
+          window.businessData = null;
           currentBusinessId = null;
+          try {
+            setRouteHash('get-started', currentSettingsPage);
+            applyRouteFromHash();
+          } catch (_) {}
           try { if (typeof window.renderManageUsersPanel === 'function') window.renderManageUsersPanel(); } catch (_) {}
           return;
         }
@@ -60095,7 +60110,27 @@
         const businessData = loadedBusiness?.businessData || null;
         console.log("FULL BUSINESS DATA:", businessData);
         if (!businessData) {
+          cleanupLegacyDemoBusinessStorage();
           setUserData(null);
+          window.businessData = null;
+          currentBusinessId = null;
+          try {
+            setRouteHash('get-started', currentSettingsPage);
+            applyRouteFromHash();
+          } catch (_) {}
+          refreshUiAfterAuthSync();
+          return;
+        }
+        const loadedBusinessName = String(businessData.name || '').trim();
+        if (!loadedBusinessName || isPlaceholderBusinessName(loadedBusinessName)) {
+          cleanupLegacyDemoBusinessStorage();
+          setUserData(null);
+          window.businessData = null;
+          currentBusinessId = null;
+          try {
+            setRouteHash('get-started', currentSettingsPage);
+            applyRouteFromHash();
+          } catch (_) {}
           refreshUiAfterAuthSync();
           return;
         }

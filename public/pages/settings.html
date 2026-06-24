@@ -35546,13 +35546,41 @@
         console.log("FULL BUSINESS DATA:", businessData);
         const resolvedBusinessId = String(loadedBusiness?.businessId || businessIdHint || '').trim();
         if (!resolvedBusinessId) {
+          cleanupLegacyDemoBusinessStorage();
+          window.businessData = null;
           currentBusinessId = null;
+          try {
+            setRouteHash('get-started', currentSettingsPage);
+            applyRouteFromHash();
+          } catch (_) {}
           if (typeof window.renderManageUsersPanel === 'function') window.renderManageUsersPanel();
           return;
         }
         currentBusinessId = resolvedBusinessId;
         startManageUsersRealtimeSync();
-        if (!businessData) return;
+        if (!businessData) {
+          cleanupLegacyDemoBusinessStorage();
+          window.businessData = null;
+          currentBusinessId = null;
+          try {
+            setRouteHash('get-started', currentSettingsPage);
+            applyRouteFromHash();
+          } catch (_) {}
+          if (typeof window.renderManageUsersPanel === 'function') window.renderManageUsersPanel();
+          return;
+        }
+        const loadedBusinessName = String(businessData.name || '').trim();
+        if (!loadedBusinessName || isDefaultBusinessProfileName(loadedBusinessName)) {
+          cleanupLegacyDemoBusinessStorage();
+          window.businessData = null;
+          currentBusinessId = null;
+          try {
+            setRouteHash('get-started', currentSettingsPage);
+            applyRouteFromHash();
+          } catch (_) {}
+          if (typeof window.renderManageUsersPanel === 'function') window.renderManageUsersPanel();
+          return;
+        }
         applySoftLockGuards();
         const biz = businessData;
         const safeCloudLogo = String(biz.logo || '').trim();
