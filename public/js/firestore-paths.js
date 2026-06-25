@@ -38,6 +38,10 @@ export function canonicalCustomerDocPath(businessId, customerId) {
   return [...canonicalCustomersColPath(businessId), required(customerId, 'customerId')];
 }
 
+export function canonicalSupplierPaymentsColPath(businessId) {
+  return [...canonicalBusinessDocPath(businessId), 'supplier_payments'];
+}
+
 export function canonicalSuppliersColPath(businessId) {
   return [...canonicalBusinessDocPath(businessId), 'suppliers'];
 }

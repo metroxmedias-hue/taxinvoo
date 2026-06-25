@@ -38,6 +38,10 @@ export function canonicalCustomerDocRef(db, businessId, customerId) {
   return canonicalCustomersColRef(db, businessId).doc(required(customerId, 'customerId'));
 }
 
+export function canonicalSupplierPaymentsColRef(db, businessId) {
+  return canonicalBusinessDocRef(db, businessId).collection('supplier_payments');
+}
+
 export function canonicalSuppliersColRef(db, businessId) {
   return canonicalBusinessDocRef(db, businessId).collection('suppliers');
 }

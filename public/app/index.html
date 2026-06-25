@@ -29973,7 +29973,8 @@
           email: partyEmail,
           address: partyAddress,
           state: partyState,
-          stateCode: partyStateCode
+          stateCode: partyStateCode,
+          canonicalId: getCustomerCanonicalId(party, state.customers[party] || {})
         };
         saveState();
         populateCustomerSelect();
@@ -34711,7 +34712,8 @@
           creditLimit: Math.max(0, Number(document.getElementById('new-cust-credit-limit')?.value || 0) || 0),
           paymentTermsDays: Math.max(0, Number(document.getElementById('new-cust-payment-terms')?.value || 0) || 0),
           openingBalance: Math.max(0, Number(document.getElementById('new-cust-opening-balance')?.value || 0) || 0),
-          openingBalanceDate: new Date().toISOString().slice(0, 10)
+          openingBalanceDate: new Date().toISOString().slice(0, 10),
+          canonicalId: getCustomerCanonicalId(name, state.customers[name] || {})
         };
         saveState();
         renderCustomers();
@@ -50414,7 +50416,8 @@
             creditLimit: Math.max(0, Number(document.getElementById('cust-credit-limit')?.value || 0) || 0),
             paymentTermsDays: Math.max(0, Number(document.getElementById('cust-payment-terms')?.value || 0) || 0),
             openingBalance: Math.max(0, Number(document.getElementById('cust-opening-balance')?.value || 0) || 0),
-            openingBalanceDate: profile.openingBalanceDate || new Date().toISOString().slice(0, 10)
+            openingBalanceDate: profile.openingBalanceDate || new Date().toISOString().slice(0, 10),
+            canonicalId: getCustomerCanonicalId(newName, profile)
           };
           // Update customer key if name changed
           if (newName !== name) {
@@ -56577,7 +56580,7 @@
           return;
         }
 
-        const invoice = {
+          const invoice = {
           id,
           date: invoiceDateValue,
           dueDate: dueDateValue,
@@ -56624,7 +56627,8 @@
           email: data.get('customerEmail'),
           address: data.get('customerAddress'),
           state: data.get('customerState'),
-          stateCode: gstStateCodes[data.get('customerState')] || ''
+          stateCode: gstStateCodes[data.get('customerState')] || '',
+          canonicalId: getCustomerCanonicalId(customer, state.customers[customer] || {})
         };
 
         setInvoiceStatus(invoice);
@@ -57755,7 +57759,7 @@
   <script type="module">
     import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp, increment, collection, collectionGroup, getDocs, getDocsFromServer, onSnapshot, query, where, arrayUnion } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestamp, increment, collection, collectionGroup, getDocs, getDocsFromServer, onSnapshot, query, where, arrayUnion } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
     import { getUserData, setUserData } from "../js/userState.js";
 
     const firebaseConfig = {
@@ -57778,6 +57782,7 @@
       getDoc,
       setDoc,
       updateDoc,
+      deleteDoc,
       serverTimestamp,
       increment,
       collection,
@@ -57803,6 +57808,23 @@
 
     function normalizeBusinessId(value = '') {
       return String(value || '').trim();
+    }
+
+    function normalizeFirestoreDocId(value = '') {
+      return String(value || '')
+        .trim()
+        .replace(/[^a-zA-Z0-9_-]/g, '_')
+        .replace(/_+/g, '_')
+        .replace(/^_+|_+$/g, '')
+        .slice(0, 1500) || 'item';
+    }
+
+    function getCustomerCanonicalId(name, customer = {}) {
+      return normalizeFirestoreDocId(customer.canonicalId || customer.id || name);
+    }
+
+    function getSupplierCanonicalId(name, supplier = {}) {
+      return normalizeFirestoreDocId(supplier.canonicalId || supplier.id || name);
     }
 
     function getBusinessName(data = {}) {
@@ -58910,8 +58932,11 @@
         }
         next.unshift(normalized);
         const cleaned = next.filter((row) => !isShadowDuplicateOfTarget(row));
+        activeBusinessProfileId = id;
+        businessProfiles = cleaned.map((row) => sanitizeBusinessProfile(row));
         window.__metroxBusinessProfiles = cleaned;
         window.__metroxActiveBusinessId = id;
+        persistBusinessProfiles();
       } catch (err) {
         console.warn('Business profile scope align failed:', err);
       }
@@ -58945,6 +58970,319 @@
       if (payloadCount(cloudSafe) > 0) return { source: 'cloud', payload: cloudSafe };
       if (payloadCount(localSafe) > 0) return { source: 'local', payload: localSafe };
       return { source: 'cloud', payload: cloudSafe };
+    }
+
+	    async function mirrorCanonicalStateCollections(ownerUid, businessId, payload = {}) {
+	      const safeOwnerUid = String(ownerUid || '').trim();
+	      const safeBusinessId = String(businessId || '').trim();
+	      if (!safeOwnerUid || !safeBusinessId) return;
+	      const tasks = [];
+	      const toIdSet = (items, getId) => {
+	        const ids = new Set();
+	        (Array.isArray(items) ? items : []).forEach((item) => {
+	          const id = String(getId(item) || '').trim();
+	          if (id) ids.add(id);
+	        });
+	        return ids;
+	      };
+	      const reconcileCanonicalCollection = async (collectionName, liveIds) => {
+	        if (!collectionName || !(liveIds instanceof Set)) return;
+	        try {
+	          const snap = await getDocs(collection(db, 'businesses', safeBusinessId, collectionName));
+	          const deletes = [];
+	          snap.forEach((entry) => {
+	            if (entry.id === ROOT_BOOTSTRAP_DOC_ID) return;
+	            if (liveIds.has(entry.id)) return;
+	            deletes.push(deleteDoc(doc(db, 'businesses', safeBusinessId, collectionName, entry.id)));
+	          });
+	          if (deletes.length) await Promise.allSettled(deletes);
+	        } catch (err) {
+	          console.warn(`Canonical ${collectionName} delete reconciliation failed:`, err);
+	        }
+	      };
+
+	      const invoiceList = Array.isArray(payload.invoices) ? payload.invoices : [];
+	      tasks.push(reconcileCanonicalCollection('invoices', toIdSet(invoiceList, (invoice) => invoice?.id || invoice?.firestoreId)));
+	      invoiceList.forEach((invoice) => {
+	        const invoiceId = String(invoice?.id || invoice?.firestoreId || '').trim();
+	        if (!invoiceId) return;
+        tasks.push(setDoc(doc(db, 'businesses', safeBusinessId, 'invoices', invoiceId), {
+          ...invoice,
+          id: invoiceId,
+          businessId: safeBusinessId,
+          business_id: safeBusinessId,
+          ownerUid: safeOwnerUid,
+          owner_uid: safeOwnerUid,
+          updatedAt: serverTimestamp(),
+          updated_at: serverTimestamp()
+        }, { merge: true }));
+	      });
+
+	      const paymentList = Array.isArray(payload.payments) ? payload.payments : [];
+	      tasks.push(reconcileCanonicalCollection('payments', toIdSet(paymentList, (payment) => payment?.id)));
+	      paymentList.forEach((payment) => {
+	        const paymentId = String(payment?.id || '').trim();
+	        if (!paymentId) return;
+        tasks.push(setDoc(doc(db, 'businesses', safeBusinessId, 'payments', paymentId), {
+          ...payment,
+          id: paymentId,
+          businessId: safeBusinessId,
+          business_id: safeBusinessId,
+          ownerUid: safeOwnerUid,
+          owner_uid: safeOwnerUid,
+          updatedAt: serverTimestamp(),
+          updated_at: serverTimestamp()
+        }, { merge: true }));
+	      });
+
+	      const quotationList = Array.isArray(payload.quotations) ? payload.quotations : [];
+	      tasks.push(reconcileCanonicalCollection('quotations', toIdSet(quotationList, (quotation) => quotation?.id)));
+	      quotationList.forEach((quotation) => {
+	        const quotationId = String(quotation?.id || '').trim();
+	        if (!quotationId) return;
+        tasks.push(setDoc(doc(db, 'businesses', safeBusinessId, 'quotations', quotationId), {
+          ...quotation,
+          id: quotationId,
+          canonicalId: quotationId,
+          businessId: safeBusinessId,
+          business_id: safeBusinessId,
+          ownerUid: safeOwnerUid,
+          owner_uid: safeOwnerUid,
+          updatedAt: serverTimestamp(),
+          updated_at: serverTimestamp()
+        }, { merge: true }));
+	      });
+
+	      const purchaseList = Array.isArray(payload.purchases) ? payload.purchases : [];
+	      tasks.push(reconcileCanonicalCollection('purchases', toIdSet(purchaseList, (purchase) => purchase?.id)));
+	      purchaseList.forEach((purchase) => {
+	        const purchaseId = String(purchase?.id || '').trim();
+	        if (!purchaseId) return;
+        tasks.push(setDoc(doc(db, 'businesses', safeBusinessId, 'purchases', purchaseId), {
+          ...purchase,
+          id: purchaseId,
+          canonicalId: purchaseId,
+          businessId: safeBusinessId,
+          business_id: safeBusinessId,
+          ownerUid: safeOwnerUid,
+          owner_uid: safeOwnerUid,
+          updatedAt: serverTimestamp(),
+          updated_at: serverTimestamp()
+        }, { merge: true }));
+	      });
+
+	      const purchaseOrderList = Array.isArray(payload.purchaseOrders) ? payload.purchaseOrders : [];
+	      tasks.push(reconcileCanonicalCollection('purchase_orders', toIdSet(purchaseOrderList, (order) => order?.id)));
+	      purchaseOrderList.forEach((order) => {
+	        const orderId = String(order?.id || '').trim();
+	        if (!orderId) return;
+        tasks.push(setDoc(doc(db, 'businesses', safeBusinessId, 'purchase_orders', orderId), {
+          ...order,
+          id: orderId,
+          canonicalId: orderId,
+          businessId: safeBusinessId,
+          business_id: safeBusinessId,
+          ownerUid: safeOwnerUid,
+          owner_uid: safeOwnerUid,
+          updatedAt: serverTimestamp(),
+          updated_at: serverTimestamp()
+        }, { merge: true }));
+	      });
+
+	      const salesReturnList = Array.isArray(payload.salesReturns) ? payload.salesReturns : [];
+	      tasks.push(reconcileCanonicalCollection('sales_returns', toIdSet(salesReturnList, (item) => item?.id)));
+	      salesReturnList.forEach((item) => {
+	        const itemId = String(item?.id || '').trim();
+	        if (!itemId) return;
+        tasks.push(setDoc(doc(db, 'businesses', safeBusinessId, 'sales_returns', itemId), {
+          ...item,
+          id: itemId,
+          canonicalId: itemId,
+          businessId: safeBusinessId,
+          business_id: safeBusinessId,
+          ownerUid: safeOwnerUid,
+          owner_uid: safeOwnerUid,
+          updatedAt: serverTimestamp(),
+          updated_at: serverTimestamp()
+        }, { merge: true }));
+	      });
+
+	      const purchaseReturnList = Array.isArray(payload.purchaseReturns) ? payload.purchaseReturns : [];
+	      tasks.push(reconcileCanonicalCollection('purchase_returns', toIdSet(purchaseReturnList, (item) => item?.id)));
+	      purchaseReturnList.forEach((item) => {
+	        const itemId = String(item?.id || '').trim();
+	        if (!itemId) return;
+        tasks.push(setDoc(doc(db, 'businesses', safeBusinessId, 'purchase_returns', itemId), {
+          ...item,
+          id: itemId,
+          canonicalId: itemId,
+          businessId: safeBusinessId,
+          business_id: safeBusinessId,
+          ownerUid: safeOwnerUid,
+          owner_uid: safeOwnerUid,
+          updatedAt: serverTimestamp(),
+          updated_at: serverTimestamp()
+        }, { merge: true }));
+	      });
+
+	      const creditNoteList = Array.isArray(payload.creditNotes) ? payload.creditNotes : [];
+	      tasks.push(reconcileCanonicalCollection('credit_notes', toIdSet(creditNoteList, (item) => item?.id)));
+	      creditNoteList.forEach((item) => {
+	        const itemId = String(item?.id || '').trim();
+	        if (!itemId) return;
+        tasks.push(setDoc(doc(db, 'businesses', safeBusinessId, 'credit_notes', itemId), {
+          ...item,
+          id: itemId,
+          canonicalId: itemId,
+          businessId: safeBusinessId,
+          business_id: safeBusinessId,
+          ownerUid: safeOwnerUid,
+          owner_uid: safeOwnerUid,
+          updatedAt: serverTimestamp(),
+          updated_at: serverTimestamp()
+        }, { merge: true }));
+	      });
+
+	      const debitNoteList = Array.isArray(payload.debitNotes) ? payload.debitNotes : [];
+	      tasks.push(reconcileCanonicalCollection('debit_notes', toIdSet(debitNoteList, (item) => item?.id)));
+	      debitNoteList.forEach((item) => {
+	        const itemId = String(item?.id || '').trim();
+	        if (!itemId) return;
+        tasks.push(setDoc(doc(db, 'businesses', safeBusinessId, 'debit_notes', itemId), {
+          ...item,
+          id: itemId,
+          canonicalId: itemId,
+          businessId: safeBusinessId,
+          business_id: safeBusinessId,
+          ownerUid: safeOwnerUid,
+          owner_uid: safeOwnerUid,
+          updatedAt: serverTimestamp(),
+          updated_at: serverTimestamp()
+        }, { merge: true }));
+	      });
+
+	      const deliveryChallanList = Array.isArray(payload.deliveryChallans) ? payload.deliveryChallans : [];
+	      tasks.push(reconcileCanonicalCollection('delivery_challans', toIdSet(deliveryChallanList, (item) => item?.id)));
+	      deliveryChallanList.forEach((item) => {
+	        const itemId = String(item?.id || '').trim();
+	        if (!itemId) return;
+        tasks.push(setDoc(doc(db, 'businesses', safeBusinessId, 'delivery_challans', itemId), {
+          ...item,
+          id: itemId,
+          canonicalId: itemId,
+          businessId: safeBusinessId,
+          business_id: safeBusinessId,
+          ownerUid: safeOwnerUid,
+          owner_uid: safeOwnerUid,
+          updatedAt: serverTimestamp(),
+          updated_at: serverTimestamp()
+        }, { merge: true }));
+	      });
+
+	      const ewayBillList = Array.isArray(payload.ewayBills) ? payload.ewayBills : [];
+	      tasks.push(reconcileCanonicalCollection('eway_bills', toIdSet(ewayBillList, (item) => item?.id)));
+	      ewayBillList.forEach((item) => {
+	        const itemId = String(item?.id || '').trim();
+	        if (!itemId) return;
+        tasks.push(setDoc(doc(db, 'businesses', safeBusinessId, 'eway_bills', itemId), {
+          ...item,
+          id: itemId,
+          canonicalId: itemId,
+          businessId: safeBusinessId,
+          business_id: safeBusinessId,
+          ownerUid: safeOwnerUid,
+          owner_uid: safeOwnerUid,
+          updatedAt: serverTimestamp(),
+          updated_at: serverTimestamp()
+        }, { merge: true }));
+	      });
+
+	      const proformaList = Array.isArray(payload.proformaInvoices) ? payload.proformaInvoices : [];
+	      tasks.push(reconcileCanonicalCollection('proforma_invoices', toIdSet(proformaList, (item) => item?.id)));
+	      proformaList.forEach((item) => {
+	        const itemId = String(item?.id || '').trim();
+	        if (!itemId) return;
+        tasks.push(setDoc(doc(db, 'businesses', safeBusinessId, 'proforma_invoices', itemId), {
+          ...item,
+          id: itemId,
+          canonicalId: itemId,
+          businessId: safeBusinessId,
+          business_id: safeBusinessId,
+          ownerUid: safeOwnerUid,
+          owner_uid: safeOwnerUid,
+          updatedAt: serverTimestamp(),
+          updated_at: serverTimestamp()
+        }, { merge: true }));
+      });
+
+	      const customerEntries = payload.customers && typeof payload.customers === 'object'
+	        ? Object.entries(payload.customers)
+	        : [];
+	      const customerIds = new Set();
+	      customerEntries.forEach(([name, customer]) => {
+	        const safeName = String(name || customer?.name || '').trim();
+	        if (!safeName) return;
+	        const customerId = getCustomerCanonicalId(safeName, customer || {});
+	        customerIds.add(customerId);
+	        tasks.push(setDoc(doc(db, 'businesses', safeBusinessId, 'customers', customerId), {
+	          ...(customer && typeof customer === 'object' ? customer : {}),
+          id: customerId,
+          customerId,
+          canonicalId: customerId,
+          name: safeName,
+          businessId: safeBusinessId,
+          business_id: safeBusinessId,
+          ownerUid: safeOwnerUid,
+          owner_uid: safeOwnerUid,
+          updatedAt: serverTimestamp(),
+	          updated_at: serverTimestamp()
+	        }, { merge: true }));
+	      });
+	      tasks.push(reconcileCanonicalCollection('customers', customerIds));
+
+	      const supplierEntries = payload.supplierMeta && typeof payload.supplierMeta === 'object'
+	        ? Object.entries(payload.supplierMeta)
+	        : [];
+	      const supplierIds = new Set();
+	      supplierEntries.forEach(([name, supplier]) => {
+	        const safeName = String(name || supplier?.name || '').trim();
+	        if (!safeName) return;
+	        const supplierId = getSupplierCanonicalId(safeName, supplier || {});
+	        supplierIds.add(supplierId);
+	        tasks.push(setDoc(doc(db, 'businesses', safeBusinessId, 'suppliers', supplierId), {
+	          ...(supplier && typeof supplier === 'object' ? supplier : {}),
+          id: supplierId,
+          supplierId,
+          canonicalId: supplierId,
+          name: safeName,
+          businessId: safeBusinessId,
+          business_id: safeBusinessId,
+          ownerUid: safeOwnerUid,
+          owner_uid: safeOwnerUid,
+          updatedAt: serverTimestamp(),
+	          updated_at: serverTimestamp()
+	        }, { merge: true }));
+	      });
+	      tasks.push(reconcileCanonicalCollection('suppliers', supplierIds));
+
+	      const supplierPaymentList = Array.isArray(payload.supplierPayments) ? payload.supplierPayments : [];
+	      tasks.push(reconcileCanonicalCollection('supplier_payments', toIdSet(supplierPaymentList, (payment) => payment?.id)));
+	      supplierPaymentList.forEach((payment) => {
+	        const paymentId = String(payment?.id || '').trim();
+	        if (!paymentId) return;
+        tasks.push(setDoc(doc(db, 'businesses', safeBusinessId, 'supplier_payments', paymentId), {
+          ...payment,
+          id: paymentId,
+          businessId: safeBusinessId,
+          business_id: safeBusinessId,
+          ownerUid: safeOwnerUid,
+          owner_uid: safeOwnerUid,
+          updatedAt: serverTimestamp(),
+          updated_at: serverTimestamp()
+        }, { merge: true }));
+      });
+
+      await Promise.allSettled(tasks);
     }
 
     async function pushLocalStateToCloud() {
@@ -58999,6 +59337,7 @@
         data: payload,
         updated_at: serverTimestamp()
       }, { merge: true });
+      await mirrorCanonicalStateCollections(user.uid, currentBusinessId, payload);
     }
 
     window.queueCloudStateSync = () => {

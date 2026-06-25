@@ -205,6 +205,29 @@ async function syncPaymentToCloudState(payment) {
   }, { merge: true });
 }
 
+async function syncPaymentToCanonicalCollections(payment) {
+  if (!businessId || !businessOwnerUid || !auth.currentUser || !payment?.id) return;
+  await setDoc(doc(db, 'businesses', businessId, 'payments', payment.id), {
+    ...payment,
+    businessId,
+    business_id: businessId,
+    ownerUid: businessOwnerUid,
+    owner_uid: businessOwnerUid,
+    updatedAt: serverTimestamp(),
+    updated_at: serverTimestamp()
+  }, { merge: true });
+
+  if (payment.invoiceFirestoreId) {
+    await setDoc(doc(db, 'businesses', businessId, 'invoices', payment.invoiceFirestoreId), {
+      amount_paid: Number(payment.invoicePaidAmount || 0),
+      paidAmount: Number(payment.invoicePaidAmount || 0),
+      status: payment.invoiceStatus || 'partial',
+      updatedAt: serverTimestamp(),
+      updated_at: serverTimestamp()
+    }, { merge: true });
+  }
+}
+
 function updateInvoiceSummary() {
   const invId = invoiceSelect.value;
   const inv = invoiceMap.get(invId);
@@ -349,7 +372,21 @@ form.addEventListener('submit', async (e) => {
       amount: amount,
       mode: payMode.value,
       date: payDate.value || new Date().toISOString().slice(0, 10),
-      note: ''
+      note: '',
+      invoicePaidAmount: newPaid,
+      invoiceStatus: newStatus
+    });
+    await syncPaymentToCanonicalCollections({
+      id: paymentRef.id,
+      invoiceId: inv.id || invId,
+      invoiceFirestoreId: invId,
+      customerName: inv.customer || inv.customer_name || 'Customer',
+      amount: amount,
+      mode: payMode.value,
+      date: payDate.value || new Date().toISOString().slice(0, 10),
+      note: '',
+      invoicePaidAmount: newPaid,
+      invoiceStatus: newStatus
     });
 
     setSuccess('Payment recorded.');

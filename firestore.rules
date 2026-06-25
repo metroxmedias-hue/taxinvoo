@@ -38,6 +38,48 @@ service cloud.firestore {
       );
     }
 
+    function canAccessBusinessData(businessId) {
+      return signedIn() && isBusinessMember(businessId);
+    }
+
+    function isBusinessDataCollection(collectionName) {
+      return collectionName in [
+        'app_meta',
+        'attachments',
+        'activities',
+        'ai_insights',
+        'accountant_invites',
+        'cash_bank_accounts',
+        'credit_notes',
+        'customers',
+        'counters',
+        'debit_notes',
+        'delivery_challans',
+        'expenses',
+        'eway_bills',
+        'gst_filings',
+        'invoices',
+        'ledger_accounts',
+        'ledger_entries',
+        'notifications',
+        'payments',
+        'proforma_invoices',
+        'products',
+        'purchase_orders',
+        'purchase_returns',
+        'purchases',
+        'quotations',
+        'reports',
+        'sales_returns',
+        'services',
+        'stock_batches',
+        'stock_locations',
+        'stock_movements',
+        'supplier_payments',
+        'suppliers'
+      ];
+    }
+
     match /users/{userId} {
       allow read, write: if signedIn() && request.auth.uid == userId;
 
@@ -70,6 +112,11 @@ service cloud.firestore {
             && signedIn()
             && request.auth.uid == uid
             && request.resource.data.uid == request.auth.uid);
+      }
+
+      match /{collectionName}/{docId} {
+        allow read: if isBusinessDataCollection(collectionName) && canAccessBusinessData(businessId);
+        allow create, update, delete: if isBusinessDataCollection(collectionName) && canAccessBusinessData(businessId);
       }
     }
   }

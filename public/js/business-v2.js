@@ -100,24 +100,10 @@ function buildOwnerMembership(user, businessId) {
   };
 }
 
-async function ensureRootCollectionBootstrapDoc(pathSegments, label) {
-  const ref = doc(db, ...pathSegments);
-  const snap = await getDoc(ref);
-  if (snap.exists()) return true;
-  await setDoc(ref, {
-    bootstrap: true,
-    collection: label,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
-  }, { merge: true });
-  return true;
-}
-
 export async function ensureBusinessRootBootstrapDocs() {
-  await Promise.all([
-    ensureRootCollectionBootstrapDoc(["businesses", ROOT_BOOTSTRAP_DOC_ID], "businesses"),
-    ensureRootCollectionBootstrapDoc(["business_identity", ROOT_BOOTSTRAP_DOC_ID], "business_identity")
-  ]);
+  // Firestore collections do not need a bootstrap document to exist before we write
+  // real business data. Keep this as a no-op so older callers stay safe.
+  return true;
 }
 
 export async function createOrResolveBusinessV2(user, payload = {}) {

@@ -205,6 +205,21 @@ async function syncInvoiceToCloudState(invoiceRefId, payload) {
   }, { merge: true });
 }
 
+async function syncInvoiceToCanonicalCollections(invoiceRefId, payload) {
+  if (!businessId || !businessOwnerUid || !auth.currentUser || !invoiceRefId) return;
+  await setDoc(doc(db, 'businesses', businessId, 'invoices', invoiceRefId), {
+    ...payload.invoice,
+    id: invoiceRefId,
+    businessId,
+    business_id: businessId,
+    ownerUid: businessOwnerUid,
+    owner_uid: businessOwnerUid,
+    customer_name: payload.customerName || payload.invoice?.customer || '',
+    updatedAt: serverTimestamp(),
+    updated_at: serverTimestamp()
+  }, { merge: true });
+}
+
 function calcTotals() {
   const amount = Number(amountEl.value) || 0;
   const gstPct = typeEl.value === 'gst' ? Number(gstEl.value) : 0;
@@ -401,6 +416,10 @@ form.addEventListener('submit', async (e) => {
     };
 
     await syncInvoiceToCloudState(invoiceRef.id, {
+      invoice: appInvoice,
+      customerName: customer
+    });
+    await syncInvoiceToCanonicalCollections(invoiceRef.id, {
       invoice: appInvoice,
       customerName: customer
     });
