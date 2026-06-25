@@ -110,7 +110,9 @@ export async function createOrResolveBusinessV2(user, payload = {}) {
   if (!user?.uid) throw new Error("User is required to create a business.");
   await ensureBusinessRootBootstrapDocs();
 
-  const identityId = buildIdentityId(payload, user.uid);
+  const primaryIdentityId = buildIdentityId(payload, user.uid);
+  const ownerScopedIdentityId = `owner_${user.uid}_${identityHash(`${primaryIdentityId}|${user.uid}`)}`;
+  let identityId = primaryIdentityId;
   const identityRef = doc(db, ...businessIdentityDocPath(identityId));
   const userRef = doc(db, ...userDocPath(user.uid));
   const businessRef = doc(collection(db, ...canonicalBusinessesColPath()));
@@ -120,6 +122,69 @@ export async function createOrResolveBusinessV2(user, payload = {}) {
   const result = await runTransaction(db, async (tx) => {
     const identitySnap = await tx.get(identityRef);
     if (identitySnap.exists()) {
+      const identityOwnerUid = String(identitySnap.data()?.ownerUid || identitySnap.data()?.owner_uid || "").trim();
+      if (identityOwnerUid && identityOwnerUid !== user.uid) {
+        identityId = ownerScopedIdentityId;
+        const ownerIdentityRef = doc(db, ...businessIdentityDocPath(identityId));
+        const ownerIdentitySnap = await tx.get(ownerIdentityRef);
+        if (ownerIdentitySnap.exists()) {
+          const existingBusinessId = String(ownerIdentitySnap.data()?.businessId || "").trim();
+          if (!existingBusinessId) throw new Error("Business identity exists without a business reference.");
+          const existingRef = doc(db, ...canonicalBusinessDocPath(existingBusinessId));
+          const existingSnap = await tx.get(existingRef);
+          if (!existingSnap.exists()) throw new Error("Existing business identity could not be resolved.");
+          tx.set(userRef, {
+            user_id: user.uid,
+            uid: user.uid,
+            email: user.email || "",
+            activeBusinessId: existingBusinessId,
+            business_id: existingBusinessId,
+            business_owner_uid: user.uid,
+            businessIds: arrayUnion(existingBusinessId),
+            updatedAt: serverTimestamp(),
+            updated_at: serverTimestamp()
+          }, { merge: true });
+          tx.set(doc(db, ...businessMemberDocPath(existingBusinessId, user.uid)), buildOwnerMembership(user, existingBusinessId), { merge: true });
+          tx.set(doc(db, ...businessDocPath(user.uid, existingBusinessId)), {
+            ...(existingSnap.data() || {}),
+            ...payload,
+            businessId: existingBusinessId,
+            business_id: existingBusinessId,
+            business_owner_uid: user.uid,
+            updatedAt: serverTimestamp(),
+            updated_at: serverTimestamp()
+          }, { merge: true });
+          return { id: existingBusinessId, businessId: existingBusinessId, duplicate: true, ...(existingSnap.data() || {}) };
+        }
+
+        const businessPayload = buildBusinessPayload(payload, user, businessRef.id);
+        tx.set(businessRef, businessPayload);
+        tx.set(memberRef, buildOwnerMembership(user, businessRef.id));
+        tx.set(legacyBusinessRef, businessPayload, { merge: true });
+        tx.set(ownerIdentityRef, {
+          identityId,
+          primaryIdentityId,
+          businessId: businessRef.id,
+          ownerUid: user.uid,
+          owner_uid: user.uid,
+          gstinNormalized: normalizeGstin(payload?.gstin),
+          createdAt: serverTimestamp()
+        });
+        tx.set(userRef, {
+          user_id: user.uid,
+          uid: user.uid,
+          email: user.email || "",
+          activeBusinessId: businessRef.id,
+          business_id: businessRef.id,
+          business_owner_uid: user.uid,
+          businessIds: arrayUnion(businessRef.id),
+          updatedAt: serverTimestamp(),
+          updated_at: serverTimestamp()
+        }, { merge: true });
+
+        return { id: businessRef.id, businessId: businessRef.id, duplicate: false, ...businessPayload };
+      }
+
       const existingBusinessId = String(identitySnap.data()?.businessId || "").trim();
       if (!existingBusinessId) throw new Error("Business identity exists without a business reference.");
       const existingRef = doc(db, ...canonicalBusinessDocPath(existingBusinessId));
@@ -157,6 +222,7 @@ export async function createOrResolveBusinessV2(user, payload = {}) {
       identityId,
       businessId: businessRef.id,
       ownerUid: user.uid,
+      owner_uid: user.uid,
       gstinNormalized: normalizeGstin(payload?.gstin),
       createdAt: serverTimestamp()
     });
