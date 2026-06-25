@@ -60156,6 +60156,29 @@
         mergeCompanyIntoLocalState(companyPatch, businessId);
         hydrateCompanyForms(companyPatch);
         const resolvedBusinessId = String(loadedBusiness?.businessId || businessId || '').trim();
+        const hydrateStateCompany = (companyLike = {}) => {
+          const nextCompany = {
+            ...(state.company && typeof state.company === 'object' ? state.company : {}),
+            ...(companyLike && typeof companyLike === 'object' ? companyLike : {}),
+            bank: {
+              ...((state.company && state.company.bank) || {}),
+              ...(companyLike?.bank || {})
+            },
+            theme: {
+              ...((state.company && state.company.theme) || {}),
+              ...(companyLike?.theme || {})
+            },
+            invoiceNumber: {
+              ...((state.company && state.company.invoiceNumber) || {}),
+              ...(companyLike?.invoiceNumber || {})
+            },
+            reminders: {
+              ...((state.company && state.company.reminders) || {}),
+              ...(companyLike?.reminders || {})
+            }
+          };
+          state.company = nextCompany;
+        };
         const cloudStateSnap = await getDoc(doc(db, 'businesses', resolvedBusinessId, 'app_meta', 'state'));
         if (cloudStateSnap.exists()) {
           const cloudState = cloudStateSnap.data() || {};
@@ -60193,6 +60216,7 @@
               business_id: resolvedBusinessId
             }
           };
+          hydrateStateCompany(syncedPayload.company || companyPatch);
           writeLocalPayload(syncedPayload, resolvedBusinessId);
           persistStateShadow(syncedPayload, resolvedBusinessId);
           window.businessData = hydratedBusinessData;
@@ -60201,6 +60225,7 @@
           refreshUiAfterAuthSync();
           await pushLocalStateToCloud();
         } else {
+          hydrateStateCompany(companyPatch);
           const fallbackPayload = buildCloudStatePayload(resolvedBusinessId);
           persistStateShadow(fallbackPayload, resolvedBusinessId);
           await pushLocalStateToCloud();

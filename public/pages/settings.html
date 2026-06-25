@@ -35594,6 +35594,34 @@
           logo: safeCloudLogo || '',
           financial_year_start: biz.financial_year_start || ''
         };
+        const hydrateStateCompany = (companyLike = {}) => {
+          state.company = {
+            ...(state.company && typeof state.company === 'object' ? state.company : {}),
+            ...(companyLike && typeof companyLike === 'object' ? companyLike : {}),
+            bank: {
+              ...((state.company && state.company.bank) || {}),
+              ...(companyLike?.bank || {})
+            },
+            theme: {
+              ...((state.company && state.company.theme) || {}),
+              ...(companyLike?.theme || {})
+            },
+            invoiceNumber: {
+              ...((state.company && state.company.invoiceNumber) || {}),
+              ...(companyLike?.invoiceNumber || {})
+            },
+            reminders: {
+              ...((state.company && state.company.reminders) || {}),
+              ...(companyLike?.reminders || {})
+            }
+          };
+        };
+        activeBusinessProfileId = resolvedBusinessId;
+        window.__metroxActiveBusinessId = resolvedBusinessId;
+        try {
+          localStorage.setItem('activeBusinessId', resolvedBusinessId);
+          localStorage.setItem('metrox_active_business_profile_v1', resolvedBusinessId);
+        } catch (_) {}
         mergeCompanyIntoLocalState(companyPatch);
         hydrateCompanyForms(companyPatch);
         const cloudStateSnap = await getDoc(doc(db, 'businesses', resolvedBusinessId, 'app_meta', 'state'));
@@ -35634,8 +35662,12 @@
           if (!safeCloudLogo && existingLogo) {
             syncedPayload.company.logo = existingLogo;
           }
-          writeLocalPayload(syncedPayload);
+          hydrateStateCompany(syncedPayload.company || companyPatch);
+          writeLocalPayload(syncedPayload, resolvedBusinessId);
           window.businessData = hydratedBusinessData;
+          try { syncActiveBusinessProfileFromState(); } catch (_) {}
+          renderTopCompanyIdentity();
+          syncSetupFromCompany();
           if (chosen.source === 'cloud') {
             const hydratedKey = `metrox_cloud_hydrated_${resolvedBusinessId}`;
             if (sessionStorage.getItem(hydratedKey) !== '1') {
@@ -35647,7 +35679,11 @@
             await pushLocalStateToCloud();
           }
         } else {
+          hydrateStateCompany(companyPatch);
           await pushLocalStateToCloud();
+          try { syncActiveBusinessProfileFromState(); } catch (_) {}
+          renderTopCompanyIdentity();
+          syncSetupFromCompany();
         }
         if (role === 'owner') {
           await loadInviteList();
